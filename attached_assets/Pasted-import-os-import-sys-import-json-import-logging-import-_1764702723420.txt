@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import os
 import sys
 import json
@@ -30,12 +29,11 @@ except ImportError as e:
 CONFIG_FILE = "/home/chris/.scripts.conf"
 
 # Default Configuration
-STASH_URL = "https://stash.feldorn.com"
+STASH_URL = "http://localhost:9999"
 STASH_API_KEY = ""
 PROXY_BIND = "0.0.0.0"
 PROXY_PORT = 8096
-SJS_USER_PASSWORD = "infuse12345" # Renamed from PROXY_API_KEY
-SJS_USER_ID = "user-1"           # Renamed from USER_ID
+PROXY_API_KEY = "infuse12345"
 
 # Load Config
 if os.path.isfile(CONFIG_FILE):
@@ -49,8 +47,6 @@ else:
     print(f"Warning: Config file {CONFIG_FILE} not found. Using defaults/env vars.")
     STASH_URL = os.getenv("STASH_URL", STASH_URL)
     STASH_API_KEY = os.getenv("STASH_API_KEY", STASH_API_KEY)
-    SJS_USER_PASSWORD = os.getenv("SJS_USER_PASSWORD", SJS_USER_PASSWORD)
-    SJS_USER_ID = os.getenv("SJS_USER_ID", SJS_USER_ID)
 
 # --- Logging Setup ---
 # Configure root logger to output to console
@@ -114,6 +110,7 @@ def stash_query(query: str, variables: Dict[str, Any] = None) -> Dict[str, Any]:
 
 # --- Jellyfin Models & Helpers ---
 SERVER_ID = "stash-proxy-v1"
+USER_ID = "user-1"
 ACCESS_TOKEN = str(uuid.uuid4())
 
 def format_jellyfin_item(scene: Dict[str, Any]) -> Dict[str, Any]:
@@ -164,7 +161,7 @@ async def endpoint_system_info(request):
     logger.info("Providing System Info")
     return JSONResponse({
         "ServerName": "Stash Proxy",
-        "Version": "10.8.13", 
+        "Version": "10.8.13", # Updated to a newer stable version
         "Id": SERVER_ID,
         "OperatingSystem": "Linux",
         "SupportsLibraryMonitor": False,
@@ -198,16 +195,16 @@ async def endpoint_authenticate_by_name(request):
     logger.info(f"Auth attempt for user: {username}")
     
     # Accept config key OR simple "password" string if user puts it there
-    if pw == SJS_USER_PASSWORD:
+    if pw == PROXY_API_KEY:
         logger.info("Auth SUCCESS")
         return JSONResponse({
             "User": {
                 "Name": username,
-                "Id": SJS_USER_ID,
+                "Id": USER_ID,
                 "Policy": {"IsAdministrator": True}
             },
             "SessionInfo": {
-                "UserId": SJS_USER_ID,
+                "UserId": USER_ID,
                 "IsActive": True
             },
             "AccessToken": ACCESS_TOKEN,
@@ -220,7 +217,7 @@ async def endpoint_authenticate_by_name(request):
 async def endpoint_users(request):
     return JSONResponse([{
         "Name": "Stash User",
-        "Id": SJS_USER_ID,
+        "Id": USER_ID,
         "HasPassword": True,
         "Policy": {"IsAdministrator": True, "EnableContentDeletion": False}
     }])
@@ -245,10 +242,6 @@ async def endpoint_user_views(request):
         ],
         "TotalRecordCount": 2
     })
-
-async def endpoint_grouping_options(request):
-    # Infuse requests this and if it 404s, it might think the server is broken
-    return JSONResponse([])
 
 async def endpoint_items(request):
     user_id = request.path_params.get("user_id")
@@ -333,7 +326,6 @@ routes = [
     Route("/System/Info/Public", endpoint_public_info),
     Route("/Users/AuthenticateByName", endpoint_authenticate_by_name, methods=["POST"]),
     Route("/Users/{user_id}/Views", endpoint_user_views),
-    Route("/Users/{user_id}/GroupingOptions", endpoint_grouping_options), # Fix for Infuse 404
     Route("/Users/{user_id}/Items", endpoint_items),
     Route("/Users/{user_id}/Items/{item_id}", endpoint_item_details),
     Route("/Items", endpoint_items),
@@ -360,7 +352,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v1.2 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v1.1 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
