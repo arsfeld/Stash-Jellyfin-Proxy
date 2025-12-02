@@ -409,7 +409,8 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
                 "IsExternal": True,
                 "IsTextSubtitleStream": True,
                 "SupportsExternalStream": True,
-                "DeliveryUrl": f"/Videos/{item_id}/Subtitles/{idx + 1}/Stream.{caption_type}"
+                "DeliveryMethod": "External",
+                "DeliveryUrl": f"/Videos/{item_id}/Subtitles/{idx + 1}/0/Stream.{caption_type}"
             })
         
         item["HasSubtitles"] = len(captions) > 0
@@ -1145,6 +1146,11 @@ async def endpoint_item_details(request):
         return JSONResponse({"error": "Not found"}, status_code=404)
     return JSONResponse(format_jellyfin_item(scene))
 
+async def endpoint_sessions(request):
+    """Handle session management endpoints (Playing, Progress, Stopped)."""
+    # Accept all session reports silently
+    return JSONResponse({})
+
 async def endpoint_playback_info(request):
     """Return playback info with subtitle streams for a scene."""
     item_id = request.path_params.get("item_id")
@@ -1238,7 +1244,8 @@ async def endpoint_playback_info(request):
             "IsExternal": True,
             "IsTextSubtitleStream": True,
             "SupportsExternalStream": True,
-            "DeliveryUrl": f"/Videos/{item_id}/Subtitles/{idx + 1}/Stream.{caption_type}"
+            "DeliveryMethod": "External",
+            "DeliveryUrl": f"/Videos/{item_id}/Subtitles/{idx + 1}/0/Stream.{caption_type}"
         })
     
     logger.info(f"PlaybackInfo for {item_id}: {len(captions)} subtitles")
@@ -1701,6 +1708,9 @@ routes = [
     Route("/Items/{item_id}/Images/Primary", endpoint_image),
     Route("/Items/{item_id}/Images/Thumb", endpoint_image),
     Route("/PlaybackInfo", endpoint_playback_info, methods=["POST", "GET"]),
+    Route("/Sessions/Playing", endpoint_sessions, methods=["POST"]),
+    Route("/Sessions/Playing/Progress", endpoint_sessions, methods=["POST"]),
+    Route("/Sessions/Playing/Stopped", endpoint_sessions, methods=["POST"]),
     Route("/{path:path}", catch_all),
 ]
 
@@ -1720,7 +1730,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.25 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.26 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
