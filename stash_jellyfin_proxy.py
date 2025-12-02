@@ -1146,15 +1146,115 @@ async def endpoint_item_details(request):
     return JSONResponse(format_jellyfin_item(scene))
 
 async def endpoint_playback_info(request):
+    """Return playback info with subtitle streams for a scene."""
+    item_id = request.path_params.get("item_id")
+    
+    if not item_id or not item_id.startswith("scene-"):
+        # Generic fallback
+        return JSONResponse({
+            "MediaSources": [{
+                "Id": "src1",
+                "Protocol": "Http",
+                "MediaStreams": [],
+                "SupportsDirectPlay": True,
+                "SupportsTranscoding": False
+            }],
+            "PlaySessionId": "session-1"
+        })
+    
+    numeric_id = item_id.replace("scene-", "")
+    
+    # Query scene to get captions
+    query = """
+    query FindScene($id: ID!) {
+        findScene(id: $id) {
+            id
+            title
+            files { path duration }
+            captions { language_code caption_type }
+        }
+    }
+    """
+    
+    result = graphql_request(query, {"id": numeric_id})
+    if not result or "findScene" not in result:
+        return JSONResponse({
+            "MediaSources": [{
+                "Id": item_id,
+                "Protocol": "Http",
+                "MediaStreams": [],
+                "SupportsDirectPlay": True,
+                "SupportsTranscoding": False
+            }],
+            "PlaySessionId": "session-1"
+        })
+    
+    scene = result["findScene"]
+    files = scene.get("files", [])
+    path = files[0].get("path", "") if files else ""
+    captions = scene.get("captions") or []
+    
+    # Build MediaStreams
+    media_streams = [
+        {
+            "Index": 0,
+            "Type": "Video",
+            "Codec": "h264",
+            "IsDefault": True,
+            "IsForced": False,
+            "IsExternal": False
+        }
+    ]
+    
+    # Add subtitle streams
+    for idx, caption in enumerate(captions):
+        lang_code = caption.get("language_code", "und")
+        caption_type = (caption.get("caption_type", "") or "").lower()
+        
+        if caption_type not in ("srt", "vtt"):
+            caption_type = "vtt"
+        
+        codec = "srt" if caption_type == "srt" else "webvtt"
+        
+        lang_names = {
+            "en": "English", "de": "German", "es": "Spanish",
+            "fr": "French", "it": "Italian", "nl": "Dutch",
+            "pt": "Portuguese", "ja": "Japanese", "ko": "Korean",
+            "zh": "Chinese", "ru": "Russian", "und": "Unknown"
+        }
+        display_lang = lang_names.get(lang_code, lang_code.upper())
+        
+        media_streams.append({
+            "Index": idx + 1,
+            "Type": "Subtitle",
+            "Codec": codec,
+            "Language": lang_code,
+            "DisplayLanguage": display_lang,
+            "DisplayTitle": f"{display_lang} ({caption_type.upper()})",
+            "Title": display_lang,
+            "IsDefault": idx == 0,
+            "IsForced": False,
+            "IsExternal": True,
+            "IsTextSubtitleStream": True,
+            "SupportsExternalStream": True,
+            "DeliveryUrl": f"/Videos/{item_id}/Subtitles/{idx + 1}/Stream.{caption_type}"
+        })
+    
+    logger.info(f"PlaybackInfo for {item_id}: {len(captions)} subtitles")
+    
     return JSONResponse({
         "MediaSources": [{
-            "Id": "src1",
+            "Id": item_id,
+            "Path": path,
             "Protocol": "Http",
-            "MediaStreams": [],
+            "Type": "Default",
+            "Container": "mp4",
             "SupportsDirectPlay": True,
-            "SupportsTranscoding": False
+            "SupportsDirectStream": True,
+            "SupportsTranscoding": False,
+            "MediaStreams": media_streams
         }],
-        "PlaySessionId": "session-1"
+        "PlaySessionId": f"session-{item_id}"
     })
 
 def get_numeric_id(item_id: str) -> str:
@@ -1588,6 +1688,7 @@ routes = [
     Route("/Users/{user_id}/Items", endpoint_items),
     Route("/Users/{user_id}/Items/{item_id}", endpoint_item_details),
     Route("/Items", endpoint_items),
+    Route("/Items/{item_id}/PlaybackInfo", endpoint_playback_info, methods=["GET", "POST"]),
     Route("/Videos/{item_id}/stream", endpoint_stream),
     Route("/Videos/{item_id}/stream.mp4", endpoint_stream),
     Route("/Videos/{item_id}/Subtitles/{subtitle_index}/Stream.srt", endpoint_subtitle),
@@ -1616,7 +1717,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.23 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.24 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
