@@ -1575,54 +1575,79 @@ async def endpoint_subtitle(request):
         logger.error(f"Subtitle proxy error: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
-def generate_menu_icon(icon_type: str, width: int = 400, height: int = 600) -> Tuple[bytes, str]:
-    """Generate a portrait 2:3 PNG menu icon using Pillow drawing (matches Infuse folder tiles)."""
+def generate_text_icon(text: str, width: int = 400, height: int = 600) -> Tuple[bytes, str]:
+    """Generate a portrait 2:3 PNG icon with text label (matches Infuse folder tiles)."""
     if not PILLOW_AVAILABLE:
-        # Return the SVG as fallback
-        return MENU_ICONS.get(icon_type, "").encode('utf-8'), "image/svg+xml"
+        # Return a simple SVG with text as fallback
+        svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
+            <rect width="400" height="600" fill="#1a1a2e"/>
+            <text x="200" y="320" text-anchor="middle" fill="#4a90d9" font-size="48" font-family="sans-serif">{text}</text>
+        </svg>'''
+        return svg.encode('utf-8'), "image/svg+xml"
     
     try:
-        from PIL import ImageDraw
+        from PIL import ImageDraw, ImageFont
         
         # Create portrait image with dark background (2:3 aspect for Infuse folder tiles)
         img = Image.new('RGB', (width, height), (26, 26, 46))
         draw = ImageDraw.Draw(img)
         
-        # Icon color (Stash-like blue)
-        icon_color = (74, 144, 217)  # #4a90d9
+        # Text color (Stash-like blue)
+        text_color = (74, 144, 217)  # #4a90d9
         
-        # Draw different icons based on type (centered in portrait canvas)
-        # Icons are drawn in the center area of the 400x600 canvas
-        if icon_type == "root-scenes":
-            # Play button circle (centered in portrait)
-            draw.ellipse([100, 200, 300, 400], outline=icon_color, width=10)
-            # Play triangle
-            draw.polygon([(160, 250), (160, 350), (240, 300)], fill=icon_color)
-            
-        elif icon_type == "root-studios":
-            # Camera/studio icon
-            draw.rectangle([80, 220, 320, 380], outline=icon_color, width=10)
-            draw.ellipse([160, 260, 240, 340], fill=icon_color)
-            draw.rectangle([120, 380, 280, 400], fill=icon_color)
-            
-        elif icon_type == "root-performers":
-            # Person icon (head + body)
-            draw.ellipse([130, 180, 270, 320], outline=icon_color, width=10)
-            draw.arc([80, 320, 320, 480], 0, 180, fill=icon_color, width=10)
-            
-        elif icon_type == "root-groups":
-            # Stacked folders/movies (centered in portrait)
-            draw.rectangle([80, 220, 180, 360], outline=icon_color, width=6)
-            draw.rectangle([140, 250, 240, 390], outline=icon_color, width=6)
-            draw.rectangle([200, 280, 300, 420], outline=icon_color, width=6)
+        # Try to find a good font size that fits the text
+        # Start with a large size and reduce if needed
+        max_width = width - 40  # Leave 20px padding on each side
+        font_size = 72
+        font = None
         
-        elif icon_type == "root-tag":
-            # Tag icon (price tag shape)
-            # Draw tag outline (pentagon shape)
-            tag_points = [(100, 200), (280, 200), (340, 300), (200, 450), (60, 300)]
-            draw.polygon(tag_points, outline=icon_color, width=10)
-            # Draw hole in tag
-            draw.ellipse([130, 250, 180, 300], fill=icon_color)
+        # Try to load a nice font, fall back to default
+        font_paths = [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+            "/System/Library/Fonts/Helvetica.ttc",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        ]
+        
+        for font_path in font_paths:
+            try:
+                font = ImageFont.truetype(font_path, font_size)
+                break
+            except (IOError, OSError):
+                continue
+        
+        if font is None:
+            # Use default font
+            font = ImageFont.load_default()
+            font_size = 20  # Default font is small
+        
+        # Reduce font size until text fits
+        while font_size > 20:
+            try:
+                font = ImageFont.truetype(font_path, font_size) if font_path else ImageFont.load_default()
+            except:
+                font = ImageFont.load_default()
+                break
+            
+            # Get text bounding box
+            bbox = draw.textbbox((0, 0), text, font=font)
+            text_width = bbox[2] - bbox[0]
+            
+            if text_width <= max_width:
+                break
+            font_size -= 4
+        
+        # Calculate position to center text
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        
+        x = (width - text_width) // 2
+        y = (height - text_height) // 2
+        
+        # Draw text
+        draw.text((x, y), text, fill=text_color, font=font)
         
         # Save as PNG
         output = io.BytesIO()
@@ -1630,8 +1655,27 @@ def generate_menu_icon(icon_type: str, width: int = 400, height: int = 600) -> T
         return output.getvalue(), "image/png"
         
     except Exception as e:
-        logger.warning(f"Menu icon generation failed: {e}")
-        return MENU_ICONS.get(icon_type, "").encode('utf-8'), "image/svg+xml"
+        logger.warning(f"Text icon generation failed: {e}")
+        # Simple SVG fallback
+        svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
+            <rect width="400" height="600" fill="#1a1a2e"/>
+            <text x="200" y="320" text-anchor="middle" fill="#4a90d9" font-size="48" font-family="sans-serif">{text}</text>
+        </svg>'''
+        return svg.encode('utf-8'), "image/svg+xml"
+
+def generate_menu_icon(icon_type: str, width: int = 400, height: int = 600) -> Tuple[bytes, str]:
+    """Generate a portrait 2:3 PNG menu icon with text label (matches Infuse folder tiles)."""
+    # Map icon types to display names
+    icon_names = {
+        "root-scenes": "Scenes",
+        "root-studios": "Studios", 
+        "root-performers": "Performers",
+        "root-groups": "Groups",
+        "root-tag": "Tags",
+    }
+    
+    text = icon_names.get(icon_type, icon_type.replace("root-", "").replace("-", " ").title())
+    return generate_text_icon(text, width, height)
 
 def generate_placeholder_icon(item_type: str = "group", width: int = 400, height: int = 600) -> Tuple[bytes, str]:
     """Generate a placeholder icon for items without images."""
@@ -1684,10 +1728,19 @@ async def endpoint_image(request):
         from starlette.responses import Response
         return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
     
-    # Handle tag folder icons (tag-* IDs use the root-tag icon)
+    # Handle tag folder icons - use the actual tag name from config
     if item_id.startswith("tag-"):
-        img_data, content_type = generate_menu_icon("root-tag")
-        logger.info(f"Serving tag icon for {item_id}")
+        tag_slug = item_id[4:]  # Remove "tag-" prefix
+        # Find the matching tag name from TAG_GROUPS config
+        tag_name = None
+        for t in TAG_GROUPS:
+            if t.lower().replace(' ', '-') == tag_slug:
+                tag_name = t
+                break
+        # Use the tag name or fall back to the slug
+        display_name = tag_name if tag_name else tag_slug.replace('-', ' ').title()
+        img_data, content_type = generate_text_icon(display_name)
+        logger.info(f"Serving text icon for tag folder: {display_name}")
         from starlette.responses import Response
         return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
     
@@ -1896,7 +1949,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.29 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.30 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
