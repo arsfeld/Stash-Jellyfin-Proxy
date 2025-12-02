@@ -375,7 +375,7 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
         ]
         
         # Add subtitle streams from captions
-        captions = scene.get("captions", [])
+        captions = scene.get("captions") or []
         for idx, caption in enumerate(captions):
             lang_code = caption.get("language_code", "und")
             caption_type = (caption.get("caption_type", "") or "").lower()
@@ -1616,7 +1616,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.22 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.23 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
