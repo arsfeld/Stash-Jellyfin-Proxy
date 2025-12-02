@@ -1308,39 +1308,9 @@ async def endpoint_image(request):
         # Performer images are usually already portrait/square
     elif item_id.startswith("group-"):
         numeric_id = item_id.replace("group-", "")
-        # Use GraphQL to fetch group image (REST endpoint has auth issues)
-        logger.info(f"Fetching group image via GraphQL for group-{numeric_id}")
-        try:
-            q = """query FindMovie($id: ID!) { 
-                findMovie(id: $id) { front_image } 
-            }"""
-            res = stash_query(q, {"id": numeric_id})
-            front_image = res.get("data", {}).get("findMovie", {}).get("front_image")
-            if front_image:
-                # front_image is a base64 data URL like "data:image/jpeg;base64,..."
-                if front_image.startswith("data:"):
-                    import base64
-                    # Parse the data URL
-                    header, encoded = front_image.split(",", 1)
-                    # Extract content type from header like "data:image/jpeg;base64"
-                    content_type = header.split(":")[1].split(";")[0]
-                    data = base64.b64decode(encoded)
-                    logger.info(f"Got group image via GraphQL: {len(data)} bytes, type={content_type}")
-                    from starlette.responses import Response
-                    return Response(content=data, media_type=content_type, headers=cache_headers)
-                else:
-                    logger.warning(f"Unexpected front_image format for group-{numeric_id}")
-            else:
-                logger.info(f"No front_image for group-{numeric_id}, using placeholder")
-            # Fall through to placeholder
-            img_data, ct = generate_placeholder_icon("group")
-            from starlette.responses import Response
-            return Response(content=img_data, media_type=ct, headers=cache_headers)
-        except Exception as e:
-            logger.error(f"GraphQL image fetch failed for group-{numeric_id}: {e}")
-            img_data, ct = generate_placeholder_icon("group")
-            from starlette.responses import Response
-            return Response(content=img_data, media_type=ct, headers=cache_headers)
+        # Correct endpoint is /group/{id}/frontimage (no underscore, found from Stash UI)
+        stash_img_url = f"{STASH_URL}/group/{numeric_id}/frontimage"
+        # Group images are usually movie posters (portrait)
     elif item_id.startswith("scene-"):
         numeric_id = item_id.replace("scene-", "")
         stash_img_url = f"{STASH_URL}/scene/{numeric_id}/screenshot"
@@ -1461,7 +1431,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.17 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.18 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
