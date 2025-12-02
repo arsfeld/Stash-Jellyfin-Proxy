@@ -117,11 +117,12 @@ SERVER_ID = "stash-proxy-v1"
 ACCESS_TOKEN = str(uuid.uuid4())
 
 def format_jellyfin_item(scene: Dict[str, Any]) -> Dict[str, Any]:
-    item_id = scene.get("id")
+    item_id = str(scene.get("id"))
     title = scene.get("title") or scene.get("code") or f"Scene {item_id}"
     date = scene.get("date")
     files = scene.get("files", [])
     path = files[0].get("path") if files else ""
+    duration = files[0].get("duration", 0) if files else 0
     studio = scene.get("studio", {}).get("name") if scene.get("studio") else None
     tags = [t.get("name") for t in scene.get("tags", [])]
     
@@ -129,7 +130,7 @@ def format_jellyfin_item(scene: Dict[str, Any]) -> Dict[str, Any]:
     for p in scene.get("performers", []):
         people.append({
             "Name": p.get("name"),
-            "Id": p.get("id"),
+            "Id": str(p.get("id")),
             "Type": "Actor",
             "Role": "Performer"
         })
@@ -139,19 +140,42 @@ def format_jellyfin_item(scene: Dict[str, Any]) -> Dict[str, Any]:
         "Id": item_id,
         "ServerId": SERVER_ID,
         "Type": "Movie",
+        "IsFolder": False,
         "MediaType": "Video",
         "ProductionYear": int(date[:4]) if date else None,
         "PremiereDate": f"{date}T00:00:00.0000000Z" if date else None,
         "DateCreated": f"{date}T00:00:00.0000000Z" if date else None,
         "Path": path,
-        "Studios": [{"Name": studio}] if studio else [],
-        "Genres": tags,
-        "Tags": tags,
+        "Studios": [{"Name": studio, "Id": "studio-1"}] if studio else [],
+        "Genres": tags[:5] if tags else [],
+        "Tags": [{"Name": t} for t in tags[:5]] if tags else [],
         "People": people,
-        "ImageTags": {"Primary": item_id, "Thumb": item_id},
+        "ImageTags": {"Primary": "1"},
+        "BackdropImageTags": [],
         "Container": "mp4",
         "SupportsSync": True,
-        "RunTimeTicks": int(files[0].get("duration", 0) * 10000000) if files else 0
+        "RunTimeTicks": int(duration * 10000000),
+        "PlayAccess": "Full",
+        "CanDownload": True,
+        "CanDelete": False,
+        "HasSubtitles": False,
+        "LocationType": "FileSystem",
+        "IsHD": True,
+        "VideoType": "VideoFile",
+        "MediaSources": [{
+            "Id": item_id,
+            "Path": path,
+            "Protocol": "Http",
+            "Type": "Default",
+            "Container": "mp4",
+            "Name": title,
+            "IsRemote": False,
+            "RunTimeTicks": int(duration * 10000000),
+            "SupportsDirectPlay": True,
+            "SupportsDirectStream": True,
+            "SupportsTranscoding": False,
+            "DirectStreamUrl": f"/Videos/{item_id}/stream.mp4"
+        }]
     }
 
 # --- API Endpoints ---
@@ -379,8 +403,13 @@ async def endpoint_item_details(request):
         q = """query FindScenes { findScenes(filter: {per_page: 50, sort: "date", direction: DESC}) { scenes { id title code date files { path duration } studio { name } tags { name } performers { name id } } } }"""
         res = stash_query(q)
         items = []
-        for s in res.get("data", {}).get("findScenes", {}).get("scenes", []):
-            items.append(format_jellyfin_item(s))
+        scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+        logger.debug(f"Found {len(scenes)} scenes from Stash")
+        for s in scenes:
+            item = format_jellyfin_item(s)
+            items.append(item)
+        if items:
+            logger.debug(f"First item sample: {json.dumps(items[0], default=str)}")
         return JSONResponse({"Items": items, "TotalRecordCount": len(items)})
     
     elif item_id == "root-studios":
@@ -480,7 +509,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v1.7 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v1.8 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
