@@ -92,29 +92,29 @@ IMAGE_CACHE_MAX_SIZE = 100  # Max items to cache
 
 # Menu icons as simple SVG graphics (styled similar to Stash's icons)
 # These are served for root-scenes, root-studios, root-performers, root-groups
-# Using square 1:1 aspect ratio (600x600) for Infuse's home screen 3x3 grid
+# Using portrait 2:3 aspect ratio (400x600) for Infuse's folder tiles
 MENU_ICONS = {
-    "root-scenes": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
-        <rect width="600" height="600" fill="#1a1a2e"/>
-        <circle cx="300" cy="280" r="120" fill="none" stroke="#4a90d9" stroke-width="16"/>
-        <polygon points="270,220 270,340 360,280" fill="#4a90d9"/>
+    "root-scenes": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
+        <rect width="400" height="600" fill="#1a1a2e"/>
+        <circle cx="200" cy="280" r="100" fill="none" stroke="#4a90d9" stroke-width="12"/>
+        <polygon points="170,230 170,330 250,280" fill="#4a90d9"/>
     </svg>""",
-    "root-studios": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
-        <rect width="600" height="600" fill="#1a1a2e"/>
-        <rect x="150" y="200" width="300" height="200" rx="12" fill="none" stroke="#4a90d9" stroke-width="16"/>
-        <circle cx="300" cy="300" r="50" fill="#4a90d9"/>
-        <rect x="200" y="400" width="200" height="30" fill="#4a90d9"/>
+    "root-studios": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
+        <rect width="400" height="600" fill="#1a1a2e"/>
+        <rect x="80" y="220" width="240" height="160" rx="10" fill="none" stroke="#4a90d9" stroke-width="12"/>
+        <circle cx="200" cy="300" r="40" fill="#4a90d9"/>
+        <rect x="120" y="380" width="160" height="24" fill="#4a90d9"/>
     </svg>""",
-    "root-performers": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
-        <rect width="600" height="600" fill="#1a1a2e"/>
-        <circle cx="300" cy="200" r="80" fill="none" stroke="#4a90d9" stroke-width="16"/>
-        <path d="M150,450 Q150,320 300,320 Q450,320 450,450 L450,480 L150,480 Z" fill="none" stroke="#4a90d9" stroke-width="16"/>
+    "root-performers": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
+        <rect width="400" height="600" fill="#1a1a2e"/>
+        <circle cx="200" cy="220" r="70" fill="none" stroke="#4a90d9" stroke-width="12"/>
+        <path d="M80,420 Q80,320 200,320 Q320,320 320,420 L320,440 L80,440 Z" fill="none" stroke="#4a90d9" stroke-width="12"/>
     </svg>""",
-    "root-groups": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
-        <rect width="600" height="600" fill="#1a1a2e"/>
-        <rect x="120" y="150" width="140" height="200" rx="8" fill="none" stroke="#4a90d9" stroke-width="12"/>
-        <rect x="230" y="180" width="140" height="200" rx="8" fill="none" stroke="#4a90d9" stroke-width="12"/>
-        <rect x="340" y="210" width="140" height="200" rx="8" fill="none" stroke="#4a90d9" stroke-width="12"/>
+    "root-groups": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
+        <rect width="400" height="600" fill="#1a1a2e"/>
+        <rect x="80" y="200" width="100" height="160" rx="6" fill="none" stroke="#4a90d9" stroke-width="10"/>
+        <rect x="150" y="240" width="100" height="160" rx="6" fill="none" stroke="#4a90d9" stroke-width="10"/>
+        <rect x="220" y="280" width="100" height="160" rx="6" fill="none" stroke="#4a90d9" stroke-width="10"/>
     </svg>"""
 }
 
@@ -1175,8 +1175,8 @@ async def endpoint_stream(request):
         logger.error(f"Stream proxy error: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
-def generate_menu_icon(icon_type: str, size: int = 600) -> Tuple[bytes, str]:
-    """Generate a square PNG menu icon using Pillow drawing."""
+def generate_menu_icon(icon_type: str, width: int = 400, height: int = 600) -> Tuple[bytes, str]:
+    """Generate a portrait 2:3 PNG menu icon using Pillow drawing (matches Infuse folder tiles)."""
     if not PILLOW_AVAILABLE:
         # Return the SVG as fallback
         return MENU_ICONS.get(icon_type, "").encode('utf-8'), "image/svg+xml"
@@ -1184,36 +1184,37 @@ def generate_menu_icon(icon_type: str, size: int = 600) -> Tuple[bytes, str]:
     try:
         from PIL import ImageDraw
         
-        # Create square image with dark background (1:1 aspect for Infuse home screen)
-        img = Image.new('RGB', (size, size), (26, 26, 46))
+        # Create portrait image with dark background (2:3 aspect for Infuse folder tiles)
+        img = Image.new('RGB', (width, height), (26, 26, 46))
         draw = ImageDraw.Draw(img)
         
         # Icon color (Stash-like blue)
         icon_color = (74, 144, 217)  # #4a90d9
         
-        # Draw different icons based on type (centered in square)
+        # Draw different icons based on type (centered in portrait canvas)
+        # Icons are drawn in the center area of the 400x600 canvas
         if icon_type == "root-scenes":
-            # Play button circle
-            draw.ellipse([180, 160, 420, 400], outline=icon_color, width=12)
+            # Play button circle (centered in portrait)
+            draw.ellipse([100, 200, 300, 400], outline=icon_color, width=10)
             # Play triangle
-            draw.polygon([(270, 220), (270, 340), (360, 280)], fill=icon_color)
+            draw.polygon([(160, 250), (160, 350), (240, 300)], fill=icon_color)
             
         elif icon_type == "root-studios":
             # Camera/studio icon
-            draw.rectangle([150, 200, 450, 400], outline=icon_color, width=12)
-            draw.ellipse([250, 250, 350, 350], fill=icon_color)
-            draw.rectangle([200, 400, 400, 430], fill=icon_color)
+            draw.rectangle([80, 220, 320, 380], outline=icon_color, width=10)
+            draw.ellipse([160, 260, 240, 340], fill=icon_color)
+            draw.rectangle([120, 380, 280, 400], fill=icon_color)
             
         elif icon_type == "root-performers":
             # Person icon (head + body)
-            draw.ellipse([220, 120, 380, 280], outline=icon_color, width=12)
-            draw.arc([150, 280, 450, 480], 0, 180, fill=icon_color, width=12)
+            draw.ellipse([130, 180, 270, 320], outline=icon_color, width=10)
+            draw.arc([80, 320, 320, 480], 0, 180, fill=icon_color, width=10)
             
         elif icon_type == "root-groups":
-            # Stacked folders/movies (centered)
-            draw.rectangle([120, 150, 260, 350], outline=icon_color, width=8)
-            draw.rectangle([200, 190, 340, 390], outline=icon_color, width=8)
-            draw.rectangle([280, 230, 420, 430], outline=icon_color, width=8)
+            # Stacked folders/movies (centered in portrait)
+            draw.rectangle([80, 220, 180, 360], outline=icon_color, width=6)
+            draw.rectangle([140, 250, 240, 390], outline=icon_color, width=6)
+            draw.rectangle([200, 280, 300, 420], outline=icon_color, width=6)
         
         # Save as PNG
         output = io.BytesIO()
@@ -1324,8 +1325,12 @@ async def endpoint_image(request):
         from starlette.responses import Response
         return Response(content=cached_data, media_type=cached_type, headers=cache_headers)
     
+    # Explicitly pass ApiKey header for image requests (some Stash endpoints need it)
+    api_key = STASH_API_KEY if STASH_API_KEY else SJS_PASSWORD
+    image_headers = {"ApiKey": api_key} if api_key else {}
+    
     try:
-        data, content_type, _ = fetch_from_stash(stash_img_url, timeout=30)
+        data, content_type, _ = fetch_from_stash(stash_img_url, extra_headers=image_headers, timeout=30)
         
         # Check for empty or invalid response (groups with no artwork)
         if not data or len(data) < 100:
@@ -1418,7 +1423,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.12 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.13 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
