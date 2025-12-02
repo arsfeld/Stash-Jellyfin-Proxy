@@ -31,7 +31,7 @@ CONFIG_FILE = "/home/chris/.scripts.conf"
 
 # Default Configuration
 STASH_URL = "https://stash.feldorn.com"
-STASH_API_KEY = ""
+STASH_API_KEY = ""  # Real Stash API key from Settings -> Security -> API Key
 PROXY_BIND = "0.0.0.0"
 PROXY_PORT = 8096
 SJS_USER_PASSWORD = "infuse12345"
@@ -51,6 +51,9 @@ else:
     STASH_API_KEY = os.getenv("STASH_API_KEY", STASH_API_KEY)
     SJS_USER_PASSWORD = os.getenv("SJS_USER_PASSWORD", SJS_USER_PASSWORD)
     SJS_USER_ID = os.getenv("SJS_USER_ID", SJS_USER_ID)
+
+# Session management for cookie-based auth
+STASH_SESSION = None  # Will hold requests.Session with auth cookies
 
 # --- Logging Setup ---
 # Configure root logger to output to console
@@ -79,33 +82,92 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 # --- Stash GraphQL Client ---
 GRAPHQL_URL = f"{STASH_URL}/graphql-local" if not STASH_URL.endswith("/graphql-local") else STASH_URL
-STASH_HEADERS = {
-    "ApiKey": STASH_API_KEY,
-    "Content-Type": "application/json"
-}
+
+def get_stash_session():
+    """Get or create a Stash session with proper authentication."""
+    global STASH_SESSION
+    
+    if STASH_SESSION is not None:
+        return STASH_SESSION
+    
+    STASH_SESSION = requests.Session()
+    
+    # If we have a real API key, use it
+    if STASH_API_KEY:
+        logger.info("Using STASH_API_KEY for authentication")
+        STASH_SESSION.headers["ApiKey"] = STASH_API_KEY
+        return STASH_SESSION
+    
+    # Otherwise, try to authenticate with username/password to get session cookie
+    logger.info("No STASH_API_KEY set, attempting session-based login...")
+    
+    # Try login with password
+    try:
+        login_url = f"{STASH_URL}/login"
+        
+        # Stash uses a simple password-based login (no username for most setups)
+        # First try form-based login
+        login_data = {"password": SJS_USER_PASSWORD}
+        resp = STASH_SESSION.post(login_url, data=login_data, allow_redirects=True, timeout=10)
+        
+        # Check if we got cookies
+        if STASH_SESSION.cookies:
+            logger.info(f"Session login successful! Got cookies: {list(STASH_SESSION.cookies.keys())}")
+            return STASH_SESSION
+        
+        # Try JSON-based login
+        resp = STASH_SESSION.post(login_url, json=login_data, allow_redirects=True, timeout=10)
+        
+        if STASH_SESSION.cookies:
+            logger.info(f"JSON login successful! Got cookies: {list(STASH_SESSION.cookies.keys())}")
+            return STASH_SESSION
+        
+        # Try with ApiKey header as fallback (some endpoints may accept it)
+        logger.warning("Login didn't return cookies, falling back to ApiKey header with password")
+        STASH_SESSION.headers["ApiKey"] = SJS_USER_PASSWORD
+        
+    except Exception as e:
+        logger.error(f"Login failed: {e}")
+        # Fall back to using password as ApiKey
+        STASH_SESSION.headers["ApiKey"] = SJS_USER_PASSWORD
+    
+    return STASH_SESSION
 
 def check_stash_connection():
     """Verify we can talk to Stash at startup."""
     try:
         logger.info(f"Testing connection to Stash at {GRAPHQL_URL}...")
-        resp = requests.post(
+        session = get_stash_session()
+        
+        resp = session.post(
             GRAPHQL_URL, 
             json={"query": "{ version { version } }"}, 
-            headers=STASH_HEADERS, 
             timeout=5
         )
         resp.raise_for_status()
         v = resp.json().get("data", {}).get("version", {}).get("version", "unknown")
         logger.info(f"✅ Connected to Stash! Version: {v}")
+        
+        # Now test media endpoint to see if auth works there too
+        test_media_url = f"{STASH_URL}/scene/1/screenshot"
+        media_resp = session.head(test_media_url, timeout=5, allow_redirects=True)
+        content_type = media_resp.headers.get('Content-Type', '')
+        if 'text/html' in content_type:
+            logger.warning("⚠️ Media endpoint returns HTML - authentication may not work for images/videos")
+            logger.warning("Consider adding STASH_API_KEY to your config (from Stash Settings → Security → API Key)")
+        else:
+            logger.info("✅ Media endpoint authentication working!")
+        
         return True
     except Exception as e:
         logger.error(f"❌ Failed to connect to Stash: {e}")
-        logger.error("Please check STASH_URL and STASH_API_KEY in your config.")
+        logger.error("Please check STASH_URL and authentication in your config.")
         return False
 
 def stash_query(query: str, variables: Dict[str, Any] = None) -> Dict[str, Any]:
     try:
-        resp = requests.post(GRAPHQL_URL, json={"query": query, "variables": variables or {}}, headers=STASH_HEADERS, timeout=10)
+        session = get_stash_session()
+        resp = session.post(GRAPHQL_URL, json={"query": query, "variables": variables or {}}, timeout=10)
         resp.raise_for_status()
         return resp.json()
     except Exception as e:
@@ -514,19 +576,11 @@ def get_numeric_id(item_id: str) -> str:
 
 def fetch_from_stash(url: str, extra_headers: Dict[str, str] = None, timeout: int = 30, stream: bool = False) -> Tuple[bytes, str, Dict[str, str]]:
     """
-    Fetch content from Stash using requests library for proper redirect handling.
+    Fetch content from Stash using authenticated session for proper redirect handling.
     Returns (data, content_type, response_headers).
     """
-    try:
-        import requests
-    except ImportError:
-        logger.error("requests library not installed. Run: pip install requests")
-        raise Exception("requests library required for media proxy")
-    
-    # Create session with persistent headers
-    session = requests.Session()
-    if STASH_API_KEY:
-        session.headers["ApiKey"] = STASH_API_KEY
+    # Use the authenticated session
+    session = get_stash_session()
     
     # Add extra headers
     headers = extra_headers or {}
@@ -536,11 +590,16 @@ def fetch_from_stash(url: str, extra_headers: Dict[str, str] = None, timeout: in
         
         # Log response details for debugging
         content_type = response.headers.get('Content-Type', 'application/octet-stream')
-        logger.debug(f"Fetch {url}: status={response.status_code}, type={content_type}, size={len(response.content) if not stream else 'streaming'}")
         
         # Check if we got HTML instead of media (indicates auth failure)
         if 'text/html' in content_type:
-            logger.error(f"Got HTML response instead of media. First 200 chars: {response.text[:200]}")
+            # Read a bit of content for debugging
+            if stream:
+                preview = next(response.iter_content(chunk_size=200), b'').decode('utf-8', errors='ignore')
+            else:
+                preview = response.text[:200]
+            logger.error(f"Got HTML response instead of media from {url}")
+            logger.error(f"First 200 chars: {preview}")
             raise Exception(f"Authentication failed - received HTML instead of media")
         
         response.raise_for_status()
@@ -554,11 +613,11 @@ def fetch_from_stash(url: str, extra_headers: Dict[str, str] = None, timeout: in
         else:
             data = response.content
         
-        logger.debug(f"Fetch success: {len(data)} bytes, type={content_type}")
+        logger.debug(f"Fetch success from {url}: {len(data)} bytes, type={content_type}")
         return data, content_type, resp_headers
         
     except requests.exceptions.RequestException as e:
-        logger.error(f"Request failed: {e}")
+        logger.error(f"Request failed for {url}: {e}")
         raise
 
 async def endpoint_stream(request):
@@ -657,7 +716,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.1 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.2 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
