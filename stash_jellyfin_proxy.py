@@ -440,43 +440,55 @@ async def endpoint_items(request):
 async def endpoint_item_details(request):
     item_id = request.path_params.get("item_id")
     
-    # Handle special folder IDs - return items within
+    # Handle special folder IDs - return the folder ITSELF (not children)
     if item_id == "root-scenes":
-        q = """query FindScenes { findScenes(filter: {per_page: 50, sort: "date", direction: DESC}) { scenes { id title code date files { path duration } studio { name } tags { name } performers { name id } } } }"""
-        res = stash_query(q)
-        items = []
-        scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-        logger.debug(f"Found {len(scenes)} scenes from Stash")
-        for s in scenes:
-            item = format_jellyfin_item(s)
-            items.append(item)
-        if items:
-            logger.debug(f"First item sample: {json.dumps(items[0], default=str)}")
-        return JSONResponse({"Items": items, "TotalRecordCount": len(items), "StartIndex": 0})
+        # Return folder metadata, not children (children come from /Items?parentId=root-scenes)
+        return JSONResponse({
+            "Name": "All Scenes",
+            "SortName": "All Scenes",
+            "Id": "root-scenes",
+            "ServerId": SERVER_ID,
+            "Type": "CollectionFolder",
+            "CollectionType": "movies",
+            "IsFolder": True,
+            "ImageTags": {},
+            "BackdropImageTags": [],
+            "ChildCount": 50,
+            "RecursiveItemCount": 50,
+            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-scenes"}
+        })
     
     elif item_id == "root-studios":
-        q = """query FindStudios { findStudios(filter: {per_page: 50, sort: "name", direction: ASC}) { studios { id name } } }"""
-        res = stash_query(q)
-        items = []
-        for s in res.get("data", {}).get("findStudios", {}).get("studios", []):
-            items.append({
-                "Name": s["name"],
-                "Id": f"studio-{s['id']}",
-                "ServerId": SERVER_ID,
-                "Type": "Folder",
-                "CollectionType": "movies",
-                "ImageTags": {}
-            })
-        return JSONResponse({"Items": items, "TotalRecordCount": len(items), "StartIndex": 0})
+        return JSONResponse({
+            "Name": "Studios",
+            "SortName": "Studios",
+            "Id": "root-studios",
+            "ServerId": SERVER_ID,
+            "Type": "CollectionFolder",
+            "CollectionType": "movies",
+            "IsFolder": True,
+            "ImageTags": {},
+            "BackdropImageTags": [],
+            "ChildCount": 50,
+            "RecursiveItemCount": 50,
+            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-studios"}
+        })
     
     elif item_id.startswith("studio-"):
+        # Return studio folder metadata
         studio_id = item_id.replace("studio-", "")
-        q = """query FindScenes($sid: [ID!]) { findScenes(scene_filter: {studios: {value: $sid, modifier: INCLUDES}}, filter: {per_page: 50, sort: "date", direction: DESC}) { scenes { id title code date files { path duration } studio { name } tags { name } performers { name id } } } }"""
-        res = stash_query(q, {"sid": [studio_id]})
-        items = []
-        for s in res.get("data", {}).get("findScenes", {}).get("scenes", []):
-            items.append(format_jellyfin_item(s))
-        return JSONResponse({"Items": items, "TotalRecordCount": len(items), "StartIndex": 0})
+        return JSONResponse({
+            "Name": f"Studio {studio_id}",
+            "SortName": f"Studio {studio_id}",
+            "Id": item_id,
+            "ServerId": SERVER_ID,
+            "Type": "Folder",
+            "CollectionType": "movies",
+            "IsFolder": True,
+            "ImageTags": {},
+            "BackdropImageTags": [],
+            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": item_id}
+        })
     
     elif item_id in ("Resume", "Latest"):
         # Return empty for resume/latest
@@ -563,7 +575,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v2.5 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v2.6 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
