@@ -36,18 +36,20 @@ except ImportError:
     print("Note: Pillow not installed. Studio images will not be resized. Install with: pip install Pillow")
 
 # --- Configuration Loading ---
-CONFIG_FILE = "/home/chris/.scripts.conf"
+# Config file location: same directory as script, or specified path
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_FILE = os.path.join(SCRIPT_DIR, "stash_jellyfin_proxy.conf")
 
-# Default Configuration
+# Default Configuration (can be overridden by config file)
 STASH_URL = "https://stash.feldorn.com"
 STASH_API_KEY = ""  # Real Stash API key from Settings -> Security -> API Key
 PROXY_BIND = "0.0.0.0"
 PROXY_PORT = 8096
-# User credentials for Infuse authentication (matches .scripts.conf variable names)
+# User credentials for Infuse authentication
 SJS_USER = "chris"
 SJS_PASSWORD = "infuse12345"
 
-# Load Config - parses .scripts.conf which uses KEY="value" format
+# Load Config - parses config file with KEY = "value" or KEY="value" format
 def load_config(filepath):
     """Load configuration from a shell-style config file."""
     config = {}
@@ -73,11 +75,16 @@ _config = load_config(CONFIG_FILE)
 if _config:
     STASH_URL = _config.get("STASH_URL", STASH_URL)
     STASH_API_KEY = _config.get("STASH_API_KEY", STASH_API_KEY)
+    PROXY_BIND = _config.get("PROXY_BIND", PROXY_BIND)
+    PROXY_PORT = int(_config.get("PROXY_PORT", PROXY_PORT))
     SJS_USER = _config.get("SJS_USER", SJS_USER)
     SJS_PASSWORD = _config.get("SJS_PASSWORD", SJS_PASSWORD)
-    print(f"Loaded config from {CONFIG_FILE}: user={SJS_USER}")
+    print(f"Loaded config from {CONFIG_FILE}")
+    print(f"  User: {SJS_USER}")
+    print(f"  Stash URL: {STASH_URL}")
+    print(f"  Proxy: {PROXY_BIND}:{PROXY_PORT}")
     if STASH_API_KEY:
-        print(f"Stash API key configured (length: {len(STASH_API_KEY)} chars)")
+        print(f"  API key: configured ({len(STASH_API_KEY)} chars)")
     else:
         print("WARNING: STASH_API_KEY not set in config file!")
         print("  Images will not load. Add STASH_API_KEY to your config file.")
@@ -86,6 +93,8 @@ else:
     print(f"Warning: Config file {CONFIG_FILE} not found or empty. Using defaults/env vars.")
     STASH_URL = os.getenv("STASH_URL", STASH_URL)
     STASH_API_KEY = os.getenv("STASH_API_KEY", STASH_API_KEY)
+    PROXY_BIND = os.getenv("PROXY_BIND", PROXY_BIND)
+    PROXY_PORT = int(os.getenv("PROXY_PORT", PROXY_PORT))
     SJS_USER = os.getenv("SJS_USER", SJS_USER)
     SJS_PASSWORD = os.getenv("SJS_PASSWORD", SJS_PASSWORD)
 
