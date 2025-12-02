@@ -205,9 +205,22 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
         item["Tags"] = [t.get("name") for t in tags if t.get("name")]
         item["Genres"] = item["Tags"][:5]  # Infuse may show genres
     
-    # Add performers as "People" (Jellyfin format)
+    # Add performers as "People" (Jellyfin format) with image support
     if performers:
-        item["People"] = [{"Name": p.get("name"), "Type": "Actor", "Id": f"performer-{p.get('id')}"} for p in performers if p.get("name")]
+        people_list = []
+        for p in performers:
+            if p.get("name"):
+                person = {
+                    "Name": p.get("name"),
+                    "Type": "Actor",
+                    "Role": "",
+                    "Id": f"performer-{p.get('id')}",
+                    "PrimaryImageTag": "img" if p.get("image_path") else None
+                }
+                if p.get("image_path"):
+                    person["ImageTags"] = {"Primary": "img"}
+                people_list.append(person)
+        item["People"] = people_list
     
     if path:
         item["Path"] = path
@@ -341,7 +354,7 @@ async def endpoint_user_views(request):
     return JSONResponse({
         "Items": [
             {
-                "Name": "All Scenes",
+                "Name": "Scenes",
                 "Id": "root-scenes",
                 "ServerId": SERVER_ID,
                 "Type": "CollectionFolder",
@@ -361,9 +374,31 @@ async def endpoint_user_views(request):
                 "ImageTags": {},
                 "BackdropImageTags": [],
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-studios"}
+            },
+            {
+                "Name": "Performers",
+                "Id": "root-performers",
+                "ServerId": SERVER_ID,
+                "Type": "CollectionFolder",
+                "CollectionType": "movies",
+                "IsFolder": True,
+                "ImageTags": {},
+                "BackdropImageTags": [],
+                "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-performers"}
+            },
+            {
+                "Name": "Groups",
+                "Id": "root-groups",
+                "ServerId": SERVER_ID,
+                "Type": "CollectionFolder",
+                "CollectionType": "movies",
+                "IsFolder": True,
+                "ImageTags": {},
+                "BackdropImageTags": [],
+                "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-groups"}
             }
         ],
-        "TotalRecordCount": 2
+        "TotalRecordCount": 4
     })
 
 async def endpoint_grouping_options(request):
@@ -374,7 +409,7 @@ async def endpoint_virtual_folders(request):
     # Infuse requests library virtual folders
     return JSONResponse([
         {
-            "Name": "All Scenes",
+            "Name": "Scenes",
             "Locations": [],
             "CollectionType": "movies",
             "ItemId": "root-scenes"
@@ -384,6 +419,18 @@ async def endpoint_virtual_folders(request):
             "Locations": [],
             "CollectionType": "movies",
             "ItemId": "root-studios"
+        },
+        {
+            "Name": "Performers",
+            "Locations": [],
+            "CollectionType": "movies",
+            "ItemId": "root-performers"
+        },
+        {
+            "Name": "Groups",
+            "Locations": [],
+            "CollectionType": "movies",
+            "ItemId": "root-groups"
         }
     ])
 
@@ -423,8 +470,8 @@ async def endpoint_items(request):
     items = []
     total_count = 0
     
-    # Full scene fields for queries
-    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id }"
+    # Full scene fields for queries (include performer image_path for People images)
+    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path }"
     
     if ids:
         # Specific items requested
@@ -516,14 +563,134 @@ async def endpoint_items(request):
         logger.debug(f"Studio {studio_id} returned {len(scenes)} scenes (page {page}, total {total_count})")
         for s in scenes:
             items.append(format_jellyfin_item(s, parent_id=parent_id))
+    
+    elif parent_id == "root-performers":
+        # Get total count
+        count_q = """query { findPerformers { count } }"""
+        count_res = stash_query(count_q)
+        total_count = count_res.get("data", {}).get("findPerformers", {}).get("count", 0)
+        
+        # Calculate page
+        page = (start_index // limit) + 1
+        
+        q = """query FindPerformers($page: Int!, $per_page: Int!) { 
+            findPerformers(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) { 
+                performers { id name image_path scene_count } 
+            } 
+        }"""
+        res = stash_query(q, {"page": page, "per_page": limit})
+        for p in res.get("data", {}).get("findPerformers", {}).get("performers", []):
+            performer_item = {
+                "Name": p["name"],
+                "Id": f"performer-{p['id']}",
+                "ServerId": SERVER_ID,
+                "Type": "Folder",
+                "IsFolder": True,
+                "CollectionType": "movies",
+                "ChildCount": p.get("scene_count", 0),
+                "RecursiveItemCount": p.get("scene_count", 0),
+                "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"performer-{p['id']}"}
+            }
+            if p.get("image_path"):
+                performer_item["ImageTags"] = {"Primary": "img"}
+            else:
+                performer_item["ImageTags"] = {}
+            items.append(performer_item)
+    
+    elif parent_id and parent_id.startswith("performer-"):
+        performer_id = parent_id.replace("performer-", "")
+        
+        # Get count for this performer
+        count_q = """query CountScenes($pid: [ID!]) { 
+            findScenes(scene_filter: {performers: {value: $pid, modifier: INCLUDES}}) { count } 
+        }"""
+        count_res = stash_query(count_q, {"pid": [performer_id]})
+        total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
+        
+        # Calculate page
+        page = (start_index // limit) + 1
+        
+        q = f"""query FindScenes($pid: [ID!], $page: Int!, $per_page: Int!) {{ 
+            findScenes(
+                scene_filter: {{performers: {{value: $pid, modifier: INCLUDES}}}}, 
+                filter: {{page: $page, per_page: $per_page, sort: "date", direction: DESC}}
+            ) {{ 
+                scenes {{ {scene_fields} }} 
+            }} 
+        }}"""
+        res = stash_query(q, {"pid": [performer_id], "page": page, "per_page": limit})
+        scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+        logger.debug(f"Performer {performer_id} returned {len(scenes)} scenes (page {page}, total {total_count})")
+        for s in scenes:
+            items.append(format_jellyfin_item(s, parent_id=parent_id))
+    
+    elif parent_id == "root-groups":
+        # Get total count - Stash uses "movies" for groups
+        count_q = """query { findMovies { count } }"""
+        count_res = stash_query(count_q)
+        total_count = count_res.get("data", {}).get("findMovies", {}).get("count", 0)
+        
+        # Calculate page
+        page = (start_index // limit) + 1
+        
+        q = """query FindMovies($page: Int!, $per_page: Int!) { 
+            findMovies(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) { 
+                movies { id name front_image_path scene_count } 
+            } 
+        }"""
+        res = stash_query(q, {"page": page, "per_page": limit})
+        for m in res.get("data", {}).get("findMovies", {}).get("movies", []):
+            group_item = {
+                "Name": m["name"],
+                "Id": f"group-{m['id']}",
+                "ServerId": SERVER_ID,
+                "Type": "Folder",
+                "IsFolder": True,
+                "CollectionType": "movies",
+                "ChildCount": m.get("scene_count", 0),
+                "RecursiveItemCount": m.get("scene_count", 0),
+                "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"group-{m['id']}"}
+            }
+            if m.get("front_image_path"):
+                group_item["ImageTags"] = {"Primary": "img"}
+            else:
+                group_item["ImageTags"] = {}
+            items.append(group_item)
+    
+    elif parent_id and parent_id.startswith("group-"):
+        group_id = parent_id.replace("group-", "")
+        
+        # Get count for this group/movie
+        count_q = """query CountScenes($mid: [ID!]) { 
+            findScenes(scene_filter: {movies: {value: $mid, modifier: INCLUDES}}) { count } 
+        }"""
+        count_res = stash_query(count_q, {"mid": [group_id]})
+        total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
+        
+        # Calculate page
+        page = (start_index // limit) + 1
+        
+        q = f"""query FindScenes($mid: [ID!], $page: Int!, $per_page: Int!) {{ 
+            findScenes(
+                scene_filter: {{movies: {{value: $mid, modifier: INCLUDES}}}}, 
+                filter: {{page: $page, per_page: $per_page, sort: "date", direction: DESC}}
+            ) {{ 
+                scenes {{ {scene_fields} }} 
+            }} 
+        }}"""
+        res = stash_query(q, {"mid": [group_id], "page": page, "per_page": limit})
+        scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+        logger.debug(f"Group {group_id} returned {len(scenes)} scenes (page {page}, total {total_count})")
+        for s in scenes:
+            items.append(format_jellyfin_item(s, parent_id=parent_id))
             
     return JSONResponse({"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index})
 
 async def endpoint_item_details(request):
     item_id = request.path_params.get("item_id")
     
-    # Full scene fields for queries
-    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id }"
+    # Full scene fields for queries (include performer image_path for People images)
+    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path }"
     
     # Handle special folder IDs - return the folder ITSELF (not children)
     if item_id == "root-scenes":
@@ -582,6 +749,100 @@ async def endpoint_item_details(request):
         return JSONResponse({
             "Name": studio_name,
             "SortName": studio_name,
+            "Id": item_id,
+            "ServerId": SERVER_ID,
+            "Type": "Folder",
+            "CollectionType": "movies",
+            "IsFolder": True,
+            "ImageTags": {"Primary": "img"} if has_image else {},
+            "BackdropImageTags": [],
+            "ChildCount": scene_count,
+            "RecursiveItemCount": scene_count,
+            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": item_id}
+        })
+    
+    elif item_id == "root-performers":
+        # Get actual count
+        count_q = """query { findPerformers { count } }"""
+        count_res = stash_query(count_q)
+        total_count = count_res.get("data", {}).get("findPerformers", {}).get("count", 0)
+        
+        return JSONResponse({
+            "Name": "Performers",
+            "SortName": "Performers",
+            "Id": "root-performers",
+            "ServerId": SERVER_ID,
+            "Type": "CollectionFolder",
+            "CollectionType": "movies",
+            "IsFolder": True,
+            "ImageTags": {},
+            "BackdropImageTags": [],
+            "ChildCount": total_count,
+            "RecursiveItemCount": total_count,
+            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-performers"}
+        })
+    
+    elif item_id.startswith("performer-"):
+        # Fetch actual performer info from Stash
+        performer_id = item_id.replace("performer-", "")
+        q = """query FindPerformer($id: ID!) { findPerformer(id: $id) { id name image_path scene_count } }"""
+        res = stash_query(q, {"id": performer_id})
+        performer = res.get("data", {}).get("findPerformer", {})
+        
+        performer_name = performer.get("name", f"Performer {performer_id}")
+        scene_count = performer.get("scene_count", 0)
+        has_image = bool(performer.get("image_path"))
+        
+        return JSONResponse({
+            "Name": performer_name,
+            "SortName": performer_name,
+            "Id": item_id,
+            "ServerId": SERVER_ID,
+            "Type": "Folder",
+            "CollectionType": "movies",
+            "IsFolder": True,
+            "ImageTags": {"Primary": "img"} if has_image else {},
+            "BackdropImageTags": [],
+            "ChildCount": scene_count,
+            "RecursiveItemCount": scene_count,
+            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": item_id}
+        })
+    
+    elif item_id == "root-groups":
+        # Get actual count
+        count_q = """query { findMovies { count } }"""
+        count_res = stash_query(count_q)
+        total_count = count_res.get("data", {}).get("findMovies", {}).get("count", 0)
+        
+        return JSONResponse({
+            "Name": "Groups",
+            "SortName": "Groups",
+            "Id": "root-groups",
+            "ServerId": SERVER_ID,
+            "Type": "CollectionFolder",
+            "CollectionType": "movies",
+            "IsFolder": True,
+            "ImageTags": {},
+            "BackdropImageTags": [],
+            "ChildCount": total_count,
+            "RecursiveItemCount": total_count,
+            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-groups"}
+        })
+    
+    elif item_id.startswith("group-"):
+        # Fetch actual group/movie info from Stash
+        group_id = item_id.replace("group-", "")
+        q = """query FindMovie($id: ID!) { findMovie(id: $id) { id name front_image_path scene_count } }"""
+        res = stash_query(q, {"id": group_id})
+        group = res.get("data", {}).get("findMovie", {})
+        
+        group_name = group.get("name", f"Group {group_id}")
+        scene_count = group.get("scene_count", 0)
+        has_image = bool(group.get("front_image_path"))
+        
+        return JSONResponse({
+            "Name": group_name,
+            "SortName": group_name,
             "Id": item_id,
             "ServerId": SERVER_ID,
             "Type": "Folder",
@@ -712,13 +973,19 @@ async def endpoint_stream(request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 async def endpoint_image(request):
-    """Proxy image from Stash with proper authentication. Handles scenes and studios."""
+    """Proxy image from Stash with proper authentication. Handles scenes, studios, performers, and groups."""
     item_id = request.path_params.get("item_id")
     
     # Determine image URL based on item type
     if item_id.startswith("studio-"):
         numeric_id = item_id.replace("studio-", "")
         stash_img_url = f"{STASH_URL}/studio/{numeric_id}/image"
+    elif item_id.startswith("performer-"):
+        numeric_id = item_id.replace("performer-", "")
+        stash_img_url = f"{STASH_URL}/performer/{numeric_id}/image"
+    elif item_id.startswith("group-"):
+        numeric_id = item_id.replace("group-", "")
+        stash_img_url = f"{STASH_URL}/movie/{numeric_id}/front_image"
     elif item_id.startswith("scene-"):
         numeric_id = item_id.replace("scene-", "")
         stash_img_url = f"{STASH_URL}/scene/{numeric_id}/screenshot"
@@ -787,7 +1054,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.4 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.5 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
