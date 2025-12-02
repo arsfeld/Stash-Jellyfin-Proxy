@@ -1295,6 +1295,7 @@ async def endpoint_image(request):
     
     # Determine image URL and whether to resize based on item type
     needs_portrait_resize = False
+    is_group_image = False  # Flag to enable SVG placeholder detection for groups
     if item_id.startswith("studio-"):
         numeric_id = item_id.replace("studio-", "")
         stash_img_url = f"{STASH_URL}/studio/{numeric_id}/image"
@@ -1308,9 +1309,13 @@ async def endpoint_image(request):
         # Performer images are usually already portrait/square
     elif item_id.startswith("group-"):
         numeric_id = item_id.replace("group-", "")
-        # Correct endpoint is /group/{id}/frontimage (no underscore, found from Stash UI)
-        stash_img_url = f"{STASH_URL}/group/{numeric_id}/frontimage"
+        # Correct endpoint is /group/{id}/frontimage with cache-busting timestamp
+        import time
+        cache_bust = int(time.time())
+        stash_img_url = f"{STASH_URL}/group/{numeric_id}/frontimage?t={cache_bust}"
         # Group images are usually movie posters (portrait)
+        # We'll check for Stash's SVG placeholder after fetch and fallback to GraphQL if needed
+        is_group_image = True
     elif item_id.startswith("scene-"):
         numeric_id = item_id.replace("scene-", "")
         stash_img_url = f"{STASH_URL}/scene/{numeric_id}/screenshot"
@@ -1355,6 +1360,46 @@ async def endpoint_image(request):
         if content_type and not content_type.startswith("image/"):
             if item_id.startswith("group-"):
                 logger.info(f"Non-image response for group ({content_type}), using placeholder: {item_id}")
+                img_data, ct = generate_placeholder_icon("group")
+                from starlette.responses import Response
+                return Response(content=img_data, media_type=ct, headers=cache_headers)
+        
+        # Detect Stash's SVG placeholder for groups (usually ~1.4KB SVG)
+        # If we get SVG when we expect an image, try GraphQL fallback
+        if is_group_image and content_type == "image/svg+xml":
+            logger.warning(f"Got SVG placeholder for {item_id}, trying GraphQL fallback")
+            # Try to fetch the front_image via GraphQL
+            query = """
+            query FindGroup($id: ID!) {
+                findGroup(id: $id) {
+                    front_image_path
+                }
+            }
+            """
+            try:
+                gql_result = graphql_request(query, {"id": numeric_id})
+                if gql_result and "findGroup" in gql_result and gql_result["findGroup"]:
+                    front_image_path = gql_result["findGroup"].get("front_image_path")
+                    if front_image_path:
+                        # Fetch the image using the path from GraphQL
+                        import time as time_module
+                        gql_img_url = f"{STASH_URL}{front_image_path}?t={int(time_module.time())}"
+                        logger.info(f"GraphQL fallback: fetching from {gql_img_url}")
+                        data, content_type, _ = fetch_from_stash(gql_img_url, extra_headers=image_headers, timeout=30)
+                        if data and len(data) > 1000 and content_type != "image/svg+xml":
+                            logger.info(f"GraphQL fallback successful: {len(data)} bytes, type={content_type}")
+                        else:
+                            logger.warning(f"GraphQL fallback still returned placeholder/SVG")
+                            img_data, ct = generate_placeholder_icon("group")
+                            from starlette.responses import Response
+                            return Response(content=img_data, media_type=ct, headers=cache_headers)
+                    else:
+                        logger.warning(f"No front_image_path in GraphQL response for {item_id}")
+                        img_data, ct = generate_placeholder_icon("group")
+                        from starlette.responses import Response
+                        return Response(content=img_data, media_type=ct, headers=cache_headers)
+            except Exception as gql_err:
+                logger.error(f"GraphQL fallback failed for {item_id}: {gql_err}")
                 img_data, ct = generate_placeholder_icon("group")
                 from starlette.responses import Response
                 return Response(content=img_data, media_type=ct, headers=cache_headers)
@@ -1433,7 +1478,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.19 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.20 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
