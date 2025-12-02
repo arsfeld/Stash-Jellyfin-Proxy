@@ -113,12 +113,27 @@ def stash_query(query: str, variables: Dict[str, Any] = None) -> Dict[str, Any]:
         return {"errors": [str(e)]}
 
 # --- Jellyfin Models & Helpers ---
-SERVER_ID = "stash-proxy-v1"
+SERVER_ID = "a1b2c3d4e5f6a1b2c3d4e5f6"
 ACCESS_TOKEN = str(uuid.uuid4())
 
+def make_guid(numeric_id: str) -> str:
+    """Convert a numeric ID to a GUID-like format that Jellyfin clients expect."""
+    # Pad the ID and format as a pseudo-GUID
+    padded = str(numeric_id).zfill(32)
+    return f"{padded[:8]}-{padded[8:12]}-{padded[12:16]}-{padded[16:20]}-{padded[20:32]}"
+
+def extract_numeric_id(guid_id: str) -> str:
+    """Extract numeric ID from a GUID format, or return as-is if already numeric."""
+    if "-" in guid_id:
+        # It's a GUID, extract the numeric part
+        numeric = guid_id.replace("-", "").lstrip("0")
+        return numeric if numeric else "0"
+    return guid_id
+
 def format_jellyfin_item(scene: Dict[str, Any]) -> Dict[str, Any]:
-    item_id = str(scene.get("id"))
-    title = scene.get("title") or scene.get("code") or f"Scene {item_id}"
+    raw_id = str(scene.get("id"))
+    item_id = make_guid(raw_id)
+    title = scene.get("title") or scene.get("code") or f"Scene {raw_id}"
     date = scene.get("date")
     files = scene.get("files", [])
     path = files[0].get("path") if files else ""
@@ -130,7 +145,7 @@ def format_jellyfin_item(scene: Dict[str, Any]) -> Dict[str, Any]:
     for p in scene.get("performers", []):
         people.append({
             "Name": p.get("name"),
-            "Id": str(p.get("id")),
+            "Id": make_guid(str(p.get("id"))),
             "Type": "Actor",
             "Role": "Performer"
         })
@@ -467,9 +482,10 @@ async def endpoint_item_details(request):
         # Return empty for resume/latest
         return JSONResponse({"Items": [], "TotalRecordCount": 0})
     
-    # Otherwise it's a scene ID
+    # Otherwise it's a scene ID - convert GUID to numeric for Stash query
+    numeric_id = extract_numeric_id(item_id)
     q = """query FindScene($id: ID!) { findScene(id: $id) { id title code date files { path duration } studio { name } tags { name } performers { name id } } }"""
-    res = stash_query(q, {"id": item_id})
+    res = stash_query(q, {"id": numeric_id})
     scene = res.get("data", {}).get("findScene")
     if not scene:
         return JSONResponse({"error": "Not found"}, status_code=404)
@@ -489,13 +505,17 @@ async def endpoint_playback_info(request):
 
 async def endpoint_stream(request):
     item_id = request.path_params.get("item_id")
-    stash_stream_url = f"{STASH_URL}/scene/{item_id}/stream"
-    logger.info(f"Redirecting stream for {item_id} to {stash_stream_url}")
+    # Convert GUID back to numeric ID for Stash
+    numeric_id = extract_numeric_id(item_id)
+    stash_stream_url = f"{STASH_URL}/scene/{numeric_id}/stream"
+    logger.info(f"Redirecting stream for {item_id} (numeric: {numeric_id}) to {stash_stream_url}")
     return RedirectResponse(url=stash_stream_url)
 
 async def endpoint_image(request):
     item_id = request.path_params.get("item_id")
-    stash_img_url = f"{STASH_URL}/scene/{item_id}/screenshot"
+    # Convert GUID back to numeric ID for Stash
+    numeric_id = extract_numeric_id(item_id)
+    stash_img_url = f"{STASH_URL}/scene/{numeric_id}/screenshot"
     return RedirectResponse(url=stash_img_url)
 
 async def catch_all(request):
@@ -543,7 +563,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v2.4 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v2.5 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
