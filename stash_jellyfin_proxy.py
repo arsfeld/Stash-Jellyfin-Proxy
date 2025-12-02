@@ -49,6 +49,9 @@ PROXY_PORT = 8096
 SJS_USER = "chris"
 SJS_PASSWORD = "infuse12345"
 
+# Tag groups - comma-separated list of tag names to show as top-level folders
+TAG_GROUPS = []  # e.g., ["Favorites", "VR", "4K"]
+
 # Load Config - parses config file with KEY = "value" or KEY="value" format
 def load_config(filepath):
     """Load configuration from a shell-style config file."""
@@ -79,6 +82,10 @@ if _config:
     PROXY_PORT = int(_config.get("PROXY_PORT", PROXY_PORT))
     SJS_USER = _config.get("SJS_USER", SJS_USER)
     SJS_PASSWORD = _config.get("SJS_PASSWORD", SJS_PASSWORD)
+    # Parse TAG_GROUPS as comma-separated list
+    tag_groups_str = _config.get("TAG_GROUPS", "")
+    if tag_groups_str:
+        TAG_GROUPS = [t.strip() for t in tag_groups_str.split(",") if t.strip()]
     print(f"Loaded config from {CONFIG_FILE}")
     print(f"  User: {SJS_USER}")
     print(f"  Stash URL: {STASH_URL}")
@@ -89,6 +96,8 @@ if _config:
         print("WARNING: STASH_API_KEY not set in config file!")
         print("  Images will not load. Add STASH_API_KEY to your config file.")
         print("  Get your API key from: Stash -> Settings -> Security -> API Key")
+    if TAG_GROUPS:
+        print(f"  Tag groups: {', '.join(TAG_GROUPS)}")
 else:
     print(f"Warning: Config file {CONFIG_FILE} not found or empty. Using defaults/env vars.")
     STASH_URL = os.getenv("STASH_URL", STASH_URL)
