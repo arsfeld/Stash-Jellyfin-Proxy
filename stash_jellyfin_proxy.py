@@ -92,32 +92,29 @@ IMAGE_CACHE_MAX_SIZE = 100  # Max items to cache
 
 # Menu icons as simple SVG graphics (styled similar to Stash's icons)
 # These are served for root-scenes, root-studios, root-performers, root-groups
+# Using square 1:1 aspect ratio (600x600) for Infuse's home screen 3x3 grid
 MENU_ICONS = {
-    "root-scenes": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
-        <rect width="400" height="600" fill="#1a1a2e"/>
-        <circle cx="200" cy="260" r="80" fill="none" stroke="#4a90d9" stroke-width="12"/>
-        <polygon points="180,230 180,290 230,260" fill="#4a90d9"/>
-        <text x="200" y="420" font-family="Arial, sans-serif" font-size="48" fill="#4a90d9" text-anchor="middle">SCENES</text>
+    "root-scenes": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+        <rect width="600" height="600" fill="#1a1a2e"/>
+        <circle cx="300" cy="280" r="120" fill="none" stroke="#4a90d9" stroke-width="16"/>
+        <polygon points="270,220 270,340 360,280" fill="#4a90d9"/>
     </svg>""",
-    "root-studios": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
-        <rect width="400" height="600" fill="#1a1a2e"/>
-        <rect x="120" y="200" width="160" height="120" rx="8" fill="none" stroke="#4a90d9" stroke-width="12"/>
-        <rect x="145" y="320" width="110" height="20" fill="#4a90d9"/>
-        <circle cx="200" cy="260" r="25" fill="#4a90d9"/>
-        <text x="200" y="420" font-family="Arial, sans-serif" font-size="48" fill="#4a90d9" text-anchor="middle">STUDIOS</text>
+    "root-studios": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+        <rect width="600" height="600" fill="#1a1a2e"/>
+        <rect x="150" y="200" width="300" height="200" rx="12" fill="none" stroke="#4a90d9" stroke-width="16"/>
+        <circle cx="300" cy="300" r="50" fill="#4a90d9"/>
+        <rect x="200" y="400" width="200" height="30" fill="#4a90d9"/>
     </svg>""",
-    "root-performers": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
-        <rect width="400" height="600" fill="#1a1a2e"/>
-        <circle cx="200" cy="220" r="50" fill="none" stroke="#4a90d9" stroke-width="12"/>
-        <path d="M120,340 Q120,280 200,280 Q280,280 280,340 L280,360 L120,360 Z" fill="none" stroke="#4a90d9" stroke-width="12"/>
-        <text x="200" y="460" font-family="Arial, sans-serif" font-size="36" fill="#4a90d9" text-anchor="middle">PERFORMERS</text>
+    "root-performers": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+        <rect width="600" height="600" fill="#1a1a2e"/>
+        <circle cx="300" cy="200" r="80" fill="none" stroke="#4a90d9" stroke-width="16"/>
+        <path d="M150,450 Q150,320 300,320 Q450,320 450,450 L450,480 L150,480 Z" fill="none" stroke="#4a90d9" stroke-width="16"/>
     </svg>""",
-    "root-groups": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
-        <rect width="400" height="600" fill="#1a1a2e"/>
-        <rect x="100" y="180" width="80" height="120" rx="4" fill="none" stroke="#4a90d9" stroke-width="8"/>
-        <rect x="160" y="200" width="80" height="120" rx="4" fill="none" stroke="#4a90d9" stroke-width="8"/>
-        <rect x="220" y="220" width="80" height="120" rx="4" fill="none" stroke="#4a90d9" stroke-width="8"/>
-        <text x="200" y="440" font-family="Arial, sans-serif" font-size="48" fill="#4a90d9" text-anchor="middle">GROUPS</text>
+    "root-groups": """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+        <rect width="600" height="600" fill="#1a1a2e"/>
+        <rect x="120" y="150" width="140" height="200" rx="8" fill="none" stroke="#4a90d9" stroke-width="12"/>
+        <rect x="230" y="180" width="140" height="200" rx="8" fill="none" stroke="#4a90d9" stroke-width="12"/>
+        <rect x="340" y="210" width="140" height="200" rx="8" fill="none" stroke="#4a90d9" stroke-width="12"/>
     </svg>"""
 }
 
@@ -837,9 +834,10 @@ async def endpoint_items(request):
         # Calculate page
         page = (start_index // limit) + 1
         
+        # Query for movies - always try to get the image, endpoint will handle failures
         q = """query FindMovies($page: Int!, $per_page: Int!) { 
             findMovies(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) { 
-                movies { id name front_image_path scene_count } 
+                movies { id name scene_count } 
             } 
         }"""
         res = stash_query(q, {"page": page, "per_page": limit})
@@ -853,14 +851,10 @@ async def endpoint_items(request):
                 "CollectionType": "movies",
                 "ChildCount": m.get("scene_count", 0),
                 "RecursiveItemCount": m.get("scene_count", 0),
-                "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"group-{m['id']}"}
+                "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"group-{m['id']}"},
+                # Always advertise image - endpoint will try to fetch and fall back to placeholder if needed
+                "ImageTags": {"Primary": "img"}
             }
-            # Set ImageTags only if group has a front image
-            if m.get("front_image_path"):
-                group_item["ImageTags"] = {"Primary": "img"}
-            else:
-                # No image - use placeholder icon similar to menu icons
-                group_item["ImageTags"] = {"Primary": "placeholder"}
             items.append(group_item)
     
     elif parent_id and parent_id.startswith("group-"):
@@ -1181,8 +1175,8 @@ async def endpoint_stream(request):
         logger.error(f"Stream proxy error: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
-def generate_menu_icon(icon_type: str, width: int = 400, height: int = 600) -> Tuple[bytes, str]:
-    """Generate a PNG menu icon using Pillow drawing."""
+def generate_menu_icon(icon_type: str, size: int = 600) -> Tuple[bytes, str]:
+    """Generate a square PNG menu icon using Pillow drawing."""
     if not PILLOW_AVAILABLE:
         # Return the SVG as fallback
         return MENU_ICONS.get(icon_type, "").encode('utf-8'), "image/svg+xml"
@@ -1190,44 +1184,36 @@ def generate_menu_icon(icon_type: str, width: int = 400, height: int = 600) -> T
     try:
         from PIL import ImageDraw
         
-        # Create image with dark background
-        img = Image.new('RGB', (width, height), (26, 26, 46))
+        # Create square image with dark background (1:1 aspect for Infuse home screen)
+        img = Image.new('RGB', (size, size), (26, 26, 46))
         draw = ImageDraw.Draw(img)
         
         # Icon color (Stash-like blue)
         icon_color = (74, 144, 217)  # #4a90d9
         
-        # Draw different icons based on type
+        # Draw different icons based on type (centered in square)
         if icon_type == "root-scenes":
             # Play button circle
-            draw.ellipse([120, 180, 280, 340], outline=icon_color, width=8)
+            draw.ellipse([180, 160, 420, 400], outline=icon_color, width=12)
             # Play triangle
-            draw.polygon([(175, 220), (175, 300), (240, 260)], fill=icon_color)
+            draw.polygon([(270, 220), (270, 340), (360, 280)], fill=icon_color)
             
         elif icon_type == "root-studios":
             # Camera/studio icon
-            draw.rectangle([120, 200, 280, 320], outline=icon_color, width=8)
-            draw.ellipse([175, 230, 225, 280], fill=icon_color)
-            draw.rectangle([145, 320, 255, 340], fill=icon_color)
+            draw.rectangle([150, 200, 450, 400], outline=icon_color, width=12)
+            draw.ellipse([250, 250, 350, 350], fill=icon_color)
+            draw.rectangle([200, 400, 400, 430], fill=icon_color)
             
         elif icon_type == "root-performers":
             # Person icon (head + body)
-            draw.ellipse([150, 160, 250, 260], outline=icon_color, width=8)
-            draw.arc([100, 260, 300, 400], 0, 180, fill=icon_color, width=8)
+            draw.ellipse([220, 120, 380, 280], outline=icon_color, width=12)
+            draw.arc([150, 280, 450, 480], 0, 180, fill=icon_color, width=12)
             
         elif icon_type == "root-groups":
-            # Stacked folders/movies
-            draw.rectangle([100, 180, 180, 300], outline=icon_color, width=6)
-            draw.rectangle([140, 200, 220, 320], outline=icon_color, width=6)
-            draw.rectangle([180, 220, 260, 340], outline=icon_color, width=6)
-        
-        # Add label text at bottom (simple, no font required)
-        label = icon_type.replace("root-", "").upper()
-        # Draw a simple underline as text indicator
-        text_y = 420
-        text_width = len(label) * 20
-        text_x = (width - text_width) // 2
-        draw.rectangle([text_x, text_y, text_x + text_width, text_y + 6], fill=icon_color)
+            # Stacked folders/movies (centered)
+            draw.rectangle([120, 150, 260, 350], outline=icon_color, width=8)
+            draw.rectangle([200, 190, 340, 390], outline=icon_color, width=8)
+            draw.rectangle([280, 230, 420, 430], outline=icon_color, width=8)
         
         # Save as PNG
         output = io.BytesIO()
@@ -1341,6 +1327,23 @@ async def endpoint_image(request):
     try:
         data, content_type, _ = fetch_from_stash(stash_img_url, timeout=30)
         
+        # Check for empty or invalid response (groups with no artwork)
+        if not data or len(data) < 100:
+            # Response too small to be a valid image
+            if item_id.startswith("group-"):
+                logger.info(f"Empty/small response for group image, using placeholder: {item_id}")
+                img_data, ct = generate_placeholder_icon("group")
+                from starlette.responses import Response
+                return Response(content=img_data, media_type=ct, headers=cache_headers)
+        
+        # Check if we got an image content type
+        if content_type and not content_type.startswith("image/"):
+            if item_id.startswith("group-"):
+                logger.info(f"Non-image response for group ({content_type}), using placeholder: {item_id}")
+                img_data, ct = generate_placeholder_icon("group")
+                from starlette.responses import Response
+                return Response(content=img_data, media_type=ct, headers=cache_headers)
+        
         # Resize studio images to portrait 2:3 aspect ratio for Infuse tiles
         if needs_portrait_resize and PILLOW_AVAILABLE:
             data, content_type = pad_image_to_portrait(data, target_width=400, target_height=600)
@@ -1415,7 +1418,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.11 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.12 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
