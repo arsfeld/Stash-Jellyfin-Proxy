@@ -307,6 +307,10 @@ async def endpoint_virtual_folders(request):
         }
     ])
 
+async def endpoint_shows_nextup(request):
+    # Infuse requests next up episodes - return empty
+    return JSONResponse({"Items": [], "TotalRecordCount": 0})
+
 async def endpoint_display_preferences(request):
     # Infuse requests display/user preferences
     return JSONResponse({
@@ -369,6 +373,45 @@ async def endpoint_items(request):
 
 async def endpoint_item_details(request):
     item_id = request.path_params.get("item_id")
+    
+    # Handle special folder IDs - return items within
+    if item_id == "root-scenes":
+        q = """query FindScenes { findScenes(scene_filter: {sort: date, direction: DESC}, filter: {per_page: 50}) { scenes { id title code date files { path duration } studio { name } tags { name } performers { name id } } } }"""
+        res = stash_query(q)
+        items = []
+        for s in res.get("data", {}).get("findScenes", {}).get("scenes", []):
+            items.append(format_jellyfin_item(s))
+        return JSONResponse({"Items": items, "TotalRecordCount": len(items)})
+    
+    elif item_id == "root-studios":
+        q = """query FindStudios { findStudios(filter: {per_page: 50, sort: name, direction: ASC}) { studios { id name } } }"""
+        res = stash_query(q)
+        items = []
+        for s in res.get("data", {}).get("findStudios", {}).get("studios", []):
+            items.append({
+                "Name": s["name"],
+                "Id": f"studio-{s['id']}",
+                "ServerId": SERVER_ID,
+                "Type": "Folder",
+                "CollectionType": "movies",
+                "ImageTags": {}
+            })
+        return JSONResponse({"Items": items, "TotalRecordCount": len(items)})
+    
+    elif item_id.startswith("studio-"):
+        studio_id = item_id.replace("studio-", "")
+        q = """query FindScenes($sid: ID!) { findScenes(scene_filter: {studios: {value: $sid, modifier: EQUALS}, sort: date, direction: DESC}, filter: {per_page: 50}) { scenes { id title code date files { path duration } studio { name } tags { name } performers { name id } } } }"""
+        res = stash_query(q, {"sid": studio_id})
+        items = []
+        for s in res.get("data", {}).get("findScenes", {}).get("scenes", []):
+            items.append(format_jellyfin_item(s))
+        return JSONResponse({"Items": items, "TotalRecordCount": len(items)})
+    
+    elif item_id in ("Resume", "Latest"):
+        # Return empty for resume/latest
+        return JSONResponse({"Items": [], "TotalRecordCount": 0})
+    
+    # Otherwise it's a scene ID
     q = """query FindScene($id: ID!) { findScene(id: $id) { id title code date files { path duration } studio { name } tags { name } performers { name id } } }"""
     res = stash_query(q, {"id": item_id})
     scene = res.get("data", {}).get("findScene")
@@ -410,6 +453,7 @@ routes = [
     Route("/Users/{user_id}/GroupingOptions", endpoint_grouping_options),
     Route("/Library/VirtualFolders", endpoint_virtual_folders),
     Route("/DisplayPreferences/{prefs_id}", endpoint_display_preferences),
+    Route("/Shows/NextUp", endpoint_shows_nextup),
     Route("/Users/{user_id}/Items", endpoint_items),
     Route("/Users/{user_id}/Items/{item_id}", endpoint_item_details),
     Route("/Items", endpoint_items),
@@ -436,7 +480,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v1.5 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v1.6 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
