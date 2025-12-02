@@ -345,13 +345,13 @@ async def endpoint_items(request):
                 items.append(format_jellyfin_item(scene))
     
     elif parent_id == "root-scenes":
-        q = """query FindScenes { findScenes(scene_filter: {sort: date, direction: DESC}, filter: {per_page: 50}) { scenes { id title code date files { path duration } studio { name } tags { name } performers { name id } } } }"""
+        q = """query FindScenes { findScenes(filter: {per_page: 50, sort: "date", direction: DESC}) { scenes { id title code date files { path duration } studio { name } tags { name } performers { name id } } } }"""
         res = stash_query(q)
         for s in res.get("data", {}).get("findScenes", {}).get("scenes", []):
             items.append(format_jellyfin_item(s))
 
     elif parent_id == "root-studios":
-        q = """query FindStudios { findStudios(filter: {per_page: 50, sort: name, direction: ASC}) { studios { id name } } }"""
+        q = """query FindStudios { findStudios(filter: {per_page: 50, sort: "name", direction: ASC}) { studios { id name } } }"""
         res = stash_query(q)
         for s in res.get("data", {}).get("findStudios", {}).get("studios", []):
             items.append({
@@ -364,8 +364,8 @@ async def endpoint_items(request):
             
     elif parent_id and parent_id.startswith("studio-"):
         studio_id = parent_id.replace("studio-", "")
-        q = """query FindScenes($sid: ID!) { findScenes(scene_filter: {studios: {value: $sid, modifier: EQUALS}, sort: date, direction: DESC}, filter: {per_page: 50}) { scenes { id title code date files { path duration } studio { name } tags { name } performers { name id } } } }"""
-        res = stash_query(q, {"sid": studio_id})
+        q = """query FindScenes($sid: [ID!]) { findScenes(scene_filter: {studios: {value: $sid, modifier: INCLUDES}}, filter: {per_page: 50, sort: "date", direction: DESC}) { scenes { id title code date files { path duration } studio { name } tags { name } performers { name id } } } }"""
+        res = stash_query(q, {"sid": [studio_id]})
         for s in res.get("data", {}).get("findScenes", {}).get("scenes", []):
             items.append(format_jellyfin_item(s))
             
@@ -376,7 +376,7 @@ async def endpoint_item_details(request):
     
     # Handle special folder IDs - return items within
     if item_id == "root-scenes":
-        q = """query FindScenes { findScenes(scene_filter: {sort: date, direction: DESC}, filter: {per_page: 50}) { scenes { id title code date files { path duration } studio { name } tags { name } performers { name id } } } }"""
+        q = """query FindScenes { findScenes(filter: {per_page: 50, sort: "date", direction: DESC}) { scenes { id title code date files { path duration } studio { name } tags { name } performers { name id } } } }"""
         res = stash_query(q)
         items = []
         for s in res.get("data", {}).get("findScenes", {}).get("scenes", []):
@@ -384,7 +384,7 @@ async def endpoint_item_details(request):
         return JSONResponse({"Items": items, "TotalRecordCount": len(items)})
     
     elif item_id == "root-studios":
-        q = """query FindStudios { findStudios(filter: {per_page: 50, sort: name, direction: ASC}) { studios { id name } } }"""
+        q = """query FindStudios { findStudios(filter: {per_page: 50, sort: "name", direction: ASC}) { studios { id name } } }"""
         res = stash_query(q)
         items = []
         for s in res.get("data", {}).get("findStudios", {}).get("studios", []):
@@ -400,8 +400,8 @@ async def endpoint_item_details(request):
     
     elif item_id.startswith("studio-"):
         studio_id = item_id.replace("studio-", "")
-        q = """query FindScenes($sid: ID!) { findScenes(scene_filter: {studios: {value: $sid, modifier: EQUALS}, sort: date, direction: DESC}, filter: {per_page: 50}) { scenes { id title code date files { path duration } studio { name } tags { name } performers { name id } } } }"""
-        res = stash_query(q, {"sid": studio_id})
+        q = """query FindScenes($sid: [ID!]) { findScenes(scene_filter: {studios: {value: $sid, modifier: INCLUDES}}, filter: {per_page: 50, sort: "date", direction: DESC}) { scenes { id title code date files { path duration } studio { name } tags { name } performers { name id } } } }"""
+        res = stash_query(q, {"sid": [studio_id]})
         items = []
         for s in res.get("data", {}).get("findScenes", {}).get("scenes", []):
             items.append(format_jellyfin_item(s))
@@ -480,7 +480,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v1.6 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v1.7 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
