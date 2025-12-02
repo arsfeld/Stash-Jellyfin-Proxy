@@ -8,7 +8,7 @@ import signal
 import uuid
 import argparse
 import time
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 from logging.handlers import SysLogHandler
 
 # Third-party dependencies
@@ -512,6 +512,58 @@ def get_numeric_id(item_id: str) -> str:
         return extract_numeric_id(item_id)
     return item_id
 
+def fetch_from_stash(url: str, extra_headers: Dict[str, str] = None, timeout: int = 30) -> Tuple[bytes, str, Dict[str, str]]:
+    """
+    Fetch content from Stash, manually following redirects to preserve ApiKey header.
+    Returns (data, content_type, response_headers).
+    """
+    import urllib.request
+    import urllib.error
+    
+    headers = {"ApiKey": STASH_API_KEY} if STASH_API_KEY else {}
+    if extra_headers:
+        headers.update(extra_headers)
+    
+    max_redirects = 5
+    current_url = url
+    
+    for _ in range(max_redirects):
+        req = urllib.request.Request(current_url, headers=headers)
+        
+        try:
+            # Don't auto-follow redirects
+            class NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+                def redirect_request(self, req, fp, code, msg, hdrs, newurl):
+                    return None
+            
+            opener = urllib.request.build_opener(NoRedirectHandler)
+            response = opener.open(req, timeout=timeout)
+            
+            # Success - return data
+            content_type = response.headers.get('Content-Type', 'application/octet-stream')
+            resp_headers = dict(response.headers)
+            data = response.read()
+            
+            logger.debug(f"Fetch success: {len(data)} bytes, type={content_type}")
+            return data, content_type, resp_headers
+            
+        except urllib.error.HTTPError as e:
+            if e.code in (301, 302, 303, 307, 308):
+                # Manual redirect - preserve headers
+                new_url = e.headers.get('Location')
+                if new_url:
+                    # Handle relative URLs
+                    if new_url.startswith('/'):
+                        from urllib.parse import urlparse
+                        parsed = urlparse(current_url)
+                        new_url = f"{parsed.scheme}://{parsed.netloc}{new_url}"
+                    logger.debug(f"Following redirect: {current_url} -> {new_url}")
+                    current_url = new_url
+                    continue
+            raise
+    
+    raise Exception(f"Too many redirects for {url}")
+
 async def endpoint_stream(request):
     """Proxy video stream from Stash with proper authentication."""
     item_id = request.path_params.get("item_id")
@@ -520,37 +572,25 @@ async def endpoint_stream(request):
     
     logger.info(f"Proxying stream for {item_id} from {stash_stream_url}")
     
-    # Build headers for Stash request
-    headers = {}
-    if STASH_API_KEY:
-        headers["ApiKey"] = STASH_API_KEY
-    
-    # Forward Range header for seeking support
+    # Build extra headers
+    extra_headers = {}
     if "range" in request.headers:
-        headers["Range"] = request.headers["range"]
+        extra_headers["Range"] = request.headers["range"]
     
     try:
-        import urllib.request
-        req = urllib.request.Request(stash_stream_url, headers=headers)
+        data, content_type, resp_headers = fetch_from_stash(stash_stream_url, extra_headers, timeout=60)
         
-        with urllib.request.urlopen(req, timeout=30) as response:
-            content_type = response.headers.get('Content-Type', 'video/mp4')
-            content_length = response.headers.get('Content-Length')
-            content_range = response.headers.get('Content-Range')
-            
-            # Read the entire response for small seeks, stream for full playback
-            data = response.read()
-            
-            from starlette.responses import Response
-            resp_headers = {"Accept-Ranges": "bytes"}
-            if content_length:
-                resp_headers["Content-Length"] = content_length
-            if content_range:
-                resp_headers["Content-Range"] = content_range
-            
-            status_code = 206 if content_range else 200
-            return Response(content=data, media_type=content_type, headers=resp_headers, status_code=status_code)
-            
+        from starlette.responses import Response
+        headers = {"Accept-Ranges": "bytes"}
+        if "Content-Length" in resp_headers:
+            headers["Content-Length"] = resp_headers["Content-Length"]
+        if "Content-Range" in resp_headers:
+            headers["Content-Range"] = resp_headers["Content-Range"]
+        
+        status_code = 206 if "Content-Range" in resp_headers else 200
+        logger.info(f"Stream response: {len(data)} bytes, type={content_type}")
+        return Response(content=data, media_type=content_type, headers=headers, status_code=status_code)
+        
     except Exception as e:
         logger.error(f"Stream proxy error: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -563,25 +603,16 @@ async def endpoint_image(request):
     
     logger.info(f"Proxying image for {item_id} from {stash_img_url}")
     
-    # Build headers for Stash request
-    headers = {}
-    if STASH_API_KEY:
-        headers["ApiKey"] = STASH_API_KEY
-    
     try:
-        import urllib.request
-        req = urllib.request.Request(stash_img_url, headers=headers)
+        data, content_type, _ = fetch_from_stash(stash_img_url, timeout=10)
         
-        with urllib.request.urlopen(req, timeout=10) as response:
-            content_type = response.headers.get('Content-Type', 'image/jpeg')
-            image_data = response.read()
-            
-            from starlette.responses import Response
-            return Response(content=image_data, media_type=content_type)
-            
+        from starlette.responses import Response
+        logger.info(f"Image response: {len(data)} bytes, type={content_type}")
+        return Response(content=data, media_type=content_type)
+        
     except Exception as e:
         logger.error(f"Image proxy error: {e}")
-        # Return a 1x1 transparent pixel as fallback
+        from starlette.responses import Response
         return Response(content=b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82', media_type='image/png')
 
 async def catch_all(request):
@@ -629,7 +660,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v2.9 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.0 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
