@@ -379,7 +379,6 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
         for idx, caption in enumerate(captions):
             lang_code = caption.get("language_code", "und")
             caption_type = (caption.get("caption_type", "") or "").lower()
-            filename = caption.get("filename", "")
             
             # Normalize caption_type to srt or vtt (default to vtt if unknown)
             if caption_type not in ("srt", "vtt"):
@@ -410,7 +409,6 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
                 "IsExternal": True,
                 "IsTextSubtitleStream": True,
                 "SupportsExternalStream": True,
-                "Path": filename,
                 "DeliveryUrl": f"/Videos/{item_id}/Subtitles/{idx + 1}/Stream.{caption_type}"
             })
         
@@ -428,10 +426,6 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
             "MediaStreams": media_streams
         }]
         
-        # Store captions info for subtitle endpoint
-        if captions:
-            item["_captions"] = captions
-    
     return item
 
 # --- API Endpoints ---
@@ -707,7 +701,7 @@ async def endpoint_items(request):
     total_count = 0
     
     # Full scene fields for queries (include performer image_path for People images, captions for subtitles)
-    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type filename }"
+    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
     
     if ids:
         # Specific items requested
@@ -966,7 +960,7 @@ async def endpoint_item_details(request):
     item_id = request.path_params.get("item_id")
     
     # Full scene fields for queries (include performer image_path for People images, captions for subtitles)
-    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type filename }"
+    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
     
     # Handle special folder IDs - return the folder ITSELF (not children)
     if item_id == "root-scenes":
@@ -1266,7 +1260,6 @@ async def endpoint_subtitle(request):
             captions {
                 language_code
                 caption_type
-                filename
             }
         }
     }
@@ -1623,7 +1616,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.21 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.22 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
