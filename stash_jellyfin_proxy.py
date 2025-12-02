@@ -206,6 +206,7 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
         item["Genres"] = item["Tags"][:5]  # Infuse may show genres
     
     # Add performers as "People" (Jellyfin format) with image support
+    # Use person- prefix for People to match Jellyfin's expected format
     if performers:
         people_list = []
         for p in performers:
@@ -214,7 +215,7 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
                     "Name": p.get("name"),
                     "Type": "Actor",
                     "Role": "",
-                    "Id": f"performer-{p.get('id')}",
+                    "Id": f"person-{p.get('id')}",
                     "PrimaryImageTag": "img" if p.get("image_path") else None
                 }
                 if p.get("image_path"):
@@ -454,6 +455,31 @@ async def endpoint_display_preferences(request):
         "ShowSidebar": False
     })
 
+def get_stash_sort_params(request) -> Tuple[str, str]:
+    """Map Jellyfin SortBy/SortOrder to Stash sort/direction."""
+    # Get sort parameters from request
+    sort_by = request.query_params.get("SortBy") or request.query_params.get("sortBy") or "PremiereDate"
+    sort_order = request.query_params.get("SortOrder") or request.query_params.get("sortOrder") or "Descending"
+    
+    # Map Jellyfin sort fields to Stash
+    sort_mapping = {
+        "SortName": "title",
+        "Name": "title",
+        "PremiereDate": "date",
+        "DateCreated": "date",
+        "DatePlayed": "date",
+        "ProductionYear": "date",
+        "Random": "random",
+        "Runtime": "duration",
+        "CommunityRating": "rating",
+        "PlayCount": "play_count",
+    }
+    
+    stash_sort = sort_mapping.get(sort_by, "date")
+    stash_direction = "ASC" if sort_order == "Ascending" else "DESC"
+    
+    return stash_sort, stash_direction
+
 async def endpoint_items(request):
     user_id = request.path_params.get("user_id")
     # Handle both ParentId and parentId (Infuse uses lowercase)
@@ -464,8 +490,11 @@ async def endpoint_items(request):
     start_index = int(request.query_params.get("startIndex") or request.query_params.get("StartIndex") or 0)
     limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 50)
     
+    # Sort parameters
+    sort_field, sort_direction = get_stash_sort_params(request)
+    
     # Debug: Log all query params
-    logger.debug(f"Items endpoint - ParentId: {parent_id}, Ids: {ids}, StartIndex: {start_index}, Limit: {limit}")
+    logger.debug(f"Items endpoint - ParentId: {parent_id}, Ids: {ids}, StartIndex: {start_index}, Limit: {limit}, Sort: {sort_field} {sort_direction}")
     
     items = []
     total_count = 0
@@ -493,13 +522,13 @@ async def endpoint_items(request):
         count_res = stash_query(count_q)
         total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
         
-        # Then get paginated scenes
-        q = f"""query FindScenes($page: Int!, $per_page: Int!) {{ 
-            findScenes(filter: {{page: $page, per_page: $per_page, sort: "date", direction: DESC}}) {{ 
+        # Then get paginated scenes with sort from request
+        q = f"""query FindScenes($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{ 
+            findScenes(filter: {{page: $page, per_page: $per_page, sort: $sort, direction: $direction}}) {{ 
                 scenes {{ {scene_fields} }} 
             }} 
         }}"""
-        res = stash_query(q, {"page": page, "per_page": limit})
+        res = stash_query(q, {"page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
         for s in res.get("data", {}).get("findScenes", {}).get("scenes", []):
             items.append(format_jellyfin_item(s, parent_id="root-scenes"))
 
@@ -550,15 +579,15 @@ async def endpoint_items(request):
         # Calculate page
         page = (start_index // limit) + 1
         
-        q = f"""query FindScenes($sid: [ID!], $page: Int!, $per_page: Int!) {{ 
+        q = f"""query FindScenes($sid: [ID!], $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{ 
             findScenes(
                 scene_filter: {{studios: {{value: $sid, modifier: INCLUDES}}}}, 
-                filter: {{page: $page, per_page: $per_page, sort: "date", direction: DESC}}
+                filter: {{page: $page, per_page: $per_page, sort: $sort, direction: $direction}}
             ) {{ 
                 scenes {{ {scene_fields} }} 
             }} 
         }}"""
-        res = stash_query(q, {"sid": [studio_id], "page": page, "per_page": limit})
+        res = stash_query(q, {"sid": [studio_id], "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
         scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
         logger.debug(f"Studio {studio_id} returned {len(scenes)} scenes (page {page}, total {total_count})")
         for s in scenes:
@@ -597,8 +626,12 @@ async def endpoint_items(request):
                 performer_item["ImageTags"] = {}
             items.append(performer_item)
     
-    elif parent_id and parent_id.startswith("performer-"):
-        performer_id = parent_id.replace("performer-", "")
+    elif parent_id and (parent_id.startswith("performer-") or parent_id.startswith("person-")):
+        # Handle both performer- (from Performers list) and person- (from People in scene details)
+        if parent_id.startswith("performer-"):
+            performer_id = parent_id.replace("performer-", "")
+        else:
+            performer_id = parent_id.replace("person-", "")
         
         # Get count for this performer
         count_q = """query CountScenes($pid: [ID!]) { 
@@ -610,15 +643,15 @@ async def endpoint_items(request):
         # Calculate page
         page = (start_index // limit) + 1
         
-        q = f"""query FindScenes($pid: [ID!], $page: Int!, $per_page: Int!) {{ 
+        q = f"""query FindScenes($pid: [ID!], $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{ 
             findScenes(
                 scene_filter: {{performers: {{value: $pid, modifier: INCLUDES}}}}, 
-                filter: {{page: $page, per_page: $per_page, sort: "date", direction: DESC}}
+                filter: {{page: $page, per_page: $per_page, sort: $sort, direction: $direction}}
             ) {{ 
                 scenes {{ {scene_fields} }} 
             }} 
         }}"""
-        res = stash_query(q, {"pid": [performer_id], "page": page, "per_page": limit})
+        res = stash_query(q, {"pid": [performer_id], "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
         scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
         logger.debug(f"Performer {performer_id} returned {len(scenes)} scenes (page {page}, total {total_count})")
         for s in scenes:
@@ -670,15 +703,15 @@ async def endpoint_items(request):
         # Calculate page
         page = (start_index // limit) + 1
         
-        q = f"""query FindScenes($mid: [ID!], $page: Int!, $per_page: Int!) {{ 
+        q = f"""query FindScenes($mid: [ID!], $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{ 
             findScenes(
                 scene_filter: {{movies: {{value: $mid, modifier: INCLUDES}}}}, 
-                filter: {{page: $page, per_page: $per_page, sort: "date", direction: DESC}}
+                filter: {{page: $page, per_page: $per_page, sort: $sort, direction: $direction}}
             ) {{ 
                 scenes {{ {scene_fields} }} 
             }} 
         }}"""
-        res = stash_query(q, {"mid": [group_id], "page": page, "per_page": limit})
+        res = stash_query(q, {"mid": [group_id], "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
         scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
         logger.debug(f"Group {group_id} returned {len(scenes)} scenes (page {page}, total {total_count})")
         for s in scenes:
@@ -782,9 +815,12 @@ async def endpoint_item_details(request):
             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-performers"}
         })
     
-    elif item_id.startswith("performer-"):
-        # Fetch actual performer info from Stash
-        performer_id = item_id.replace("performer-", "")
+    elif item_id.startswith("performer-") or item_id.startswith("person-"):
+        # Fetch actual performer info from Stash (handle both performer- and person- prefixes)
+        if item_id.startswith("performer-"):
+            performer_id = item_id.replace("performer-", "")
+        else:
+            performer_id = item_id.replace("person-", "")
         q = """query FindPerformer($id: ID!) { findPerformer(id: $id) { id name image_path scene_count } }"""
         res = stash_query(q, {"id": performer_id})
         performer = res.get("data", {}).get("findPerformer", {})
@@ -980,8 +1016,11 @@ async def endpoint_image(request):
     if item_id.startswith("studio-"):
         numeric_id = item_id.replace("studio-", "")
         stash_img_url = f"{STASH_URL}/studio/{numeric_id}/image"
-    elif item_id.startswith("performer-"):
-        numeric_id = item_id.replace("performer-", "")
+    elif item_id.startswith("performer-") or item_id.startswith("person-"):
+        if item_id.startswith("performer-"):
+            numeric_id = item_id.replace("performer-", "")
+        else:
+            numeric_id = item_id.replace("person-", "")
         stash_img_url = f"{STASH_URL}/performer/{numeric_id}/image"
     elif item_id.startswith("group-"):
         numeric_id = item_id.replace("group-", "")
@@ -996,18 +1035,25 @@ async def endpoint_image(request):
     
     logger.info(f"Proxying image for {item_id} from {stash_img_url}")
     
+    # Cache control headers to help with Infuse caching issues
+    cache_headers = {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+    }
+    
     try:
         data, content_type, _ = fetch_from_stash(stash_img_url, timeout=30)
         
         from starlette.responses import Response
         logger.info(f"Image response: {len(data)} bytes, type={content_type}")
-        return Response(content=data, media_type=content_type)
+        return Response(content=data, media_type=content_type, headers=cache_headers)
         
     except Exception as e:
         logger.error(f"Image proxy error: {e}")
         from starlette.responses import Response
         # Return transparent 1x1 PNG as fallback
-        return Response(content=b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82', media_type='image/png')
+        return Response(content=b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82', media_type='image/png', headers=cache_headers)
 
 async def catch_all(request):
     """Catch any unhandled routes and log them for debugging."""
@@ -1054,7 +1100,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.5 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.6 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
