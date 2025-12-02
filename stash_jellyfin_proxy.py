@@ -361,6 +361,60 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
     if path:
         item["Path"] = path
         item["LocationType"] = "FileSystem"
+        
+        # Build MediaStreams for video and subtitles
+        media_streams = [
+            {
+                "Index": 0,
+                "Type": "Video",
+                "Codec": "h264",
+                "IsDefault": True,
+                "IsForced": False,
+                "IsExternal": False
+            }
+        ]
+        
+        # Add subtitle streams from captions
+        captions = scene.get("captions", [])
+        for idx, caption in enumerate(captions):
+            lang_code = caption.get("language_code", "und")
+            caption_type = (caption.get("caption_type", "") or "").lower()
+            filename = caption.get("filename", "")
+            
+            # Normalize caption_type to srt or vtt (default to vtt if unknown)
+            if caption_type not in ("srt", "vtt"):
+                caption_type = "vtt"
+            
+            # Map caption_type to codec
+            codec = "srt" if caption_type == "srt" else "webvtt"
+            
+            # Get human-readable language name
+            lang_names = {
+                "en": "English", "de": "German", "es": "Spanish", 
+                "fr": "French", "it": "Italian", "nl": "Dutch",
+                "pt": "Portuguese", "ja": "Japanese", "ko": "Korean",
+                "zh": "Chinese", "ru": "Russian", "und": "Unknown"
+            }
+            display_lang = lang_names.get(lang_code, lang_code.upper())
+            
+            media_streams.append({
+                "Index": idx + 1,
+                "Type": "Subtitle",
+                "Codec": codec,
+                "Language": lang_code,
+                "DisplayLanguage": display_lang,
+                "DisplayTitle": f"{display_lang} ({caption_type.upper()})",
+                "Title": display_lang,
+                "IsDefault": idx == 0,  # First subtitle is default
+                "IsForced": False,
+                "IsExternal": True,
+                "IsTextSubtitleStream": True,
+                "SupportsExternalStream": True,
+                "Path": filename,
+                "DeliveryUrl": f"/Videos/{item_id}/Subtitles/{idx + 1}/Stream.{caption_type}"
+            })
+        
+        item["HasSubtitles"] = len(captions) > 0
         item["MediaSources"] = [{
             "Id": item_id,
             "Path": path,
@@ -370,8 +424,13 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
             "Name": title,
             "SupportsDirectPlay": True,
             "SupportsDirectStream": True,
-            "SupportsTranscoding": False
+            "SupportsTranscoding": False,
+            "MediaStreams": media_streams
         }]
+        
+        # Store captions info for subtitle endpoint
+        if captions:
+            item["_captions"] = captions
     
     return item
 
@@ -647,8 +706,8 @@ async def endpoint_items(request):
     items = []
     total_count = 0
     
-    # Full scene fields for queries (include performer image_path for People images)
-    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path }"
+    # Full scene fields for queries (include performer image_path for People images, captions for subtitles)
+    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type filename }"
     
     if ids:
         # Specific items requested
@@ -906,8 +965,8 @@ async def endpoint_items(request):
 async def endpoint_item_details(request):
     item_id = request.path_params.get("item_id")
     
-    # Full scene fields for queries (include performer image_path for People images)
-    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path }"
+    # Full scene fields for queries (include performer image_path for People images, captions for subtitles)
+    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type filename }"
     
     # Handle special folder IDs - return the folder ITSELF (not children)
     if item_id == "root-scenes":
@@ -1192,6 +1251,79 @@ async def endpoint_stream(request):
         logger.error(f"Stream proxy error: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
+async def endpoint_subtitle(request):
+    """Proxy subtitle/caption file from Stash."""
+    item_id = request.path_params.get("item_id")
+    subtitle_index = int(request.path_params.get("subtitle_index", 1))
+    
+    # Get the scene's numeric ID
+    numeric_id = get_numeric_id(item_id)
+    
+    # Query Stash for captions to get the correct filename
+    query = """
+    query FindScene($id: ID!) {
+        findScene(id: $id) {
+            captions {
+                language_code
+                caption_type
+                filename
+            }
+        }
+    }
+    """
+    
+    try:
+        result = graphql_request(query, {"id": numeric_id})
+        if not result or "findScene" not in result:
+            logger.error(f"Could not find scene {numeric_id} for subtitles")
+            return JSONResponse({"error": "Scene not found"}, status_code=404)
+        
+        captions = result["findScene"].get("captions", [])
+        if not captions:
+            logger.warning(f"No captions found for scene {numeric_id}")
+            return JSONResponse({"error": "No subtitles"}, status_code=404)
+        
+        # Get the caption by index (1-based from Jellyfin)
+        caption_idx = subtitle_index - 1
+        if caption_idx < 0 or caption_idx >= len(captions):
+            logger.warning(f"Subtitle index {subtitle_index} out of range for scene {numeric_id}")
+            return JSONResponse({"error": "Subtitle not found"}, status_code=404)
+        
+        caption = captions[caption_idx]
+        caption_type = (caption.get("caption_type", "") or "").lower()
+        
+        # Normalize caption_type to srt or vtt (default to vtt if unknown)
+        if caption_type not in ("srt", "vtt"):
+            caption_type = "vtt"
+        
+        # Stash serves captions at /scene/{id}/caption?lang={lang}&type={type}
+        lang_code = caption.get("language_code", "en") or "en"
+        stash_caption_url = f"{STASH_URL}/scene/{numeric_id}/caption?lang={lang_code}&type={caption_type}"
+        
+        logger.info(f"Proxying subtitle for {item_id} index {subtitle_index} from {stash_caption_url}")
+        
+        # Fetch the caption file
+        image_headers = {"ApiKey": STASH_API_KEY} if STASH_API_KEY else {}
+        data, content_type, _ = fetch_from_stash(stash_caption_url, extra_headers=image_headers, timeout=30)
+        
+        # Set appropriate content type for subtitle format
+        if caption_type == "srt":
+            content_type = "application/x-subrip"
+        elif caption_type == "vtt":
+            content_type = "text/vtt"
+        else:
+            content_type = "text/plain"
+        
+        logger.info(f"Subtitle response: {len(data)} bytes, type={content_type}")
+        from starlette.responses import Response
+        return Response(content=data, media_type=content_type, headers={
+            "Content-Disposition": f'attachment; filename="subtitle.{caption_type}"'
+        })
+        
+    except Exception as e:
+        logger.error(f"Subtitle proxy error: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 def generate_menu_icon(icon_type: str, width: int = 400, height: int = 600) -> Tuple[bytes, str]:
     """Generate a portrait 2:3 PNG menu icon using Pillow drawing (matches Infuse folder tiles)."""
     if not PILLOW_AVAILABLE:
@@ -1465,6 +1597,10 @@ routes = [
     Route("/Items", endpoint_items),
     Route("/Videos/{item_id}/stream", endpoint_stream),
     Route("/Videos/{item_id}/stream.mp4", endpoint_stream),
+    Route("/Videos/{item_id}/Subtitles/{subtitle_index}/Stream.srt", endpoint_subtitle),
+    Route("/Videos/{item_id}/Subtitles/{subtitle_index}/Stream.vtt", endpoint_subtitle),
+    Route("/Videos/{item_id}/Subtitles/{subtitle_index}/0/Stream.srt", endpoint_subtitle),
+    Route("/Videos/{item_id}/Subtitles/{subtitle_index}/0/Stream.vtt", endpoint_subtitle),
     Route("/Items/{item_id}/Images/Primary", endpoint_image),
     Route("/Items/{item_id}/Images/Thumb", endpoint_image),
     Route("/PlaybackInfo", endpoint_playback_info, methods=["POST", "GET"]),
@@ -1487,7 +1623,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.20 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.21 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
