@@ -267,6 +267,22 @@ async def endpoint_virtual_folders(request):
         }
     ])
 
+async def endpoint_display_preferences(request):
+    # Infuse requests display/user preferences
+    return JSONResponse({
+        "Id": "usersettings",
+        "SortBy": "SortName",
+        "SortOrder": "Ascending",
+        "RememberIndexing": False,
+        "PrimaryImageHeight": 250,
+        "PrimaryImageWidth": 250,
+        "CustomPrefs": {},
+        "ScrollDirection": "Horizontal",
+        "ShowBackdrop": True,
+        "RememberSorting": False,
+        "ShowSidebar": False
+    })
+
 async def endpoint_items(request):
     user_id = request.path_params.get("user_id")
     parent_id = request.query_params.get("ParentId")
@@ -352,6 +368,7 @@ routes = [
     Route("/Users/{user_id}/Views", endpoint_user_views),
     Route("/Users/{user_id}/GroupingOptions", endpoint_grouping_options),
     Route("/Library/VirtualFolders", endpoint_virtual_folders),
+    Route("/DisplayPreferences/{prefs_id}", endpoint_display_preferences),
     Route("/Users/{user_id}/Items", endpoint_items),
     Route("/Users/{user_id}/Items/{item_id}", endpoint_item_details),
     Route("/Items", endpoint_items),
@@ -378,7 +395,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v1.3 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v1.4 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
