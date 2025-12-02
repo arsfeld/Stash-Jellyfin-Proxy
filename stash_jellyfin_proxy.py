@@ -225,6 +225,46 @@ async def endpoint_users(request):
         "Policy": {"IsAdministrator": True, "EnableContentDeletion": False}
     }])
 
+async def endpoint_user_by_id(request):
+    # Return user profile
+    return JSONResponse({
+        "Name": "Stash User",
+        "Id": SJS_USER_ID,
+        "HasPassword": True,
+        "HasConfiguredPassword": True,
+        "HasConfiguredEasyPassword": False,
+        "EnableAutoLogin": False,
+        "Policy": {
+            "IsAdministrator": True,
+            "IsHidden": False,
+            "IsDisabled": False,
+            "EnableUserPreferenceAccess": True,
+            "EnableRemoteAccess": True,
+            "EnableContentDeletion": False,
+            "EnablePlaybackRemuxing": True,
+            "ForceRemoteSourceTranscoding": False,
+            "EnableMediaPlayback": True,
+            "EnableAudioPlaybackTranscoding": True,
+            "EnableVideoPlaybackTranscoding": True
+        },
+        "Configuration": {
+            "PlayDefaultAudioTrack": True,
+            "SubtitleLanguagePreference": "",
+            "DisplayMissingEpisodes": False,
+            "GroupedFolders": [],
+            "SubtitleMode": "Default",
+            "DisplayCollectionsView": False,
+            "EnableLocalPassword": False,
+            "OrderedViews": [],
+            "LatestItemsExcludes": [],
+            "MyMediaExcludes": [],
+            "HidePlayedInLatest": True,
+            "RememberAudioSelections": True,
+            "RememberSubtitleSelections": True,
+            "EnableNextEpisodeAutoPlay": True
+        }
+    })
+
 async def endpoint_user_views(request):
     return JSONResponse({
         "Items": [
@@ -365,6 +405,7 @@ routes = [
     Route("/System/Info", endpoint_system_info),
     Route("/System/Info/Public", endpoint_public_info),
     Route("/Users/AuthenticateByName", endpoint_authenticate_by_name, methods=["POST"]),
+    Route("/Users/{user_id}", endpoint_user_by_id),
     Route("/Users/{user_id}/Views", endpoint_user_views),
     Route("/Users/{user_id}/GroupingOptions", endpoint_grouping_options),
     Route("/Library/VirtualFolders", endpoint_virtual_folders),
@@ -395,7 +436,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v1.4 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v1.5 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
