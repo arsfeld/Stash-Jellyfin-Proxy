@@ -4513,17 +4513,14 @@ async def ui_api_restart(request):
     logger.info("Restart requested via Web UI")
     _restart_requested = True
     
-    # Schedule the restart after responding
-    async def delayed_restart():
+    # Schedule the shutdown after responding (restart happens after main loop exits)
+    async def delayed_shutdown():
         await asyncio.sleep(1)  # Allow response to be sent
-        logger.info("Restarting server...")
+        logger.info("Shutting down for restart...")
         if _shutdown_event:
             _shutdown_event.set()
-        await asyncio.sleep(1)  # Allow graceful shutdown
-        # Replace current process with fresh start
-        os.execv(sys.executable, [sys.executable, os.path.abspath(__file__)] + sys.argv[1:])
     
-    asyncio.create_task(delayed_restart())
+    asyncio.create_task(delayed_shutdown())
     return JSONResponse({"success": True, "message": "Restarting..."})
 
 async def ui_api_auth_config(request):
@@ -4675,6 +4672,12 @@ if __name__ == "__main__":
             else:
                 logger.error(f"ABORTING: Network error: {e}")
             sys.exit(1)
+        
+        # Check if restart was requested (must happen after event loop exits)
+        if _restart_requested:
+            logger.info("Executing restart...")
+            time.sleep(0.5)  # Brief pause before restart
+            os.execv(sys.executable, [sys.executable, os.path.abspath(__file__)] + sys.argv[1:])
     else:
         logger.error("ABORTING: Could not connect to Stash. Check configuration.")
         sys.exit(1)
