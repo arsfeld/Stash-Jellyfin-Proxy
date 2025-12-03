@@ -832,7 +832,10 @@ WEB_UI_HTML = '''<!DOCTYPE html>
             document.getElementById('log-count').textContent = `${filtered.length} entries`;
             const html = filtered.map(l => `<div class="log-entry log-${l.level}">${l.timestamp} [${l.level}] ${l.message}</div>`).join('');
             document.getElementById('full-logs').innerHTML = html || '<div class="empty-state">No logs</div>';
-            document.getElementById('dashboard-logs').innerHTML = html.slice(0, 2000) || '<div class="empty-state">No logs</div>';
+            // Dashboard shows last 10 log entries (not sliced by character count)
+            const recentLogs = filtered.slice(-10);
+            const dashboardHtml = recentLogs.map(l => `<div class="log-entry log-${l.level}">${l.timestamp} [${l.level}] ${l.message}</div>`).join('');
+            document.getElementById('dashboard-logs').innerHTML = dashboardHtml || '<div class="empty-state">No logs</div>';
         }
 
         async function fetchConfig() {
