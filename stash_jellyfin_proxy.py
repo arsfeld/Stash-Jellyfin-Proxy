@@ -309,26 +309,35 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         method = request.method
         
-        # Log incoming request at DEBUG level for detailed tracing
-        logger.debug(f"<- {method} {path} from {client_host}")
-        
         try:
             response = await call_next(request)
             process_time = time.time() - start_time
             ms = int(process_time * 1000)
-            
-            # Single clear log line: method path -> status (time)
             status = response.status_code
-            if status >= 400:
-                logger.warning(f"{method} {path} -> {status} ({ms}ms)")
+            
+            # Determine log level based on request type and result
+            # INFO: errors, auth, streams, slow requests (>1s)
+            # DEBUG: images, routine API calls
+            is_error = status >= 400
+            is_auth = "/Authenticate" in path
+            is_stream = "/stream" in path.lower() or "/Videos/" in path
+            is_slow = ms > 1000
+            is_image = "/Images/" in path
+            
+            log_line = f"{path} -> {status} ({ms}ms)"
+            
+            if is_error:
+                logger.warning(log_line)
+            elif is_auth or is_stream or is_slow:
+                logger.info(log_line)
             else:
-                logger.info(f"{method} {path} -> {status} ({ms}ms)")
+                logger.debug(log_line)
             
             return response
         except Exception as e:
             process_time = time.time() - start_time
             ms = int(process_time * 1000)
-            logger.error(f"{method} {path} -> ERROR ({ms}ms): {str(e)}", exc_info=True)
+            logger.error(f"{path} -> ERROR ({ms}ms): {str(e)}", exc_info=True)
             return JSONResponse({"error": "Internal Server Error"}, status_code=500)
 
 # --- Stash GraphQL Client ---
@@ -3212,7 +3221,7 @@ if __name__ == "__main__":
     if args.no_log_file:
         logger.handlers = [h for h in logger.handlers if not isinstance(h, (RotatingFileHandler, logging.FileHandler))]
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.57 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.58 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
