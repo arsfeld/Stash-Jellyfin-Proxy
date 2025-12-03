@@ -3099,110 +3099,13 @@ async def endpoint_branding(request):
 
 async def endpoint_media_segments(request):
     """
-    Return media segments (chapters/markers) for a scene.
-    Maps Stash scene_markers to Jellyfin MediaSegments format.
+    Return media segments for a scene - stub endpoint.
     
-    Jellyfin uses this for intro/outro skipping and chapter navigation.
+    Note: Infuse does not currently support Jellyfin's MediaSegments API
+    (intro/outro/chapter skipping). It only uses traditional chapter markers
+    embedded in video files. This stub prevents "UNHANDLED ENDPOINT" warnings.
     """
-    item_id = request.path_params.get("item_id")
-    numeric_id = get_numeric_id(item_id)
-    
-    if not numeric_id:
-        return JSONResponse({"Items": []})
-    
-    # Query Stash for scene markers
-    query = """query FindScene($id: ID!) {
-        findScene(id: $id) {
-            id
-            scene_markers {
-                id
-                title
-                seconds
-                primary_tag {
-                    id
-                    name
-                }
-                tags {
-                    id
-                    name
-                }
-            }
-            files {
-                duration
-            }
-        }
-    }"""
-    
-    res = stash_query(query, {"id": numeric_id})
-    scene = res.get("data", {}).get("findScene")
-    
-    if not scene:
-        return JSONResponse({"Items": []})
-    
-    markers = scene.get("scene_markers", [])
-    files = scene.get("files", [])
-    scene_duration = files[0].get("duration", 0) if files else 0
-    
-    if not markers:
-        logger.debug(f"No markers found for scene {numeric_id}")
-        return JSONResponse({"Items": []})
-    
-    # Sort markers by timestamp
-    markers = sorted(markers, key=lambda m: m.get("seconds", 0))
-    
-    segments = []
-    for i, marker in enumerate(markers):
-        marker_id = marker.get("id")
-        title = marker.get("title", "")
-        seconds = marker.get("seconds", 0)
-        primary_tag = marker.get("primary_tag", {})
-        tag_name = primary_tag.get("name", "") if primary_tag else ""
-        
-        # Determine segment type based on tag name or title
-        # Common patterns: intro, outro, credits, recap, preview
-        segment_type = "Chapter"  # Default to Chapter for generic markers
-        name_lower = (tag_name or title).lower()
-        
-        if "intro" in name_lower or "opening" in name_lower:
-            segment_type = "Intro"
-        elif "outro" in name_lower or "ending" in name_lower or "credit" in name_lower:
-            segment_type = "Outro"
-        elif "recap" in name_lower or "previously" in name_lower:
-            segment_type = "Recap"
-        elif "preview" in name_lower or "next" in name_lower:
-            segment_type = "Preview"
-        elif "commercial" in name_lower or "ad" in name_lower:
-            segment_type = "Commercial"
-        
-        # Calculate end time - use next marker's start time or scene end
-        if i + 1 < len(markers):
-            end_seconds = markers[i + 1].get("seconds", seconds + 30)
-        else:
-            # Last marker - extend to end of scene or add 30 seconds
-            end_seconds = scene_duration if scene_duration > seconds else seconds + 30
-        
-        # Convert to ticks (10,000,000 ticks per second)
-        start_ticks = int(seconds * 10000000)
-        end_ticks = int(end_seconds * 10000000)
-        
-        segment = {
-            "Id": f"segment-{marker_id}",
-            "ItemId": item_id,
-            "Type": segment_type,
-            "StartTicks": start_ticks,
-            "EndTicks": end_ticks
-        }
-        
-        # Add name/title if available
-        if title:
-            segment["Name"] = title
-        elif tag_name:
-            segment["Name"] = tag_name
-        
-        segments.append(segment)
-    
-    logger.debug(f"Returning {len(segments)} media segments for scene {numeric_id}")
-    return JSONResponse({"Items": segments})
+    return JSONResponse({"Items": []})
 
 async def catch_all(request):
     """Catch any unhandled routes and log them for debugging."""
