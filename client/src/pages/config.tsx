@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, Save, AlertTriangle, Loader2 } from "lucide-react";
 import { Link } from "wouter";
@@ -21,6 +22,11 @@ interface ProxyConfig {
   serverName: string;
   tagGroups: string;
   latestGroups: string;
+  defaultPageSize: number;
+  maxPageSize: number;
+  enableFilters: boolean;
+  enableImageResize: boolean;
+  imageCacheMaxSize: number;
   stashTimeout: number;
   stashRetries: number;
   logDir: string;
@@ -37,7 +43,7 @@ export default function Config() {
   const [hasChanges, setHasChanges] = useState(false);
   const [serverIdChanged, setServerIdChanged] = useState(false);
 
-  const { data: config, isLoading } = useQuery<ProxyConfig>({
+  const { data: config, isLoading, error } = useQuery<ProxyConfig>({
     queryKey: ["config"],
     queryFn: async () => {
       const res = await fetch("/api/config");
@@ -48,7 +54,6 @@ export default function Config() {
 
   const [formData, setFormData] = useState<Partial<ProxyConfig>>({});
 
-  // Initialize form data when config loads
   const currentConfig = { ...config, ...formData };
 
   const mutation = useMutation({
@@ -58,7 +63,10 @@ export default function Config() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to save config");
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to save config");
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -70,16 +78,16 @@ export default function Config() {
       setServerIdChanged(false);
       queryClient.invalidateQueries({ queryKey: ["config"] });
     },
-    onError: () => {
+    onError: (err: Error) => {
       toast({
         title: "Error",
-        description: "Failed to save configuration.",
+        description: err.message || "Failed to save configuration.",
         variant: "destructive",
       });
     },
   });
 
-  const handleChange = (field: keyof ProxyConfig, value: string | number) => {
+  const handleChange = (field: keyof ProxyConfig, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
     if (field === "serverId" && value !== config?.serverId) {
@@ -97,6 +105,16 @@ export default function Config() {
     return (
       <div className="p-6 md:p-8 flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 md:p-8">
+        <Alert variant="destructive">
+          <AlertDescription>Failed to load configuration. Make sure the config file exists.</AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -176,7 +194,7 @@ export default function Config() {
               data-testid="input-api-key"
             />
             <p className="text-[10px] text-muted-foreground">
-              Get from Stash → Settings → Security → API Key
+              Get from Stash Settings Security API Key
             </p>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -335,6 +353,90 @@ export default function Config() {
             />
             <p className="text-[10px] text-muted-foreground">
               Libraries to show on Infuse home screen. "Scenes" = all scenes.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Pagination */}
+      <Card className="bg-card border-border/50">
+        <CardHeader>
+          <CardTitle className="font-mono text-base">Pagination</CardTitle>
+          <CardDescription className="font-mono text-xs">
+            Control how many items are returned per request
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="default-page-size" className="font-mono text-xs uppercase">Default Page Size</Label>
+              <Input 
+                id="default-page-size" 
+                type="number"
+                value={currentConfig.defaultPageSize || 50} 
+                onChange={e => handleChange("defaultPageSize", parseInt(e.target.value) || 50)}
+                className="font-mono bg-background/50" 
+                data-testid="input-default-page-size"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="max-page-size" className="font-mono text-xs uppercase">Max Page Size</Label>
+              <Input 
+                id="max-page-size" 
+                type="number"
+                value={currentConfig.maxPageSize || 200} 
+                onChange={e => handleChange("maxPageSize", parseInt(e.target.value) || 200)}
+                className="font-mono bg-background/50" 
+                data-testid="input-max-page-size"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Feature Toggles */}
+      <Card className="bg-card border-border/50">
+        <CardHeader>
+          <CardTitle className="font-mono text-base">Features</CardTitle>
+          <CardDescription className="font-mono text-xs">
+            Enable or disable optional features
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="font-mono text-sm">Enable Filters</Label>
+              <p className="text-[10px] text-muted-foreground">Show FILTERS folder in library root</p>
+            </div>
+            <Switch 
+              checked={currentConfig.enableFilters !== false}
+              onCheckedChange={v => handleChange("enableFilters", v)}
+              data-testid="switch-enable-filters"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="font-mono text-sm">Enable Image Resize</Label>
+              <p className="text-[10px] text-muted-foreground">Resize thumbnails for better performance</p>
+            </div>
+            <Switch 
+              checked={currentConfig.enableImageResize !== false}
+              onCheckedChange={v => handleChange("enableImageResize", v)}
+              data-testid="switch-enable-image-resize"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="image-cache-size" className="font-mono text-xs uppercase">Image Cache Size</Label>
+            <Input 
+              id="image-cache-size" 
+              type="number"
+              value={currentConfig.imageCacheMaxSize || 100} 
+              onChange={e => handleChange("imageCacheMaxSize", parseInt(e.target.value) || 100)}
+              className="font-mono bg-background/50" 
+              data-testid="input-image-cache-size"
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Maximum number of resized images to cache
             </p>
           </div>
         </CardContent>

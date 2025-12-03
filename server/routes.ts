@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import * as fs from "fs";
 import * as path from "path";
+import { proxyConfigSchema } from "../shared/schema";
 
 // Config file path - look for it in common locations
 const CONFIG_PATHS = [
@@ -45,6 +46,11 @@ function parseConfigFile(content: string): Record<string, string> {
   return config;
 }
 
+function parseBool(val: string | undefined, defaultVal: boolean): boolean {
+  if (!val) return defaultVal;
+  return val.toLowerCase() === "true" || val === "1";
+}
+
 function configToApiFormat(raw: Record<string, string>) {
   return {
     stashUrl: raw.STASH_URL || "http://localhost:9999",
@@ -57,6 +63,11 @@ function configToApiFormat(raw: Record<string, string>) {
     serverName: raw.SERVER_NAME || "Stash Media Server",
     tagGroups: raw.TAG_GROUPS || "",
     latestGroups: raw.LATEST_GROUPS || "Scenes",
+    defaultPageSize: parseInt(raw.DEFAULT_PAGE_SIZE || "50", 10),
+    maxPageSize: parseInt(raw.MAX_PAGE_SIZE || "200", 10),
+    enableFilters: parseBool(raw.ENABLE_FILTERS, true),
+    enableImageResize: parseBool(raw.ENABLE_IMAGE_RESIZE, true),
+    imageCacheMaxSize: parseInt(raw.IMAGE_CACHE_MAX_SIZE || "100", 10),
     stashTimeout: parseInt(raw.STASH_TIMEOUT || "30", 10),
     stashRetries: parseInt(raw.STASH_RETRIES || "3", 10),
     logDir: raw.LOG_DIR || ".",
@@ -95,6 +106,17 @@ function apiToConfigFormat(api: any): string {
     `SERVER_ID = "${api.serverId}"`,
     `SERVER_NAME = "${api.serverName || "Stash Media Server"}"`,
     "",
+    "# ---- Pagination Settings ----",
+    "",
+    `DEFAULT_PAGE_SIZE = ${api.defaultPageSize || 50}`,
+    `MAX_PAGE_SIZE = ${api.maxPageSize || 200}`,
+    "",
+    "# ---- Feature Toggles ----",
+    "",
+    `ENABLE_FILTERS = ${api.enableFilters !== false}`,
+    `ENABLE_IMAGE_RESIZE = ${api.enableImageResize !== false}`,
+    `IMAGE_CACHE_MAX_SIZE = ${api.imageCacheMaxSize || 100}`,
+    "",
     "# ---- Performance Settings ----",
     "",
     `STASH_TIMEOUT = ${api.stashTimeout || 30}`,
@@ -130,6 +152,24 @@ function parseLogLine(line: string) {
   return null;
 }
 
+function getLogPath(configPath: string | null): string {
+  let logPath = "./stash_jellyfin_proxy.log";
+  
+  if (configPath) {
+    try {
+      const content = fs.readFileSync(configPath, "utf-8");
+      const raw = parseConfigFile(content);
+      const logDir = raw.LOG_DIR || ".";
+      const logFile = raw.LOG_FILE || "stash_jellyfin_proxy.log";
+      logPath = path.join(logDir, logFile);
+    } catch (e) {
+      // Use default
+    }
+  }
+  
+  return logPath;
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -161,7 +201,16 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Config file not found" });
       }
       
-      const newConfig = apiToConfigFormat(req.body);
+      // Validate with zod schema (partial to allow missing optional fields)
+      const result = proxyConfigSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid configuration", 
+          details: result.error.errors 
+        });
+      }
+      
+      const newConfig = apiToConfigFormat(result.data);
       fs.writeFileSync(configPath, newConfig, "utf-8");
       
       res.json({ success: true });
@@ -170,7 +219,7 @@ export async function registerRoutes(
     }
   });
   
-  // GET /api/status - Get proxy status (mock for now, would connect to real proxy)
+  // GET /api/status - Get proxy status
   app.get("/api/status", async (req, res) => {
     try {
       const configPath = findConfigPath();
@@ -182,7 +231,6 @@ export async function registerRoutes(
         config = configToApiFormat(raw);
       }
       
-      // Check if we can reach the proxy
       let proxyRunning = false;
       let stashConnected = false;
       let stashVersion = "";
@@ -205,7 +253,7 @@ export async function registerRoutes(
         // Proxy not reachable
       }
       
-      // If proxy is running, assume Stash is connected (proxy wouldn't start otherwise)
+      // If proxy is running, assume Stash is connected
       if (proxyRunning) {
         stashConnected = true;
       }
@@ -228,15 +276,8 @@ export async function registerRoutes(
   app.get("/api/logs", (req, res) => {
     try {
       const configPath = findConfigPath();
-      let logPath = "./stash_jellyfin_proxy.log";
-      
-      if (configPath) {
-        const content = fs.readFileSync(configPath, "utf-8");
-        const raw = parseConfigFile(content);
-        const logDir = raw.LOG_DIR || ".";
-        const logFile = raw.LOG_FILE || "stash_jellyfin_proxy.log";
-        logPath = path.join(logDir, logFile);
-      }
+      const logPath = getLogPath(configPath);
+      const limit = parseInt(req.query.limit as string || "100", 10);
       
       if (!fs.existsSync(logPath)) {
         return res.json({ entries: [], logPath });
@@ -245,9 +286,9 @@ export async function registerRoutes(
       const content = fs.readFileSync(logPath, "utf-8");
       const lines = content.split("\n").filter(l => l.trim());
       
-      // Parse last 100 lines
+      // Parse last N lines
       const entries = lines
-        .slice(-100)
+        .slice(-limit)
         .map(parseLogLine)
         .filter(Boolean)
         .reverse();
@@ -262,30 +303,26 @@ export async function registerRoutes(
   app.get("/api/logs/download", (req, res) => {
     try {
       const configPath = findConfigPath();
-      let logPath = "./stash_jellyfin_proxy.log";
-      
-      if (configPath) {
-        const content = fs.readFileSync(configPath, "utf-8");
-        const raw = parseConfigFile(content);
-        const logDir = raw.LOG_DIR || ".";
-        const logFile = raw.LOG_FILE || "stash_jellyfin_proxy.log";
-        logPath = path.join(logDir, logFile);
-      }
+      const logPath = getLogPath(configPath);
       
       if (!fs.existsSync(logPath)) {
         return res.status(404).json({ error: "Log file not found" });
       }
       
-      res.download(logPath);
+      const filename = path.basename(logPath);
+      res.setHeader("Content-Type", "text/plain");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      
+      const stream = fs.createReadStream(logPath);
+      stream.pipe(res);
     } catch (err) {
       res.status(500).json({ error: "Failed to download logs" });
     }
   });
   
-  // GET /api/streams - Get active streams (would need IPC with proxy)
+  // GET /api/streams - Get active streams
+  // Note: Would need IPC with Python proxy for real data
   app.get("/api/streams", (req, res) => {
-    // This would need inter-process communication with the Python proxy
-    // For now, return empty array - can be enhanced later
     res.json({ streams: [] });
   });
 

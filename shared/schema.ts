@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Proxy configuration schema matching stash_jellyfin_proxy.conf
+// Proxy configuration schema matching ALL stash_jellyfin_proxy.conf fields
 export const proxyConfigSchema = z.object({
   // Connection settings
   stashUrl: z.string().url(),
@@ -19,6 +19,15 @@ export const proxyConfigSchema = z.object({
   // Library config
   tagGroups: z.string().optional(),
   latestGroups: z.string().optional(),
+  
+  // Pagination settings
+  defaultPageSize: z.number().int().min(1).default(50),
+  maxPageSize: z.number().int().min(1).default(200),
+  
+  // Feature toggles
+  enableFilters: z.boolean().default(true),
+  enableImageResize: z.boolean().default(true),
+  imageCacheMaxSize: z.number().int().min(0).default(100),
   
   // Performance settings
   stashTimeout: z.number().int().min(1).default(30),
