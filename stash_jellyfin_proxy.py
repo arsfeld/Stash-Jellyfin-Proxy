@@ -175,26 +175,40 @@ else:
 
 # Environment variables ALWAYS override config file (for Docker deployment flexibility)
 # This allows docker-compose env vars to take precedence over the mounted config file
+_env_overrides = []
 if os.getenv("STASH_URL"):
     STASH_URL = os.getenv("STASH_URL")
+    _env_overrides.append("STASH_URL")
 if os.getenv("STASH_API_KEY"):
     STASH_API_KEY = os.getenv("STASH_API_KEY")
+    _env_overrides.append("STASH_API_KEY")
 if os.getenv("PROXY_BIND"):
     PROXY_BIND = os.getenv("PROXY_BIND")
+    _env_overrides.append("PROXY_BIND")
 if os.getenv("PROXY_PORT"):
     PROXY_PORT = int(os.getenv("PROXY_PORT"))
+    _env_overrides.append("PROXY_PORT")
 if os.getenv("UI_PORT"):
     UI_PORT = int(os.getenv("UI_PORT"))
+    _env_overrides.append("UI_PORT")
 if os.getenv("SJS_USER"):
     SJS_USER = os.getenv("SJS_USER")
+    _env_overrides.append("SJS_USER")
 if os.getenv("SJS_PASSWORD"):
     SJS_PASSWORD = os.getenv("SJS_PASSWORD")
+    _env_overrides.append("SJS_PASSWORD")
 if os.getenv("SERVER_ID"):
     SERVER_ID = os.getenv("SERVER_ID")
+    _env_overrides.append("SERVER_ID")
 if os.getenv("REQUIRE_AUTH_FOR_CONFIG"):
     REQUIRE_AUTH_FOR_CONFIG = os.getenv("REQUIRE_AUTH_FOR_CONFIG", "").lower() in ('true', 'yes', '1', 'on')
+    _env_overrides.append("REQUIRE_AUTH_FOR_CONFIG")
 if os.getenv("LOG_DIR"):
     LOG_DIR = os.getenv("LOG_DIR")
+    _env_overrides.append("LOG_DIR")
+
+if _env_overrides:
+    print(f"  Env overrides: {', '.join(_env_overrides)}")
 
 # Print effective configuration
 print(f"  User: {SJS_USER}")
