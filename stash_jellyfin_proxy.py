@@ -982,6 +982,14 @@ def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
                 if isinstance(val, dict) and 'value' in val and len(val) == 1:
                     val = val['value']
                 
+                # Convert string booleans to actual booleans
+                # Stash saved filters store booleans as strings 'true'/'false'
+                if isinstance(val, str):
+                    if val.lower() == 'true':
+                        val = True
+                    elif val.lower() == 'false':
+                        val = False
+                
                 # Handle HierarchicalMultiCriterionInput (tags, performers, studios, etc.)
                 # Structure: {'items': [{'id': '123', 'label': 'Name'}], 'depth': 0, 'excluded': []}
                 # Needs to become: {'value': ['123'], 'modifier': 'INCLUDES_ALL', 'depth': 0, 'excludes': []}
@@ -2582,7 +2590,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.35 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.36 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
