@@ -671,6 +671,34 @@ async def endpoint_shows_nextup(request):
     # Infuse requests next up episodes - return empty
     return JSONResponse({"Items": [], "TotalRecordCount": 0})
 
+async def endpoint_latest_items(request):
+    """Return recently added items for the Infuse home page."""
+    # Get parent_id to filter by library (optional)
+    parent_id = request.query_params.get("ParentId") or request.query_params.get("parentId")
+    limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 16)
+    
+    logger.info(f"Latest items request - ParentId: {parent_id}, Limit: {limit}")
+    
+    # Full scene fields for queries
+    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+    
+    # Query for the most recently added scenes, sorted by created_at descending
+    q = f"""query FindScenes($page: Int!, $per_page: Int!) {{ 
+        findScenes(filter: {{page: $page, per_page: $per_page, sort: "created_at", direction: DESC}}) {{ 
+            scenes {{ {scene_fields} }} 
+        }} 
+    }}"""
+    
+    res = stash_query(q, {"page": 1, "per_page": limit})
+    scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+    
+    items = []
+    for s in scenes:
+        items.append(format_jellyfin_item(s, parent_id="root-scenes"))
+    
+    logger.info(f"Returning {len(items)} latest items")
+    return JSONResponse(items)
+
 async def endpoint_display_preferences(request):
     # Infuse requests display/user preferences
     return JSONResponse({
@@ -1908,6 +1936,7 @@ routes = [
     Route("/Users/AuthenticateByName", endpoint_authenticate_by_name, methods=["POST"]),
     Route("/Users/{user_id}", endpoint_user_by_id),
     Route("/Users/{user_id}/Views", endpoint_user_views),
+    Route("/Users/{user_id}/Items/Latest", endpoint_latest_items),
     Route("/Users/{user_id}/GroupingOptions", endpoint_grouping_options),
     Route("/Library/VirtualFolders", endpoint_virtual_folders),
     Route("/DisplayPreferences/{prefs_id}", endpoint_display_preferences),
@@ -1949,7 +1978,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.30 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.31 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
