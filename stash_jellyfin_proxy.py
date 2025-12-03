@@ -1114,6 +1114,10 @@ async def endpoint_items(request):
                 graphql_filter = transform_saved_filter_to_graphql(object_filter, filter_mode)
                 logger.info(f"Transformed filter: {graphql_filter}")
                 
+                # Try querying Stash directly with the filter to see what happens
+                # Also log the full saved filter data for debugging
+                logger.info(f"Full saved filter data: {saved_filter}")
+                
                 logger.debug(f"Filter find_filter: {find_filter}")
                 logger.debug(f"Filter object_filter: {object_filter}")
                 
@@ -1127,7 +1131,9 @@ async def endpoint_items(request):
                     count_q = """query CountScenes($scene_filter: SceneFilterType) { 
                         findScenes(scene_filter: $scene_filter) { count } 
                     }"""
+                    logger.info(f"Running count query with scene_filter: {graphql_filter}")
                     count_res = stash_query(count_q, {"scene_filter": graphql_filter})
+                    logger.info(f"Count query response: {count_res}")
                     total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
                     
                     # Get paginated results
