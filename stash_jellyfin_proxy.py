@@ -56,6 +56,22 @@ TAG_GROUPS = []  # e.g., ["Favorites", "VR", "4K"]
 # "Scenes" = all scenes, other entries must match TAG_GROUPS entries
 LATEST_GROUPS = ["Scenes"]  # e.g., ["Scenes", "VR", "Favorites"]
 
+# Server identity
+SERVER_NAME = "Stash Media Server"
+SERVER_ID = "stash-jellyfin-proxy-001"
+
+# Pagination settings
+DEFAULT_PAGE_SIZE = 50
+MAX_PAGE_SIZE = 200
+
+# Feature toggles
+ENABLE_FILTERS = True
+ENABLE_IMAGE_RESIZE = True
+
+# Performance settings
+STASH_TIMEOUT = 30
+STASH_RETRIES = 3
+
 # Load Config - parses config file with KEY = "value" or KEY="value" format
 def load_config(filepath):
     """Load configuration from a shell-style config file."""
@@ -78,6 +94,14 @@ def load_config(filepath):
             print(f"Error loading config file {filepath}: {e}", file=sys.stderr)
     return config
 
+def parse_bool(value, default=True):
+    """Parse a boolean value from config string."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() in ('true', 'yes', '1', 'on')
+    return default
+
 _config = load_config(CONFIG_FILE)
 if _config:
     STASH_URL = _config.get("STASH_URL", STASH_URL)
@@ -94,6 +118,31 @@ if _config:
     latest_groups_str = _config.get("LATEST_GROUPS", "")
     if latest_groups_str:
         LATEST_GROUPS = [t.strip() for t in latest_groups_str.split(",") if t.strip()]
+    
+    # Server identity
+    SERVER_NAME = _config.get("SERVER_NAME", SERVER_NAME)
+    SERVER_ID = _config.get("SERVER_ID", SERVER_ID)
+    
+    # Pagination settings
+    if "DEFAULT_PAGE_SIZE" in _config:
+        DEFAULT_PAGE_SIZE = int(_config.get("DEFAULT_PAGE_SIZE", DEFAULT_PAGE_SIZE))
+    if "MAX_PAGE_SIZE" in _config:
+        MAX_PAGE_SIZE = int(_config.get("MAX_PAGE_SIZE", MAX_PAGE_SIZE))
+    
+    # Feature toggles
+    if "ENABLE_FILTERS" in _config:
+        ENABLE_FILTERS = parse_bool(_config.get("ENABLE_FILTERS"), ENABLE_FILTERS)
+    if "ENABLE_IMAGE_RESIZE" in _config:
+        ENABLE_IMAGE_RESIZE = parse_bool(_config.get("ENABLE_IMAGE_RESIZE"), ENABLE_IMAGE_RESIZE)
+    if "IMAGE_CACHE_MAX_SIZE" in _config:
+        IMAGE_CACHE_MAX_SIZE = int(_config.get("IMAGE_CACHE_MAX_SIZE", IMAGE_CACHE_MAX_SIZE))
+    
+    # Performance settings
+    if "STASH_TIMEOUT" in _config:
+        STASH_TIMEOUT = int(_config.get("STASH_TIMEOUT", STASH_TIMEOUT))
+    if "STASH_RETRIES" in _config:
+        STASH_RETRIES = int(_config.get("STASH_RETRIES", STASH_RETRIES))
+    
     print(f"Loaded config from {CONFIG_FILE}")
     print(f"  User: {SJS_USER}")
     print(f"  Stash URL: {STASH_URL}")
@@ -282,15 +331,68 @@ def pad_image_to_portrait(image_data: bytes, target_width: int = 400, target_hei
         logger.warning(f"Image padding failed: {e}, returning original")
         return image_data, "image/jpeg"
 
-def stash_query(query: str, variables: Dict[str, Any] = None) -> Dict[str, Any]:
-    try:
-        session = get_stash_session()
-        resp = session.post(GRAPHQL_URL, json={"query": query, "variables": variables or {}}, timeout=10)
-        resp.raise_for_status()
-        return resp.json()
-    except Exception as e:
-        logger.error(f"Stash API Query Error: {e}")
-        return {"errors": [str(e)]}
+def stash_query(query: str, variables: Dict[str, Any] = None, retries: int = None) -> Dict[str, Any]:
+    """Execute a GraphQL query against Stash with retry logic.
+    
+    Args:
+        query: The GraphQL query string
+        variables: Optional query variables
+        retries: Number of retries (defaults to STASH_RETRIES config)
+    
+    Returns:
+        The JSON response from Stash, or an error dict on failure
+    """
+    if retries is None:
+        retries = STASH_RETRIES
+    
+    last_error = None
+    for attempt in range(retries + 1):
+        try:
+            session = get_stash_session()
+            resp = session.post(
+                GRAPHQL_URL, 
+                json={"query": query, "variables": variables or {}}, 
+                timeout=STASH_TIMEOUT
+            )
+            resp.raise_for_status()
+            result = resp.json()
+            
+            # Check for GraphQL errors in response
+            if "errors" in result and result["errors"]:
+                error_msgs = [e.get("message", str(e)) for e in result["errors"]]
+                logger.warning(f"GraphQL errors in response: {error_msgs}")
+                # Still return the result as it may contain partial data
+            
+            return result
+            
+        except requests.exceptions.Timeout as e:
+            last_error = e
+            logger.warning(f"Stash API timeout (attempt {attempt + 1}/{retries + 1}): {e}")
+            if attempt < retries:
+                time.sleep(1 * (attempt + 1))  # Exponential backoff
+                
+        except requests.exceptions.ConnectionError as e:
+            last_error = e
+            logger.warning(f"Stash API connection error (attempt {attempt + 1}/{retries + 1}): {e}")
+            if attempt < retries:
+                time.sleep(2 * (attempt + 1))  # Longer backoff for connection issues
+                
+        except requests.exceptions.HTTPError as e:
+            last_error = e
+            logger.error(f"Stash API HTTP error: {e}")
+            # Don't retry client errors (4xx)
+            if hasattr(e, 'response') and e.response is not None and 400 <= e.response.status_code < 500:
+                break
+            if attempt < retries:
+                time.sleep(1 * (attempt + 1))
+                
+        except Exception as e:
+            last_error = e
+            logger.error(f"Stash API Query Error: {e}")
+            break  # Don't retry unknown errors
+    
+    logger.error(f"Stash API failed after {retries + 1} attempts: {last_error}")
+    return {"errors": [str(last_error)], "data": None}
 
 def stash_get_saved_filters(mode: str) -> List[Dict[str, Any]]:
     """Get saved filters from Stash for a specific mode (SCENES, PERFORMERS, STUDIOS, GROUPS)."""
@@ -375,7 +477,7 @@ def format_saved_filter_item(saved_filter: Dict[str, Any], parent_id: str) -> Di
     }
 
 # --- Jellyfin Models & Helpers ---
-SERVER_ID = "a1b2c3d4e5f6a1b2c3d4e5f6"
+# Note: SERVER_ID is now configured at the top of the file and loaded from config
 ACCESS_TOKEN = str(uuid.uuid4())
 
 def make_guid(numeric_id: str) -> str:
@@ -553,13 +655,13 @@ async def endpoint_root(request):
 async def endpoint_system_info(request):
     logger.info("Providing System Info")
     return JSONResponse({
-        "ServerName": "Stash Proxy",
-        "Version": "10.8.13", # Updated to a newer stable version
+        "ServerName": SERVER_NAME,
+        "Version": "10.8.13",
         "Id": SERVER_ID,
         "OperatingSystem": "Linux",
         "SupportsLibraryMonitor": False,
         "WebSocketPortNumber": PROXY_PORT,
-        "CompletedInstallations": [{"Guid": SERVER_ID, "Name": "Stash Proxy"}],
+        "CompletedInstallations": [{"Guid": SERVER_ID, "Name": SERVER_NAME}],
         "CanSelfRestart": False,
         "CanLaunchWebBrowser": False,
         "LocalAddress": f"http://{PROXY_BIND}:{PROXY_PORT}"
@@ -568,7 +670,7 @@ async def endpoint_system_info(request):
 async def endpoint_public_info(request):
     return JSONResponse({
         "LocalAddress": f"http://{PROXY_BIND}:{PROXY_PORT}",
-        "ServerName": "Stash Proxy",
+        "ServerName": SERVER_NAME,
         "Version": "10.8.13",
         "Id": SERVER_ID,
         "ProductName": "Jellyfin Server",
@@ -916,16 +1018,55 @@ def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
         {'is_missing': {'modifier': 'EQUALS', 'value': 'cover'}}
         {'tags': {'value': ['123', '456'], 'modifier': 'INCLUDES'}}
         {'details': {'modifier': 'IS_NULL'}}  # No value for null checks
+        {'duration': {'modifier': 'BETWEEN', 'value': 600, 'value2': 1800}}  # Range
+        {'date': {'modifier': 'GREATER_THAN', 'value': '2023-01-01'}}  # Date comparison
     
     GraphQL expects:
         {'is_missing': 'cover'}
         {'tags': {'value': ['123', '456'], 'modifier': INCLUDES}}
         {'details': {'value': '', 'modifier': IS_NULL}}  # Empty string for null checks
+        {'duration': {'value': 600, 'value2': 1800, 'modifier': BETWEEN}}  # Range preserved
+    
+    Supported modifiers:
+        - EQUALS, NOT_EQUALS
+        - INCLUDES, INCLUDES_ALL, EXCLUDES
+        - IS_NULL, NOT_NULL
+        - GREATER_THAN, LESS_THAN
+        - BETWEEN (with value and value2)
+        - MATCHES_REGEX
+    
+    Supported field types:
+        - String fields: title, path, details, url, code, director, phash
+        - Boolean fields: organized, interactive, performer_favorite, has_markers
+        - Integer fields: rating100, o_counter, play_count, file_count
+        - Duration fields: duration (in seconds), resume_time
+        - Date fields: date, created_at, updated_at
+        - Resolution fields: resolution (enum: VERY_LOW, LOW, R360P, R480P, R720P, R1080P, R1440P, FOUR_K, FIVE_K, etc.)
+        - Hierarchical fields: tags, performers, studios, movies/groups
     """
     if not object_filter or not isinstance(object_filter, dict):
         return {}
     
     result = {}
+    
+    # Fields that should be passed as simple booleans (not wrapped in modifier structure)
+    BOOLEAN_FIELDS = {'organized', 'interactive', 'performer_favorite', 'has_markers', 
+                      'ignore_auto_tag', 'favorite', 'is_missing'}
+    
+    # Fields that use IntCriterionInput (value/value2/modifier structure)
+    INT_CRITERION_FIELDS = {'rating100', 'o_counter', 'play_count', 'file_count', 
+                            'width', 'height', 'framerate', 'bitrate', 'duration', 
+                            'resume_time', 'tag_count', 'performer_count', 'scene_count',
+                            'gallery_count', 'marker_count', 'image_count'}
+    
+    # Fields that use date comparison
+    DATE_FIELDS = {'date', 'created_at', 'updated_at', 'last_played_at', 'birthdate', 'death_date'}
+    
+    # Fields that use HierarchicalMultiCriterionInput
+    HIERARCHICAL_FIELDS = {'tags', 'performers', 'studios', 'movies', 'groups', 'performer_tags'}
+    
+    # Fields that use MultiCriterionInput (IDs with modifier)
+    MULTI_CRITERION_FIELDS = {'galleries', 'scenes', 'parents', 'children'}
     
     for key, value in object_filter.items():
         if value is None:
@@ -934,9 +1075,15 @@ def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
         # Handle nested filter groups (AND, OR, NOT)
         if key in ('AND', 'OR', 'NOT'):
             if isinstance(value, list):
-                result[key] = [transform_saved_filter_to_graphql(v, filter_mode) for v in value]
+                transformed = [transform_saved_filter_to_graphql(v, filter_mode) for v in value]
+                # Filter out empty dicts from the list
+                transformed = [t for t in transformed if t]
+                if transformed:
+                    result[key] = transformed
             elif isinstance(value, dict):
-                result[key] = transform_saved_filter_to_graphql(value, filter_mode)
+                transformed = transform_saved_filter_to_graphql(value, filter_mode)
+                if transformed:
+                    result[key] = transformed
             continue
         
         # Handle simple string fields that don't need transformation
@@ -963,6 +1110,7 @@ def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
         if isinstance(value, dict):
             modifier = value.get('modifier')
             val = value.get('value')
+            val2 = value.get('value2')  # For BETWEEN modifier
             
             # Special case: is_missing just needs the string value
             if key == 'is_missing' and modifier == 'EQUALS':
@@ -974,16 +1122,61 @@ def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
                 result[key] = {'value': '', 'modifier': modifier}
                 continue
             
+            # Handle BETWEEN modifier (ranges) - preserve value2
+            if modifier == 'BETWEEN':
+                if val is not None and val2 is not None:
+                    # Ensure numeric values are properly typed
+                    try:
+                        if key in INT_CRITERION_FIELDS or key in DATE_FIELDS:
+                            if key in DATE_FIELDS:
+                                # Keep dates as strings
+                                result[key] = {'value': val, 'value2': val2, 'modifier': modifier}
+                            else:
+                                result[key] = {'value': int(val) if not isinstance(val, int) else val,
+                                             'value2': int(val2) if not isinstance(val2, int) else val2,
+                                             'modifier': modifier}
+                        else:
+                            result[key] = {'value': val, 'value2': val2, 'modifier': modifier}
+                    except (ValueError, TypeError):
+                        result[key] = {'value': val, 'value2': val2, 'modifier': modifier}
+                    continue
+            
+            # Handle comparison modifiers (GREATER_THAN, LESS_THAN)
+            if modifier in ('GREATER_THAN', 'LESS_THAN', 'EQUALS', 'NOT_EQUALS'):
+                if val is not None:
+                    # Handle nested value objects like {'value': 1} -> 1
+                    if isinstance(val, dict) and 'value' in val and len(val) == 1:
+                        val = val['value']
+                    
+                    # Convert string booleans to actual booleans
+                    if isinstance(val, str):
+                        if val.lower() == 'true':
+                            val = True
+                        elif val.lower() == 'false':
+                            val = False
+                    
+                    # For simple boolean fields with EQUALS modifier, pass boolean directly
+                    if key in BOOLEAN_FIELDS and isinstance(val, bool) and modifier == 'EQUALS':
+                        result[key] = val
+                        continue
+                    
+                    # For integer fields, ensure proper typing
+                    if key in INT_CRITERION_FIELDS and not isinstance(val, bool):
+                        try:
+                            val = int(val) if isinstance(val, str) else val
+                        except (ValueError, TypeError):
+                            pass
+                    
+                    result[key] = {'value': val, 'modifier': modifier}
+                    continue
+            
             # For most filter fields with modifier/value, pass through as-is
-            # The GraphQL API expects the modifier as a string enum
             if modifier and val is not None:
                 # Handle nested value objects like {'value': 1} -> 1
-                # This happens with IntCriterionInput and similar types
                 if isinstance(val, dict) and 'value' in val and len(val) == 1:
                     val = val['value']
                 
                 # Convert string booleans to actual booleans
-                # Stash saved filters store booleans as strings 'true'/'false'
                 if isinstance(val, str):
                     if val.lower() == 'true':
                         val = True
@@ -991,15 +1184,14 @@ def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
                         val = False
                 
                 # For simple boolean fields with EQUALS modifier, just pass the boolean directly
-                # The Stash GraphQL API expects: organized: false, not organized: {value: false, modifier: EQUALS}
-                if isinstance(val, bool) and modifier == 'EQUALS':
+                if key in BOOLEAN_FIELDS and isinstance(val, bool) and modifier == 'EQUALS':
                     result[key] = val
                     continue
                 
                 # Handle HierarchicalMultiCriterionInput (tags, performers, studios, etc.)
                 # Structure: {'items': [{'id': '123', 'label': 'Name'}], 'depth': 0, 'excluded': []}
                 # Needs to become: {'value': ['123'], 'modifier': 'INCLUDES_ALL', 'depth': 0, 'excludes': []}
-                if isinstance(val, dict) and 'items' in val:
+                if key in HIERARCHICAL_FIELDS and isinstance(val, dict) and 'items' in val:
                     items = val.get('items', [])
                     # Extract IDs from items
                     ids = [item.get('id') for item in items if item.get('id')]
@@ -1012,12 +1204,41 @@ def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
                     result[key] = {'value': ids, 'modifier': modifier, 'depth': depth, 'excludes': excludes}
                     continue
                 
+                # Handle MultiCriterionInput (just IDs with modifier)
+                if key in MULTI_CRITERION_FIELDS and isinstance(val, list):
+                    # Extract IDs if val contains objects
+                    ids = [v.get('id') if isinstance(v, dict) else v for v in val]
+                    result[key] = {'value': ids, 'modifier': modifier}
+                    continue
+                
+                # Handle resolution (enum type)
+                if key == 'resolution':
+                    result[key] = {'value': val, 'modifier': modifier}
+                    continue
+                
+                # Handle orientation/aspect_ratio (enum types)
+                if key in ('orientation', 'aspect_ratio'):
+                    result[key] = {'value': val, 'modifier': modifier}
+                    continue
+                
+                # Handle stash_id (with endpoint)
+                if key == 'stash_id' and isinstance(val, dict):
+                    result[key] = val
+                    continue
+                
+                # Handle phash_distance (IntCriterionInput with distance field)
+                if key == 'phash_distance' and isinstance(val, dict):
+                    result[key] = val
+                    continue
+                
                 result[key] = {'value': val, 'modifier': modifier}
                 continue
             
             # For nested objects without modifier/value, recurse
             if not modifier:
-                result[key] = transform_saved_filter_to_graphql(value, filter_mode)
+                transformed = transform_saved_filter_to_graphql(value, filter_mode)
+                if transformed:
+                    result[key] = transformed
                 continue
             
             # If we have modifier but no value, add empty string for value
@@ -2576,6 +2797,220 @@ async def endpoint_image(request):
         # Return transparent 1x1 PNG as fallback for other types
         return Response(content=b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82', media_type='image/png', headers=cache_headers)
 
+async def endpoint_user_items_resume(request):
+    """Return resume/in-progress items - currently returns empty."""
+    # TODO: Could integrate with Stash's continue_watching or playback history
+    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+
+async def endpoint_ping(request):
+    """Simple ping endpoint for connectivity checks."""
+    return Response(content="Stash-Jellyfin Proxy", media_type="text/plain")
+
+async def endpoint_sessions_capabilities(request):
+    """Return session capabilities - stub for client compatibility."""
+    return JSONResponse({})
+
+async def endpoint_items_counts(request):
+    """Return item counts by type."""
+    # Query Stash for counts
+    try:
+        count_q = """query { 
+            findScenes { count }
+            findPerformers { count }
+            findStudios { count }
+            findMovies { count }
+        }"""
+        res = stash_query(count_q)
+        data = res.get("data", {})
+        return JSONResponse({
+            "MovieCount": data.get("findScenes", {}).get("count", 0),
+            "SeriesCount": 0,
+            "EpisodeCount": 0,
+            "ArtistCount": data.get("findPerformers", {}).get("count", 0),
+            "ProgramCount": 0,
+            "TrailerCount": 0,
+            "SongCount": 0,
+            "AlbumCount": 0,
+            "MusicVideoCount": 0,
+            "BoxSetCount": data.get("findMovies", {}).get("count", 0),
+            "BookCount": 0,
+            "ItemCount": data.get("findScenes", {}).get("count", 0)
+        })
+    except Exception as e:
+        logger.error(f"Error getting item counts: {e}")
+        return JSONResponse({"ItemCount": 0})
+
+async def endpoint_user_favorites(request):
+    """Handle favorite items - returns empty since Stash doesn't sync favorites."""
+    # Stash has an 'organized' field but not a favorites system
+    # Could potentially use tags to implement favorites in the future
+    user_id = request.path_params.get("user_id")
+    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+
+async def endpoint_user_item_favorite(request):
+    """Toggle favorite status on an item - stub that accepts but doesn't persist."""
+    # Accept the request but don't actually do anything since Stash doesn't have favorites
+    # Could potentially add/remove a "Favorites" tag in Stash in the future
+    return JSONResponse({"IsFavorite": True})
+
+async def endpoint_user_item_unfavorite(request):
+    """Remove favorite status - stub."""
+    return JSONResponse({"IsFavorite": False})
+
+async def endpoint_user_item_rating(request):
+    """Update item rating - stub that accepts but doesn't persist."""
+    # Stash has a rating100 field (0-100), Jellyfin uses different scales
+    # Could potentially sync this in the future
+    return JSONResponse({})
+
+async def endpoint_user_played_items(request):
+    """Mark item as played - stub."""
+    return JSONResponse({})
+
+async def endpoint_user_unplayed_items(request):
+    """Mark item as unplayed - stub."""
+    return JSONResponse({})
+
+async def endpoint_collections(request):
+    """Return collections - maps to Stash groups/movies."""
+    # Could return groups as collections, but for now return empty
+    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+
+async def endpoint_playlists(request):
+    """Return playlists - Stash doesn't have playlists."""
+    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+
+async def endpoint_genres(request):
+    """Return genres - could map to Stash tags."""
+    user_id = request.path_params.get("user_id")
+    parent_id = request.query_params.get("ParentId") or request.query_params.get("parentId")
+    
+    # Return Stash tags as genres
+    try:
+        q = """query { findTags(filter: {per_page: 100, sort: "name", direction: ASC}) { 
+            tags { id name scene_count } 
+        }}"""
+        res = stash_query(q)
+        tags = res.get("data", {}).get("findTags", {}).get("tags", [])
+        items = []
+        for t in tags:
+            if t.get("scene_count", 0) > 0:
+                items.append({
+                    "Name": t["name"],
+                    "Id": f"genre-{t['id']}",
+                    "ServerId": SERVER_ID,
+                    "Type": "Genre"
+                })
+        return JSONResponse({"Items": items, "TotalRecordCount": len(items), "StartIndex": 0})
+    except Exception as e:
+        logger.error(f"Error getting genres: {e}")
+        return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+
+async def endpoint_persons(request):
+    """Return persons - maps to Stash performers."""
+    # This is an alternative endpoint for accessing performers
+    start_index = int(request.query_params.get("startIndex") or request.query_params.get("StartIndex") or 0)
+    limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 50)
+    
+    try:
+        count_q = """query { findPerformers { count } }"""
+        count_res = stash_query(count_q)
+        total_count = count_res.get("data", {}).get("findPerformers", {}).get("count", 0)
+        
+        page = (start_index // limit) + 1
+        q = """query FindPerformers($page: Int!, $per_page: Int!) { 
+            findPerformers(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) { 
+                performers { id name image_path scene_count } 
+            } 
+        }"""
+        res = stash_query(q, {"page": page, "per_page": limit})
+        performers = res.get("data", {}).get("findPerformers", {}).get("performers", [])
+        
+        items = []
+        for p in performers:
+            items.append({
+                "Name": p["name"],
+                "Id": f"performer-{p['id']}",
+                "ServerId": SERVER_ID,
+                "Type": "Person",
+                "PrimaryImageTag": "img" if p.get("image_path") else None
+            })
+        return JSONResponse({"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index})
+    except Exception as e:
+        logger.error(f"Error getting persons: {e}")
+        return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+
+async def endpoint_studios(request):
+    """Return studios list via /Studios endpoint."""
+    start_index = int(request.query_params.get("startIndex") or request.query_params.get("StartIndex") or 0)
+    limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 50)
+    
+    try:
+        count_q = """query { findStudios { count } }"""
+        count_res = stash_query(count_q)
+        total_count = count_res.get("data", {}).get("findStudios", {}).get("count", 0)
+        
+        page = (start_index // limit) + 1
+        q = """query FindStudios($page: Int!, $per_page: Int!) { 
+            findStudios(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) { 
+                studios { id name image_path scene_count } 
+            } 
+        }"""
+        res = stash_query(q, {"page": page, "per_page": limit})
+        studios = res.get("data", {}).get("findStudios", {}).get("studios", [])
+        
+        items = []
+        for s in studios:
+            items.append({
+                "Name": s["name"],
+                "Id": f"studio-{s['id']}",
+                "ServerId": SERVER_ID,
+                "Type": "Studio",
+                "PrimaryImageTag": "img" if s.get("image_path") else None
+            })
+        return JSONResponse({"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index})
+    except Exception as e:
+        logger.error(f"Error getting studios: {e}")
+        return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+
+async def endpoint_artists(request):
+    """Return artists - maps to Stash performers (alternative endpoint)."""
+    return await endpoint_persons(request)
+
+async def endpoint_years(request):
+    """Return available years for filtering."""
+    # Could query Stash for distinct years from scenes
+    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+
+async def endpoint_similar(request):
+    """Return similar items - stub."""
+    item_id = request.path_params.get("item_id")
+    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+
+async def endpoint_recommendations(request):
+    """Return recommendations - stub."""
+    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+
+async def endpoint_instant_mix(request):
+    """Return instant mix playlist - stub."""
+    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+
+async def endpoint_intros(request):
+    """Return intro/trailer items - stub."""
+    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+
+async def endpoint_special_features(request):
+    """Return special features - stub."""
+    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+
+async def endpoint_branding(request):
+    """Return branding configuration."""
+    return JSONResponse({
+        "LoginDisclaimer": None,
+        "CustomCss": None,
+        "SplashscreenEnabled": False
+    })
+
 async def catch_all(request):
     """Catch any unhandled routes and log them for debugging."""
     logger.warning(f"UNHANDLED ENDPOINT: {request.method} {request.url.path} - Query: {dict(request.query_params)}")
@@ -2587,18 +3022,32 @@ routes = [
     Route("/", endpoint_root),
     Route("/System/Info", endpoint_system_info),
     Route("/System/Info/Public", endpoint_public_info),
+    Route("/System/Ping", endpoint_ping),
+    Route("/Branding/Configuration", endpoint_branding),
     Route("/Users/AuthenticateByName", endpoint_authenticate_by_name, methods=["POST"]),
     Route("/Users/{user_id}", endpoint_user_by_id),
     Route("/Users/{user_id}/Views", endpoint_user_views),
     Route("/Users/{user_id}/Items/Latest", endpoint_latest_items),
+    Route("/Users/{user_id}/Items/Resume", endpoint_user_items_resume),
     Route("/Users/{user_id}/GroupingOptions", endpoint_grouping_options),
+    Route("/Users/{user_id}/FavoriteItems", endpoint_user_favorites),
+    Route("/Users/{user_id}/Items/{item_id}/Rating", endpoint_user_item_rating, methods=["POST", "DELETE"]),
+    Route("/Users/{user_id}/FavoriteItems/{item_id}", endpoint_user_item_favorite, methods=["POST"]),
+    Route("/Users/{user_id}/FavoriteItems/{item_id}/Delete", endpoint_user_item_unfavorite, methods=["POST", "DELETE"]),
+    Route("/Users/{user_id}/PlayedItems/{item_id}", endpoint_user_played_items, methods=["POST"]),
+    Route("/Users/{user_id}/PlayingItems/{item_id}", endpoint_user_played_items, methods=["POST", "DELETE"]),
+    Route("/Users/{user_id}/UnplayedItems/{item_id}", endpoint_user_unplayed_items, methods=["POST", "DELETE"]),
     Route("/Library/VirtualFolders", endpoint_virtual_folders),
     Route("/DisplayPreferences/{prefs_id}", endpoint_display_preferences),
     Route("/Shows/NextUp", endpoint_shows_nextup),
     Route("/Users/{user_id}/Items", endpoint_items),
     Route("/Users/{user_id}/Items/{item_id}", endpoint_item_details),
     Route("/Items", endpoint_items),
+    Route("/Items/Counts", endpoint_items_counts),
     Route("/Items/{item_id}/PlaybackInfo", endpoint_playback_info, methods=["GET", "POST"]),
+    Route("/Items/{item_id}/Similar", endpoint_similar),
+    Route("/Items/{item_id}/Intros", endpoint_intros),
+    Route("/Items/{item_id}/SpecialFeatures", endpoint_special_features),
     Route("/Videos/{item_id}/stream", endpoint_stream),
     Route("/Videos/{item_id}/stream.mp4", endpoint_stream),
     Route("/Videos/{item_id}/Subtitles/{subtitle_index}/Stream.srt", endpoint_subtitle),
@@ -2613,6 +3062,18 @@ routes = [
     Route("/Sessions/Playing", endpoint_sessions, methods=["POST"]),
     Route("/Sessions/Playing/Progress", endpoint_sessions, methods=["POST"]),
     Route("/Sessions/Playing/Stopped", endpoint_sessions, methods=["POST"]),
+    Route("/Sessions/Capabilities", endpoint_sessions_capabilities, methods=["POST"]),
+    Route("/Sessions/Capabilities/Full", endpoint_sessions_capabilities, methods=["POST"]),
+    Route("/Collections", endpoint_collections),
+    Route("/Playlists", endpoint_playlists),
+    Route("/Genres", endpoint_genres),
+    Route("/MusicGenres", endpoint_genres),
+    Route("/Persons", endpoint_persons),
+    Route("/Studios", endpoint_studios),
+    Route("/Artists", endpoint_artists),
+    Route("/Years", endpoint_years),
+    Route("/Movies/Recommendations", endpoint_recommendations),
+    Route("/Items/{item_id}/InstantMix", endpoint_instant_mix),
     Route("/{path:path}", catch_all),
 ]
 
@@ -2632,7 +3093,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.40 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.50 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
