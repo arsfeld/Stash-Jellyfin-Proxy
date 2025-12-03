@@ -4301,6 +4301,26 @@ ui_middleware = [
 
 ui_app = Starlette(debug=False, routes=ui_routes, middleware=ui_middleware)
 
+# --- Hypercorn Disconnect Error Filter ---
+class SuppressDisconnectFilter(logging.Filter):
+    """Filter to suppress expected socket disconnect errors from Hypercorn."""
+    
+    def filter(self, record):
+        # Suppress "socket.send() raised exception" messages
+        msg = record.getMessage()
+        if "socket.send() raised exception" in msg:
+            return False
+        if "socket.recv() raised exception" in msg:
+            return False
+        
+        # Also suppress common disconnect exception types
+        if record.exc_info:
+            exc_type = record.exc_info[0]
+            if exc_type in (ConnectionResetError, BrokenPipeError, asyncio.CancelledError):
+                return False
+        
+        return True
+
 # --- Main Execution ---
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Stash-Jellyfin Proxy Server")
@@ -4318,6 +4338,10 @@ if __name__ == "__main__":
     # Remove file handler if --no-log-file is set
     if args.no_log_file:
         logger.handlers = [h for h in logger.handlers if not isinstance(h, (RotatingFileHandler, logging.FileHandler))]
+
+    # Suppress Hypercorn's socket disconnect errors (expected during video seeking)
+    hypercorn_error_logger = logging.getLogger("hypercorn.error")
+    hypercorn_error_logger.addFilter(SuppressDisconnectFilter())
 
     logger.info(f"--- Stash-Jellyfin Proxy v3.69 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
