@@ -303,6 +303,10 @@ def setup_logging():
 logger = setup_logging()
 
 # --- Middleware for Request Logging ---
+# Track last activity time for each scene to detect resumes
+_stream_last_seen = {}  # scene_id -> timestamp
+STREAM_RESUME_THRESHOLD = 10  # seconds of inactivity before considering it a "resume"
+
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         start_time = time.time()
@@ -332,11 +336,24 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 # Extract scene ID from path like /Videos/scene-35734/stream
                 match = re.search(r'/(scene-\d+)/', path)
                 scene_id = match.group(1) if match else "unknown"
+                now = time.time()
                 
-                # First request is slow (stream starting), follow-ups are fast (range requests)
+                # Check if this is a new stream, resume, or continuation
+                last_seen = _stream_last_seen.get(scene_id)
+                _stream_last_seen[scene_id] = now
+                
                 if ms > 500:
+                    # Slow response = new stream starting
                     logger.info(f"▶ Stream started: {scene_id} ({ms}ms)")
+                elif last_seen is None:
+                    # First time seeing this scene (but fast response - maybe cached)
+                    logger.info(f"▶ Stream started: {scene_id} ({ms}ms)")
+                elif (now - last_seen) > STREAM_RESUME_THRESHOLD:
+                    # Gap in activity = resumed after pause
+                    gap = int(now - last_seen)
+                    logger.info(f"▶ Stream resumed: {scene_id} (paused {gap}s)")
                 else:
+                    # Continuous playback
                     logger.debug(f"Stream continue: {scene_id} ({ms}ms)")
             elif is_slow:
                 logger.info(f"Slow request: {path} ({ms}ms)")
@@ -3231,7 +3248,7 @@ if __name__ == "__main__":
     if args.no_log_file:
         logger.handlers = [h for h in logger.handlers if not isinstance(h, (RotatingFileHandler, logging.FileHandler))]
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.59 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.60 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
