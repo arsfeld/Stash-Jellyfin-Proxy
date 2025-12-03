@@ -906,10 +906,12 @@ def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
     Saved filters use a complex format like:
         {'is_missing': {'modifier': 'EQUALS', 'value': 'cover'}}
         {'tags': {'value': ['123', '456'], 'modifier': 'INCLUDES'}}
+        {'details': {'modifier': 'IS_NULL'}}  # No value for null checks
     
-    GraphQL expects simpler format like:
+    GraphQL expects:
         {'is_missing': 'cover'}
-        {'tags': {'value': ['123', '456'], 'modifier': INCLUDES}}  (modifier as enum, not string)
+        {'tags': {'value': ['123', '456'], 'modifier': INCLUDES}}
+        {'details': {'value': '', 'modifier': IS_NULL}}  # Empty string for null checks
     """
     if not object_filter or not isinstance(object_filter, dict):
         return {}
@@ -958,6 +960,11 @@ def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
                 result[key] = val
                 continue
             
+            # Handle IS_NULL and NOT_NULL modifiers - they need an empty string value
+            if modifier in ('IS_NULL', 'NOT_NULL'):
+                result[key] = {'value': '', 'modifier': modifier}
+                continue
+            
             # For most filter fields with modifier/value, pass through as-is
             # The GraphQL API expects the modifier as a string enum
             if modifier and val is not None:
@@ -969,19 +976,13 @@ def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
                 result[key] = transform_saved_filter_to_graphql(value, filter_mode)
                 continue
             
-            # If we have modifier but no value, check for other keys
-            # (some filters have 'depth' or other params)
-            transformed = {}
+            # If we have modifier but no value, add empty string for value
+            # (needed for some modifiers like IS_NULL, NOT_NULL)
+            transformed = {'modifier': modifier, 'value': val if val is not None else ''}
             for k, v in value.items():
-                if k == 'modifier':
-                    transformed['modifier'] = v
-                elif k == 'value':
-                    if v is not None:
-                        transformed['value'] = v
-                else:
+                if k not in ('modifier', 'value'):
                     transformed[k] = v
-            if transformed:
-                result[key] = transformed
+            result[key] = transformed
     
     return result
 
