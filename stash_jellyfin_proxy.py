@@ -1507,23 +1507,56 @@ async def endpoint_items(request):
         
         # On first page, add FILTERS folder at the top if there are saved filters
         # We add it as an extra item (not affecting pagination of actual groups)
-        if start_index == 0 and has_filters:
+        prepend_filters = start_index == 0 and has_filters
+        if prepend_filters:
             items.append(format_filters_folder("root-groups"))
         
         # Total count includes Filters folder if present
         total_count = group_count + 1 if has_filters else group_count
         
-        # Calculate page - Stash uses 1-indexed pages
-        page = (start_index // limit) + 1
+        # Use a fixed page size (50) for consistent pagination
+        # This avoids misalignment when the last page has a smaller limit
+        FIXED_PAGE_SIZE = 50
         
-        # Query for movies - always try to get the image, endpoint will handle failures
+        # Calculate which Stash page(s) we need and the offset within that page
+        stash_page = (start_index // FIXED_PAGE_SIZE) + 1
+        offset_within_page = start_index % FIXED_PAGE_SIZE
+        items_needed = limit
+        
+        logger.debug(f"Groups pagination: startIndex={start_index}, limit={limit}, stash_page={stash_page}, offset_within_page={offset_within_page}")
+        
+        # Query for movies - fetch using fixed page size
         q = """query FindMovies($page: Int!, $per_page: Int!) { 
             findMovies(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) { 
                 movies { id name scene_count } 
             } 
         }"""
-        res = stash_query(q, {"page": page, "per_page": limit})
-        for m in res.get("data", {}).get("findMovies", {}).get("movies", []):
+        
+        # Fetch pages until we have enough items
+        fetched_movies = []
+        current_page = stash_page
+        while len(fetched_movies) < offset_within_page + items_needed:
+            res = stash_query(q, {"page": current_page, "per_page": FIXED_PAGE_SIZE})
+            page_movies = res.get("data", {}).get("findMovies", {}).get("movies", [])
+            if not page_movies:
+                break  # No more data
+            fetched_movies.extend(page_movies)
+            current_page += 1
+            # Safety: don't fetch more than 2 pages
+            if current_page > stash_page + 1:
+                break
+        
+        # Slice to get the items we need
+        movies_to_return = fetched_movies[offset_within_page:offset_within_page + items_needed]
+        
+        # Log Y-groups for debugging
+        y_groups = [m["name"] for m in movies_to_return if m.get("name", "").upper().startswith("Y")]
+        if y_groups:
+            logger.info(f"Groups starting with Y in this batch: {y_groups}")
+        
+        logger.debug(f"Groups: fetched {len(fetched_movies)} total, returning {len(movies_to_return)} (offset {offset_within_page})")
+        
+        for m in movies_to_return:
             group_item = {
                 "Name": m["name"],
                 "Id": f"group-{m['id']}",
@@ -2599,7 +2632,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.39 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.40 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
