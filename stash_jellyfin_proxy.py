@@ -369,12 +369,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     # New stream - fetch title and log
                     title = get_scene_title(scene_id)
                     _active_streams[scene_id] = {"last_seen": now, "title": title}
-                    logger.info(f"▶ Stream started: {title}")
+                    logger.info(f"▶ Stream started: {title} ({scene_id})")
                 elif (now - stream_info["last_seen"]) > STREAM_RESUME_THRESHOLD:
                     # Gap in activity = resumed after pause
                     gap = int(now - stream_info["last_seen"])
                     stream_info["last_seen"] = now
-                    logger.info(f"▶ Stream resumed: {stream_info['title']} (paused {gap}s)")
+                    logger.info(f"▶ Stream resumed: {stream_info['title']} ({scene_id}, paused {gap}s)")
                 else:
                     # Continuous playback - just update timestamp
                     stream_info["last_seen"] = now
@@ -2346,10 +2346,10 @@ async def endpoint_sessions(request):
             if item_id in _active_streams:
                 title = _active_streams[item_id]["title"]
                 mark_stream_stopped(item_id)
-                logger.info(f"⏹ Stream stopped: {title}")
+                logger.info(f"⏹ Stream stopped: {title} ({item_id})")
             elif item_id.startswith("scene-"):
                 title = get_scene_title(item_id)
-                logger.info(f"⏹ Stream stopped: {title}")
+                logger.info(f"⏹ Stream stopped: {title} ({item_id})")
             else:
                 logger.info(f"⏹ Stream stopped: {item_id}")
         except:
@@ -3291,7 +3291,7 @@ if __name__ == "__main__":
     if args.no_log_file:
         logger.handlers = [h for h in logger.handlers if not isinstance(h, (RotatingFileHandler, logging.FileHandler))]
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.62 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.63 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
