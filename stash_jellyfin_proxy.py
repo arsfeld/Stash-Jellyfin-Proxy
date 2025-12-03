@@ -58,7 +58,7 @@ LATEST_GROUPS = ["Scenes"]  # e.g., ["Scenes", "VR", "Favorites"]
 
 # Server identity
 SERVER_NAME = "Stash Media Server"
-SERVER_ID = "stash-jellyfin-proxy-001"
+SERVER_ID = "a1b2c3d4e5f6a1b2c3d4e5f6"  # Must be consistent - changing breaks Infuse pairing
 
 # Pagination settings
 DEFAULT_PAGE_SIZE = 50
@@ -119,9 +119,9 @@ if _config:
     if latest_groups_str:
         LATEST_GROUPS = [t.strip() for t in latest_groups_str.split(",") if t.strip()]
     
-    # Server identity
+    # Server identity (only SERVER_NAME is configurable - SERVER_ID must stay constant)
     SERVER_NAME = _config.get("SERVER_NAME", SERVER_NAME)
-    SERVER_ID = _config.get("SERVER_ID", SERVER_ID)
+    # Note: SERVER_ID should NOT be loaded from config - changing it breaks Infuse pairing
     
     # Pagination settings
     if "DEFAULT_PAGE_SIZE" in _config:
@@ -3093,7 +3093,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.50 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.51 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
