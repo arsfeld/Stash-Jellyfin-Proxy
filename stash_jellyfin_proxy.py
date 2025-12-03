@@ -195,6 +195,12 @@ else:
     SJS_USER = os.getenv("SJS_USER", SJS_USER)
     SJS_PASSWORD = os.getenv("SJS_PASSWORD", SJS_PASSWORD)
     SERVER_ID = os.getenv("SERVER_ID", SERVER_ID)
+    
+    # Additional env vars for Docker deployment
+    if os.getenv("REQUIRE_AUTH_FOR_CONFIG"):
+        REQUIRE_AUTH_FOR_CONFIG = os.getenv("REQUIRE_AUTH_FOR_CONFIG", "").lower() in ('true', 'yes', '1', 'on')
+    if os.getenv("LOG_DIR"):
+        LOG_DIR = os.getenv("LOG_DIR", LOG_DIR)
 
 # Validate required config: SERVER_ID
 if not SERVER_ID:
@@ -529,7 +535,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v3.74</span>
+                <span id="version">v3.75</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -837,7 +843,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v3.74';
+                document.getElementById('version').textContent = data.version || 'v3.75';
                 document.getElementById('proxy-uptime').textContent = data.uptime ? `Uptime: ${formatDuration(data.uptime)}` : '';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
@@ -4290,7 +4296,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - PROXY_START_TIME) if PROXY_START_TIME else 0
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v3.74",
+        "version": "v3.75",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "uptime": uptime_seconds,
@@ -4633,73 +4639,74 @@ if __name__ == "__main__":
     asyncio_logger = logging.getLogger("asyncio")
     asyncio_logger.setLevel(logging.CRITICAL)  # Only show critical asyncio errors
 
-    logger.info(f"--- Stash-Jellyfin Proxy v3.74 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.75 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
 
-    if check_stash_connection():
-        PROXY_RUNNING = True
-        PROXY_START_TIME = time.time()
+    stash_ok = check_stash_connection()
+    if not stash_ok:
+        logger.warning("Could not connect to Stash. Proxy will start but streaming will not work until Stash is reachable.")
+        logger.warning(f"Check STASH_URL ({STASH_URL}) and STASH_API_KEY settings.")
+    
+    PROXY_RUNNING = True
+    PROXY_START_TIME = time.time()
 
-        # Configure proxy server
-        proxy_config = Config()
-        proxy_config.bind = [f"{PROXY_BIND}:{PROXY_PORT}"]
-        proxy_config.accesslog = logging.getLogger("hypercorn.access")
-        proxy_config.access_log_format = "%(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s"
-        proxy_config.errorlog = logging.getLogger("hypercorn.error")
+    # Configure proxy server
+    proxy_config = Config()
+    proxy_config.bind = [f"{PROXY_BIND}:{PROXY_PORT}"]
+    proxy_config.accesslog = logging.getLogger("hypercorn.access")
+    proxy_config.access_log_format = "%(h)s %(l)s %(u)s %(t)s \"%(r)s\" %(s)s %(b)s"
+    proxy_config.errorlog = logging.getLogger("hypercorn.error")
 
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    shutdown_event = asyncio.Event()
+    
+    # Update module-level reference for restart endpoint
+    import __main__
+    __main__._shutdown_event = shutdown_event
+    
+    def signal_handler():
+        logger.info("Shutdown signal received...")
+        shutdown_event.set()
+
+    async def run_servers():
+        """Run both proxy and UI servers with graceful shutdown."""
+        # Set up signal handlers
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            loop.add_signal_handler(sig, signal_handler)
         
-        shutdown_event = asyncio.Event()
-        
-        # Update module-level reference for restart endpoint
-        import __main__
-        __main__._shutdown_event = shutdown_event
-        
-        def signal_handler():
-            logger.info("Shutdown signal received...")
-            shutdown_event.set()
+        tasks = [serve(app, proxy_config, shutdown_trigger=shutdown_event.wait)]
 
-        async def run_servers():
-            """Run both proxy and UI servers with graceful shutdown."""
-            # Set up signal handlers
-            for sig in (signal.SIGINT, signal.SIGTERM):
-                loop.add_signal_handler(sig, signal_handler)
-            
-            tasks = [serve(app, proxy_config, shutdown_trigger=shutdown_event.wait)]
+        # Start UI server if enabled
+        if UI_PORT > 0 and not args.no_ui:
+            ui_config = Config()
+            ui_config.bind = [f"{PROXY_BIND}:{UI_PORT}"]
+            ui_config.accesslog = None  # Disable access logging for UI
+            ui_config.errorlog = logging.getLogger("hypercorn.error")
+            tasks.append(serve(ui_app, ui_config, shutdown_trigger=shutdown_event.wait))
+            logger.info(f"Web UI: http://{PROXY_BIND}:{UI_PORT}")
 
-            # Start UI server if enabled
-            if UI_PORT > 0 and not args.no_ui:
-                ui_config = Config()
-                ui_config.bind = [f"{PROXY_BIND}:{UI_PORT}"]
-                ui_config.accesslog = None  # Disable access logging for UI
-                ui_config.errorlog = logging.getLogger("hypercorn.error")
-                tasks.append(serve(ui_app, ui_config, shutdown_trigger=shutdown_event.wait))
-                logger.info(f"Web UI: http://{PROXY_BIND}:{UI_PORT}")
+        logger.info("Starting Hypercorn server...")
+        await asyncio.gather(*tasks)
+        logger.info("Servers stopped.")
 
-            logger.info("Starting Hypercorn server...")
-            await asyncio.gather(*tasks)
-            logger.info("Servers stopped.")
-
-        try:
-            loop.run_until_complete(run_servers())
-        except KeyboardInterrupt:
-            pass
-        except OSError as e:
-            if e.errno == 98:  # Address already in use
-                logger.error(f"ABORTING: Port already in use. Is another instance running?")
-                logger.error(f"  Proxy port {PROXY_PORT} or UI port {UI_PORT} is already bound.")
-                logger.error(f"  Try: lsof -i :{PROXY_PORT} or lsof -i :{UI_PORT}")
-            else:
-                logger.error(f"ABORTING: Network error: {e}")
-            sys.exit(1)
-        
-        # Check if restart was requested (must happen after event loop exits)
-        if _restart_requested:
-            logger.info("Executing restart...")
-            time.sleep(0.5)  # Brief pause before restart
-            os.execv(sys.executable, [sys.executable, os.path.abspath(__file__)] + sys.argv[1:])
-    else:
-        logger.error("ABORTING: Could not connect to Stash. Check configuration.")
+    try:
+        loop.run_until_complete(run_servers())
+    except KeyboardInterrupt:
+        pass
+    except OSError as e:
+        if e.errno == 98:  # Address already in use
+            logger.error(f"ABORTING: Port already in use. Is another instance running?")
+            logger.error(f"  Proxy port {PROXY_PORT} or UI port {UI_PORT} is already bound.")
+            logger.error(f"  Try: lsof -i :{PROXY_PORT} or lsof -i :{UI_PORT}")
+        else:
+            logger.error(f"ABORTING: Network error: {e}")
         sys.exit(1)
+    
+    # Check if restart was requested (must happen after event loop exits)
+    if _restart_requested:
+        logger.info("Executing restart...")
+        time.sleep(0.5)  # Brief pause before restart
+        os.execv(sys.executable, [sys.executable, os.path.abspath(__file__)] + sys.argv[1:])
