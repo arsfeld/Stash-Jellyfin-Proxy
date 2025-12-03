@@ -899,6 +899,92 @@ def get_stash_sort_params(request) -> Tuple[str, str]:
     
     return stash_sort, stash_direction
 
+def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
+    """
+    Transform a saved filter's object_filter format to GraphQL query format.
+    
+    Saved filters use a complex format like:
+        {'is_missing': {'modifier': 'EQUALS', 'value': 'cover'}}
+        {'tags': {'value': ['123', '456'], 'modifier': 'INCLUDES'}}
+    
+    GraphQL expects simpler format like:
+        {'is_missing': 'cover'}
+        {'tags': {'value': ['123', '456'], 'modifier': INCLUDES}}  (modifier as enum, not string)
+    """
+    if not object_filter or not isinstance(object_filter, dict):
+        return {}
+    
+    result = {}
+    
+    for key, value in object_filter.items():
+        if value is None:
+            continue
+            
+        # Handle nested filter groups (AND, OR, NOT)
+        if key in ('AND', 'OR', 'NOT'):
+            if isinstance(value, list):
+                result[key] = [transform_saved_filter_to_graphql(v, filter_mode) for v in value]
+            elif isinstance(value, dict):
+                result[key] = transform_saved_filter_to_graphql(value, filter_mode)
+            continue
+        
+        # Handle simple string fields that don't need transformation
+        if isinstance(value, str):
+            result[key] = value
+            continue
+            
+        # Handle boolean fields
+        if isinstance(value, bool):
+            result[key] = value
+            continue
+            
+        # Handle integer fields
+        if isinstance(value, (int, float)):
+            result[key] = value
+            continue
+        
+        # Handle list of simple values
+        if isinstance(value, list):
+            result[key] = value
+            continue
+        
+        # Handle dict with modifier/value structure
+        if isinstance(value, dict):
+            modifier = value.get('modifier')
+            val = value.get('value')
+            
+            # Special case: is_missing just needs the string value
+            if key == 'is_missing' and modifier == 'EQUALS':
+                result[key] = val
+                continue
+            
+            # For most filter fields with modifier/value, pass through as-is
+            # The GraphQL API expects the modifier as a string enum
+            if modifier and val is not None:
+                result[key] = {'value': val, 'modifier': modifier}
+                continue
+            
+            # For nested objects without modifier/value, recurse
+            if not modifier:
+                result[key] = transform_saved_filter_to_graphql(value, filter_mode)
+                continue
+            
+            # If we have modifier but no value, check for other keys
+            # (some filters have 'depth' or other params)
+            transformed = {}
+            for k, v in value.items():
+                if k == 'modifier':
+                    transformed['modifier'] = v
+                elif k == 'value':
+                    if v is not None:
+                        transformed['value'] = v
+                else:
+                    transformed[k] = v
+            if transformed:
+                result[key] = transformed
+    
+    return result
+
 async def endpoint_items(request):
     user_id = request.path_params.get("user_id")
     # Handle both ParentId and parentId (Infuse uses lowercase)
@@ -1023,6 +1109,11 @@ async def endpoint_items(request):
                 
                 logger.info(f"Applying saved filter '{saved_filter.get('name')}' (id={filter_id}, mode={filter_mode})")
                 logger.info(f"Raw object_filter type: {type(object_filter)}, value: {object_filter}")
+                
+                # Transform saved filter format to GraphQL query format
+                graphql_filter = transform_saved_filter_to_graphql(object_filter, filter_mode)
+                logger.info(f"Transformed filter: {graphql_filter}")
+                
                 logger.debug(f"Filter find_filter: {find_filter}")
                 logger.debug(f"Filter object_filter: {object_filter}")
                 
@@ -1036,7 +1127,7 @@ async def endpoint_items(request):
                     count_q = """query CountScenes($scene_filter: SceneFilterType) { 
                         findScenes(scene_filter: $scene_filter) { count } 
                     }"""
-                    count_res = stash_query(count_q, {"scene_filter": object_filter})
+                    count_res = stash_query(count_q, {"scene_filter": graphql_filter})
                     total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
                     
                     # Get paginated results
@@ -1049,7 +1140,7 @@ async def endpoint_items(request):
                         }} 
                     }}"""
                     res = stash_query(q, {
-                        "scene_filter": object_filter,
+                        "scene_filter": graphql_filter,
                         "page": page, 
                         "per_page": limit, 
                         "sort": sort_field, 
@@ -1065,7 +1156,7 @@ async def endpoint_items(request):
                     count_q = """query CountPerformers($performer_filter: PerformerFilterType) { 
                         findPerformers(performer_filter: $performer_filter) { count } 
                     }"""
-                    count_res = stash_query(count_q, {"performer_filter": object_filter})
+                    count_res = stash_query(count_q, {"performer_filter": graphql_filter})
                     total_count = count_res.get("data", {}).get("findPerformers", {}).get("count", 0)
                     
                     # Get paginated performers
@@ -1077,7 +1168,7 @@ async def endpoint_items(request):
                             performers { id name image_path scene_count } 
                         } 
                     }"""
-                    res = stash_query(q, {"performer_filter": object_filter, "page": page, "per_page": limit})
+                    res = stash_query(q, {"performer_filter": graphql_filter, "page": page, "per_page": limit})
                     performers = res.get("data", {}).get("findPerformers", {}).get("performers", [])
                     logger.info(f"Saved filter returned {len(performers)} performers (page {page}, total {total_count})")
                     for p in performers:
@@ -1101,7 +1192,7 @@ async def endpoint_items(request):
                     count_q = """query CountStudios($studio_filter: StudioFilterType) { 
                         findStudios(studio_filter: $studio_filter) { count } 
                     }"""
-                    count_res = stash_query(count_q, {"studio_filter": object_filter})
+                    count_res = stash_query(count_q, {"studio_filter": graphql_filter})
                     total_count = count_res.get("data", {}).get("findStudios", {}).get("count", 0)
                     
                     # Get paginated studios
@@ -1113,7 +1204,7 @@ async def endpoint_items(request):
                             studios { id name image_path scene_count } 
                         } 
                     }"""
-                    res = stash_query(q, {"studio_filter": object_filter, "page": page, "per_page": limit})
+                    res = stash_query(q, {"studio_filter": graphql_filter, "page": page, "per_page": limit})
                     studios = res.get("data", {}).get("findStudios", {}).get("studios", [])
                     logger.info(f"Saved filter returned {len(studios)} studios (page {page}, total {total_count})")
                     for s in studios:
@@ -1137,7 +1228,7 @@ async def endpoint_items(request):
                     count_q = """query CountGroups($group_filter: GroupFilterType) { 
                         findGroups(group_filter: $group_filter) { count } 
                     }"""
-                    count_res = stash_query(count_q, {"group_filter": object_filter})
+                    count_res = stash_query(count_q, {"group_filter": graphql_filter})
                     total_count = count_res.get("data", {}).get("findGroups", {}).get("count", 0)
                     
                     # Get paginated groups
@@ -1149,7 +1240,7 @@ async def endpoint_items(request):
                             groups { id name scene_count } 
                         } 
                     }"""
-                    res = stash_query(q, {"group_filter": object_filter, "page": page, "per_page": limit})
+                    res = stash_query(q, {"group_filter": graphql_filter, "page": page, "per_page": limit})
                     groups = res.get("data", {}).get("findGroups", {}).get("groups", [])
                     logger.info(f"Saved filter returned {len(groups)} groups (page {page}, total {total_count})")
                     for g in groups:
@@ -2454,7 +2545,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.33 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.34 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
