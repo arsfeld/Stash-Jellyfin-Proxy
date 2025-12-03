@@ -526,7 +526,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v3.67</span>
+                <span id="version">v3.68</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -757,7 +757,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v3.67';
+                document.getElementById('version').textContent = data.version || 'v3.68';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
             }
@@ -3296,32 +3296,64 @@ def fetch_from_stash(url: str, extra_headers: Dict[str, str] = None, timeout: in
         raise
 
 async def endpoint_stream(request):
-    """Proxy video stream from Stash with proper authentication."""
+    """Proxy video stream from Stash with proper authentication using true streaming."""
+    from starlette.responses import StreamingResponse
+    
     item_id = request.path_params.get("item_id")
     numeric_id = get_numeric_id(item_id)
     stash_stream_url = f"{STASH_URL}/scene/{numeric_id}/stream"
 
     logger.debug(f"Proxying stream for {item_id} from {stash_stream_url}")
 
-    # Build extra headers
+    # Build extra headers (forward Range header for seeking)
     extra_headers = {}
     if "range" in request.headers:
         extra_headers["Range"] = request.headers["range"]
 
     try:
-        data, content_type, resp_headers = fetch_from_stash(stash_stream_url, extra_headers, timeout=120, stream=True)
-
-        from starlette.responses import Response
+        # Use authenticated session with stream=True for chunked transfer
+        session = get_stash_session()
+        response = session.get(stash_stream_url, headers=extra_headers, timeout=30, stream=True, allow_redirects=True)
+        
+        content_type = response.headers.get('Content-Type', 'video/mp4')
+        
+        # Check for auth failure (HTML instead of video)
+        if 'text/html' in content_type:
+            logger.error(f"Got HTML response instead of video from {stash_stream_url}")
+            return JSONResponse({"error": "Authentication failed"}, status_code=401)
+        
+        response.raise_for_status()
+        
+        # Build response headers
         headers = {"Accept-Ranges": "bytes"}
-        if "Content-Length" in resp_headers:
-            headers["Content-Length"] = resp_headers["Content-Length"]
-        if "Content-Range" in resp_headers:
-            headers["Content-Range"] = resp_headers["Content-Range"]
+        if "Content-Length" in response.headers:
+            headers["Content-Length"] = response.headers["Content-Length"]
+        if "Content-Range" in response.headers:
+            headers["Content-Range"] = response.headers["Content-Range"]
+        
+        status_code = 206 if "Content-Range" in response.headers else 200
+        content_length = response.headers.get("Content-Length", "?")
+        logger.debug(f"Stream response: {content_length} bytes, type={content_type}, status={status_code}")
+        
+        # Generator that yields chunks from Stash directly to client
+        def stream_generator():
+            try:
+                for chunk in response.iter_content(chunk_size=262144):  # 256KB chunks
+                    if chunk:
+                        yield chunk
+            finally:
+                response.close()
+        
+        return StreamingResponse(
+            stream_generator(),
+            media_type=content_type,
+            headers=headers,
+            status_code=status_code
+        )
 
-        status_code = 206 if "Content-Range" in resp_headers else 200
-        logger.debug(f"Stream response: {len(data)} bytes, type={content_type}")
-        return Response(content=data, media_type=content_type, headers=headers, status_code=status_code)
-
+    except requests.exceptions.Timeout:
+        logger.error(f"Stream timeout connecting to Stash: {stash_stream_url}")
+        return JSONResponse({"error": "Stash timeout"}, status_code=504)
     except Exception as e:
         logger.error(f"Stream proxy error: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -4082,7 +4114,7 @@ async def ui_api_status(request):
     """Return proxy status."""
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v3.67",
+        "version": "v3.68",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "stashConnected": STASH_CONNECTED,
@@ -4245,7 +4277,7 @@ if __name__ == "__main__":
     if args.no_log_file:
         logger.handlers = [h for h in logger.handlers if not isinstance(h, (RotatingFileHandler, logging.FileHandler))]
 
-    logger.info(f"--- Stash-Jellyfin Proxy v3.67 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.68 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
 
