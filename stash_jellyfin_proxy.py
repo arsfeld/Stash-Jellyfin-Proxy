@@ -46,6 +46,7 @@ STASH_URL = "https://stash.feldorn.com"
 STASH_API_KEY = ""  # Real Stash API key from Settings -> Security -> API Key
 PROXY_BIND = "0.0.0.0"
 PROXY_PORT = 8096
+UI_PORT = 8097  # Web UI port (set to 0 to disable)
 # User credentials for Infuse authentication
 SJS_USER = "chris"
 SJS_PASSWORD = "infuse12345"
@@ -116,6 +117,8 @@ if _config:
     STASH_API_KEY = _config.get("STASH_API_KEY", STASH_API_KEY)
     PROXY_BIND = _config.get("PROXY_BIND", PROXY_BIND)
     PROXY_PORT = int(_config.get("PROXY_PORT", PROXY_PORT))
+    if "UI_PORT" in _config:
+        UI_PORT = int(_config.get("UI_PORT", UI_PORT))
     SJS_USER = _config.get("SJS_USER", SJS_USER)
     SJS_PASSWORD = _config.get("SJS_PASSWORD", SJS_PASSWORD)
     # Parse TAG_GROUPS as comma-separated list
@@ -185,6 +188,7 @@ else:
     STASH_API_KEY = os.getenv("STASH_API_KEY", STASH_API_KEY)
     PROXY_BIND = os.getenv("PROXY_BIND", PROXY_BIND)
     PROXY_PORT = int(os.getenv("PROXY_PORT", PROXY_PORT))
+    UI_PORT = int(os.getenv("UI_PORT", UI_PORT))
     SJS_USER = os.getenv("SJS_USER", SJS_USER)
     SJS_PASSWORD = os.getenv("SJS_PASSWORD", SJS_PASSWORD)
     SERVER_ID = os.getenv("SERVER_ID", SERVER_ID)
@@ -237,6 +241,642 @@ MENU_ICONS = {
         <circle cx="160" cy="280" r="20" fill="#4a90d9"/>
     </svg>"""
 }
+
+# --- Web UI HTML/CSS/JS ---
+WEB_UI_HTML = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stash-Jellyfin Proxy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #252540;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent: #4a90d9;
+            --accent-hover: #5da0e9;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --border: #3a3a5a;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 220px;
+            background: var(--bg-secondary);
+            padding: 20px 0;
+            border-right: 1px solid var(--border);
+        }
+        .logo {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .logo h1 {
+            font-size: 16px;
+            color: var(--accent);
+        }
+        .logo span {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        .nav-item.active {
+            border-left: 3px solid var(--accent);
+        }
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+        }
+        .main {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        .page-title {
+            font-size: 24px;
+            margin-bottom: 24px;
+        }
+        .card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .status-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .status-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .status-value {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .status-value.running { color: var(--success); }
+        .status-value.stopped { color: var(--error); }
+        .status-value.connected { color: var(--success); }
+        .status-value.disconnected { color: var(--error); }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        .log-viewer {
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            padding: 2px 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .log-DEBUG { color: #888; }
+        .log-INFO { color: var(--text-primary); }
+        .log-WARNING { color: var(--warning); }
+        .log-ERROR { color: var(--error); }
+        .log-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+        .log-filter {
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        .log-count {
+            margin-left: auto;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        .streams-list {
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 16px;
+        }
+        .stream-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-card);
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .stream-title {
+            flex: 1;
+            font-weight: 500;
+        }
+        .stream-time {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--error); }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .hidden { display: none; }
+        select.form-input {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <nav class="sidebar">
+            <div class="logo">
+                <h1>Stash-Jellyfin Proxy</h1>
+                <span id="version">v3.65</span>
+            </div>
+            <a class="nav-item active" data-page="dashboard">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Dashboard
+            </a>
+            <a class="nav-item" data-page="config">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Configuration
+            </a>
+            <a class="nav-item" data-page="logs">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Logs
+            </a>
+        </nav>
+        <main class="main">
+            <!-- Dashboard Page -->
+            <div id="page-dashboard" class="page">
+                <h2 class="page-title">Dashboard</h2>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-label">Proxy Status</div>
+                        <div id="proxy-status" class="status-value">Checking...</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-label">Stash Connection</div>
+                        <div id="stash-status" class="status-value">Checking...</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-label">Stash Version</div>
+                        <div id="stash-version" class="status-value">-</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-label">Active Streams</div>
+                        <div id="stream-count" class="status-value">0</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">Active Streams</h3>
+                    <div id="streams-list" class="streams-list">
+                        <div class="empty-state">No active streams</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">Recent Logs</h3>
+                    <div id="dashboard-logs" class="log-viewer"></div>
+                </div>
+            </div>
+            <!-- Configuration Page -->
+            <div id="page-config" class="page hidden">
+                <h2 class="page-title">Configuration</h2>
+                <form id="config-form">
+                    <div class="card">
+                        <h3 class="card-title">Stash Connection</h3>
+                        <div class="form-group">
+                            <label class="form-label">Stash URL</label>
+                            <input type="text" class="form-input" name="STASH_URL" placeholder="http://localhost:9999">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">API Key</label>
+                            <input type="password" class="form-input" name="STASH_API_KEY" placeholder="Enter API key">
+                            <div class="form-hint">Get from Stash: Settings > Security > API Key</div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Timeout (seconds)</label>
+                                <input type="number" class="form-input" name="STASH_TIMEOUT" value="30">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Retries</label>
+                                <input type="number" class="form-input" name="STASH_RETRIES" value="3">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">Proxy Settings</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Bind Address</label>
+                                <input type="text" class="form-input" name="PROXY_BIND" value="0.0.0.0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Proxy Port</label>
+                                <input type="number" class="form-input" name="PROXY_PORT" value="8096">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">UI Port</label>
+                                <input type="number" class="form-input" name="UI_PORT" value="8097">
+                                <div class="form-hint">Set to 0 to disable Web UI</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">Authentication</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input type="text" class="form-input" name="SJS_USER" placeholder="admin">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-input" name="SJS_PASSWORD" placeholder="Enter password">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">Server Identity</h3>
+                        <div class="form-group">
+                            <label class="form-label">Server ID</label>
+                            <input type="text" class="form-input" name="SERVER_ID" readonly>
+                            <div class="form-hint" style="color: var(--warning);">Do not change - will break Infuse pairing</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Server Name</label>
+                            <input type="text" class="form-input" name="SERVER_NAME" placeholder="Stash Media Server">
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">Library Organization</h3>
+                        <div class="form-group">
+                            <label class="form-label">Tag Groups</label>
+                            <input type="text" class="form-input" name="TAG_GROUPS" placeholder="Favorites, VR, 4K">
+                            <div class="form-hint">Comma-separated tag names to show as library folders</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Latest Groups</label>
+                            <input type="text" class="form-input" name="LATEST_GROUPS" placeholder="Scenes, VR">
+                            <div class="form-hint">Libraries to show on Infuse home screen. "Scenes" = all scenes.</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">Logging</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Log Level</label>
+                                <select class="form-input" name="LOG_LEVEL">
+                                    <option value="DEBUG">DEBUG</option>
+                                    <option value="INFO">INFO</option>
+                                    <option value="WARNING">WARNING</option>
+                                    <option value="ERROR">ERROR</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Log Directory</label>
+                                <input type="text" class="form-input" name="LOG_DIR" placeholder=".">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Log File</label>
+                                <input type="text" class="form-input" name="LOG_FILE" placeholder="stash_jellyfin_proxy.log">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Max Size (MB)</label>
+                                <input type="number" class="form-input" name="LOG_MAX_SIZE_MB" value="10">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Backup Count</label>
+                                <input type="number" class="form-input" name="LOG_BACKUP_COUNT" value="3">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Configuration</button>
+                </form>
+            </div>
+            <!-- Logs Page -->
+            <div id="page-logs" class="page hidden">
+                <h2 class="page-title">Logs</h2>
+                <div class="card">
+                    <div class="log-controls">
+                        <select id="log-level-filter" class="log-filter">
+                            <option value="">All Levels</option>
+                            <option value="DEBUG">DEBUG</option>
+                            <option value="INFO">INFO</option>
+                            <option value="WARNING">WARNING</option>
+                            <option value="ERROR">ERROR</option>
+                        </select>
+                        <input type="text" id="log-search" class="form-input" placeholder="Search logs..." style="width: 300px;">
+                        <span id="log-count" class="log-count">0 entries</span>
+                        <button id="download-logs" class="btn btn-secondary">Download</button>
+                    </div>
+                    <div id="full-logs" class="log-viewer" style="max-height: 600px;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        const state = {
+            config: {},
+            logs: [],
+            streams: [],
+            currentPage: 'dashboard'
+        };
+
+        // Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const page = item.dataset.page;
+                showPage(page);
+            });
+        });
+
+        function showPage(page) {
+            state.currentPage = page;
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`page-${page}`).classList.remove('hidden');
+        }
+
+        // API calls
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                document.getElementById('proxy-status').textContent = data.running ? 'Running' : 'Stopped';
+                document.getElementById('proxy-status').className = 'status-value ' + (data.running ? 'running' : 'stopped');
+                document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
+                document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
+                document.getElementById('stash-version').textContent = data.stashVersion || '-';
+                document.getElementById('version').textContent = data.version || 'v3.65';
+            } catch (e) {
+                console.error('Failed to fetch status:', e);
+            }
+        }
+
+        async function fetchStreams() {
+            try {
+                const res = await fetch('/api/streams');
+                const data = await res.json();
+                state.streams = data.streams || [];
+                document.getElementById('stream-count').textContent = state.streams.length;
+                const list = document.getElementById('streams-list');
+                if (state.streams.length === 0) {
+                    list.innerHTML = '<div class="empty-state">No active streams</div>';
+                } else {
+                    list.innerHTML = state.streams.map(s => `
+                        <div class="stream-item">
+                            <span class="stream-title">${s.title || s.id}</span>
+                            <span class="stream-time">${s.duration || ''}</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error('Failed to fetch streams:', e);
+            }
+        }
+
+        async function fetchLogs() {
+            try {
+                const res = await fetch('/api/logs?limit=100');
+                const data = await res.json();
+                state.logs = data.entries || [];
+                renderLogs();
+            } catch (e) {
+                console.error('Failed to fetch logs:', e);
+            }
+        }
+
+        function renderLogs() {
+            const levelFilter = document.getElementById('log-level-filter').value;
+            const searchFilter = document.getElementById('log-search').value.toLowerCase();
+            let filtered = state.logs;
+            if (levelFilter) {
+                filtered = filtered.filter(l => l.level === levelFilter);
+            }
+            if (searchFilter) {
+                filtered = filtered.filter(l => l.message.toLowerCase().includes(searchFilter));
+            }
+            document.getElementById('log-count').textContent = `${filtered.length} entries`;
+            const html = filtered.map(l => `<div class="log-entry log-${l.level}">${l.timestamp} [${l.level}] ${l.message}</div>`).join('');
+            document.getElementById('full-logs').innerHTML = html || '<div class="empty-state">No logs</div>';
+            document.getElementById('dashboard-logs').innerHTML = html.slice(0, 2000) || '<div class="empty-state">No logs</div>';
+        }
+
+        async function fetchConfig() {
+            try {
+                const res = await fetch('/api/config');
+                state.config = await res.json();
+                Object.entries(state.config).forEach(([key, value]) => {
+                    const input = document.querySelector(`[name="${key}"]`);
+                    if (input) {
+                        if (Array.isArray(value)) {
+                            input.value = value.join(', ');
+                        } else {
+                            input.value = value;
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error('Failed to fetch config:', e);
+            }
+        }
+
+        // Form submission
+        document.getElementById('config-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const config = {};
+            formData.forEach((value, key) => {
+                if (key === 'TAG_GROUPS' || key === 'LATEST_GROUPS') {
+                    config[key] = value.split(',').map(s => s.trim()).filter(Boolean);
+                } else if (['PROXY_PORT', 'UI_PORT', 'STASH_TIMEOUT', 'STASH_RETRIES', 'LOG_MAX_SIZE_MB', 'LOG_BACKUP_COUNT'].includes(key)) {
+                    config[key] = parseInt(value) || 0;
+                } else {
+                    config[key] = value;
+                }
+            });
+            try {
+                const res = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                if (res.ok) {
+                    showToast('Configuration saved! Restart proxy to apply changes.', 'success');
+                } else {
+                    showToast('Failed to save configuration', 'error');
+                }
+            } catch (e) {
+                showToast('Failed to save configuration', 'error');
+            }
+        });
+
+        // Log filters
+        document.getElementById('log-level-filter').addEventListener('change', renderLogs);
+        document.getElementById('log-search').addEventListener('input', renderLogs);
+
+        // Download logs
+        document.getElementById('download-logs').addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/logs?limit=10000');
+                const data = await res.json();
+                const text = data.entries.map(l => `${l.timestamp} [${l.level}] ${l.message}`).join('\\n');
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'stash_jellyfin_proxy.log';
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                showToast('Failed to download logs', 'error');
+            }
+        });
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Polling
+        async function poll() {
+            if (state.currentPage === 'dashboard') {
+                await Promise.all([fetchStatus(), fetchStreams(), fetchLogs()]);
+            } else if (state.currentPage === 'logs') {
+                await fetchLogs();
+            }
+        }
+
+        // Initial load
+        fetchStatus();
+        fetchStreams();
+        fetchLogs();
+        fetchConfig();
+        setInterval(poll, 5000);
+    </script>
+</body>
+</html>'''
 
 # --- Logging Setup ---
 def setup_logging():
