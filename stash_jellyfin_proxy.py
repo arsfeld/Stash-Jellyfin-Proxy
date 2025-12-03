@@ -292,6 +292,88 @@ def stash_query(query: str, variables: Dict[str, Any] = None) -> Dict[str, Any]:
         logger.error(f"Stash API Query Error: {e}")
         return {"errors": [str(e)]}
 
+def stash_get_saved_filters(mode: str) -> List[Dict[str, Any]]:
+    """Get saved filters from Stash for a specific mode (SCENES, PERFORMERS, STUDIOS, GROUPS)."""
+    query = """query FindSavedFilters($mode: FilterMode) {
+        findSavedFilters(mode: $mode) {
+            id
+            name
+            mode
+            find_filter { q page per_page sort direction }
+            object_filter
+            ui_options
+        }
+    }"""
+    res = stash_query(query, {"mode": mode})
+    filters = res.get("data", {}).get("findSavedFilters", [])
+    logger.debug(f"Found {len(filters)} saved filters for mode {mode}")
+    return filters
+
+# Filter mode mapping: library parent_id -> Stash FilterMode
+FILTER_MODE_MAP = {
+    "root-scenes": "SCENES",
+    "root-performers": "PERFORMERS",
+    "root-studios": "STUDIOS",
+    "root-groups": "GROUPS",
+}
+
+def format_filters_folder(parent_id: str) -> Dict[str, Any]:
+    """Create a Jellyfin folder item for the FILTERS special folder."""
+    filter_mode = FILTER_MODE_MAP.get(parent_id, "SCENES")
+    filters_id = f"filters-{filter_mode.lower()}"
+    
+    # Get count of saved filters for this mode
+    filters = stash_get_saved_filters(filter_mode)
+    filter_count = len(filters)
+    
+    return {
+        "Name": "FILTERS",
+        "SortName": "!!!FILTERS",  # Sort to top
+        "Id": filters_id,
+        "ServerId": SERVER_ID,
+        "Type": "Folder",
+        "IsFolder": True,
+        "CollectionType": "movies",
+        "ChildCount": filter_count,
+        "RecursiveItemCount": filter_count,
+        "ParentId": parent_id,
+        "ImageTags": {"Primary": "img"},
+        "UserData": {
+            "PlaybackPositionTicks": 0,
+            "PlayCount": 0,
+            "IsFavorite": False,
+            "Played": False,
+            "Key": filters_id
+        }
+    }
+
+def format_saved_filter_item(saved_filter: Dict[str, Any], parent_id: str) -> Dict[str, Any]:
+    """Format a saved filter as a browsable folder item."""
+    filter_id = saved_filter.get("id")
+    filter_name = saved_filter.get("name", f"Filter {filter_id}")
+    filter_mode = saved_filter.get("mode", "SCENES").lower()
+    
+    item_id = f"filter-{filter_mode}-{filter_id}"
+    
+    return {
+        "Name": filter_name,
+        "SortName": filter_name,
+        "Id": item_id,
+        "ServerId": SERVER_ID,
+        "Type": "Folder",
+        "IsFolder": True,
+        "CollectionType": "movies",
+        "ParentId": parent_id,
+        "ImageTags": {"Primary": "img"},
+        "UserData": {
+            "PlaybackPositionTicks": 0,
+            "PlayCount": 0,
+            "IsFavorite": False,
+            "Played": False,
+            "Key": item_id
+        }
+    }
+
 # --- Jellyfin Models & Helpers ---
 SERVER_ID = "a1b2c3d4e5f6a1b2c3d4e5f6"
 ACCESS_TOKEN = str(uuid.uuid4())
@@ -892,6 +974,204 @@ async def endpoint_items(request):
         for s in scenes:
             items.append(format_jellyfin_item(s, parent_id=f"person-{performer_id}"))
     
+    elif parent_id and parent_id.startswith("filters-"):
+        # List saved filters for a specific mode (filters-scenes, filters-performers, etc.)
+        filter_mode = parent_id.replace("filters-", "").upper()
+        saved_filters = stash_get_saved_filters(filter_mode)
+        total_count = len(saved_filters)
+        
+        logger.info(f"Listing {total_count} saved filters for mode {filter_mode}")
+        
+        for sf in saved_filters:
+            items.append(format_saved_filter_item(sf, parent_id))
+    
+    elif parent_id and parent_id.startswith("filter-"):
+        # Apply a saved filter and show results
+        # Format: filter-{mode}-{filter_id}
+        parts = parent_id.split("-", 2)  # ['filter', 'scenes', '123']
+        if len(parts) == 3:
+            filter_mode = parts[1].upper()
+            filter_id = parts[2]
+            
+            # Get the saved filter details
+            query = """query FindSavedFilter($id: ID!) {
+                findSavedFilter(id: $id) {
+                    id name mode
+                    find_filter { q page per_page sort direction }
+                    object_filter
+                }
+            }"""
+            res = stash_query(query, {"id": filter_id})
+            saved_filter = res.get("data", {}).get("findSavedFilter")
+            
+            if saved_filter:
+                find_filter = saved_filter.get("find_filter") or {}
+                object_filter = saved_filter.get("object_filter")
+                
+                # Parse object_filter if it's a string (JSON)
+                import json
+                if isinstance(object_filter, str):
+                    try:
+                        object_filter = json.loads(object_filter)
+                    except Exception as e:
+                        logger.warning(f"Failed to parse object_filter JSON: {e}")
+                        object_filter = {}
+                
+                # Ensure object_filter is a dict, default to empty
+                if object_filter is None:
+                    object_filter = {}
+                
+                logger.info(f"Applying saved filter '{saved_filter.get('name')}' (id={filter_id}, mode={filter_mode})")
+                logger.debug(f"Filter find_filter: {find_filter}")
+                logger.debug(f"Filter object_filter: {object_filter}")
+                
+                # Calculate page
+                page = (start_index // limit) + 1
+                
+                # Build the query with the saved filter's criteria
+                # Each mode has its own filter type in Stash GraphQL
+                if filter_mode == "SCENES":
+                    # First get count with filter
+                    count_q = """query CountScenes($scene_filter: SceneFilterType) { 
+                        findScenes(scene_filter: $scene_filter) { count } 
+                    }"""
+                    count_res = stash_query(count_q, {"scene_filter": object_filter})
+                    total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
+                    
+                    # Get paginated results
+                    q = f"""query FindScenes($scene_filter: SceneFilterType, $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{ 
+                        findScenes(
+                            scene_filter: $scene_filter,
+                            filter: {{page: $page, per_page: $per_page, sort: $sort, direction: $direction}}
+                        ) {{ 
+                            scenes {{ {scene_fields} }} 
+                        }} 
+                    }}"""
+                    res = stash_query(q, {
+                        "scene_filter": object_filter,
+                        "page": page, 
+                        "per_page": limit, 
+                        "sort": sort_field, 
+                        "direction": sort_direction
+                    })
+                    scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+                    logger.info(f"Saved filter returned {len(scenes)} scenes (page {page}, total {total_count})")
+                    for s in scenes:
+                        items.append(format_jellyfin_item(s, parent_id=parent_id))
+                
+                elif filter_mode == "PERFORMERS":
+                    # Count performers with filter
+                    count_q = """query CountPerformers($performer_filter: PerformerFilterType) { 
+                        findPerformers(performer_filter: $performer_filter) { count } 
+                    }"""
+                    count_res = stash_query(count_q, {"performer_filter": object_filter})
+                    total_count = count_res.get("data", {}).get("findPerformers", {}).get("count", 0)
+                    
+                    # Get paginated performers
+                    q = """query FindPerformers($performer_filter: PerformerFilterType, $page: Int!, $per_page: Int!) { 
+                        findPerformers(
+                            performer_filter: $performer_filter,
+                            filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}
+                        ) { 
+                            performers { id name image_path scene_count } 
+                        } 
+                    }"""
+                    res = stash_query(q, {"performer_filter": object_filter, "page": page, "per_page": limit})
+                    performers = res.get("data", {}).get("findPerformers", {}).get("performers", [])
+                    logger.info(f"Saved filter returned {len(performers)} performers (page {page}, total {total_count})")
+                    for p in performers:
+                        performer_item = {
+                            "Name": p["name"],
+                            "Id": f"performer-{p['id']}",
+                            "ServerId": SERVER_ID,
+                            "Type": "Folder",
+                            "IsFolder": True,
+                            "CollectionType": "movies",
+                            "ChildCount": p.get("scene_count", 0),
+                            "RecursiveItemCount": p.get("scene_count", 0),
+                            "ParentId": parent_id,
+                            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"performer-{p['id']}"},
+                            "ImageTags": {"Primary": "img"} if p.get("image_path") else {}
+                        }
+                        items.append(performer_item)
+                
+                elif filter_mode == "STUDIOS":
+                    # Count studios with filter
+                    count_q = """query CountStudios($studio_filter: StudioFilterType) { 
+                        findStudios(studio_filter: $studio_filter) { count } 
+                    }"""
+                    count_res = stash_query(count_q, {"studio_filter": object_filter})
+                    total_count = count_res.get("data", {}).get("findStudios", {}).get("count", 0)
+                    
+                    # Get paginated studios
+                    q = """query FindStudios($studio_filter: StudioFilterType, $page: Int!, $per_page: Int!) { 
+                        findStudios(
+                            studio_filter: $studio_filter,
+                            filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}
+                        ) { 
+                            studios { id name image_path scene_count } 
+                        } 
+                    }"""
+                    res = stash_query(q, {"studio_filter": object_filter, "page": page, "per_page": limit})
+                    studios = res.get("data", {}).get("findStudios", {}).get("studios", [])
+                    logger.info(f"Saved filter returned {len(studios)} studios (page {page}, total {total_count})")
+                    for s in studios:
+                        studio_item = {
+                            "Name": s["name"],
+                            "Id": f"studio-{s['id']}",
+                            "ServerId": SERVER_ID,
+                            "Type": "Folder",
+                            "IsFolder": True,
+                            "CollectionType": "movies",
+                            "ChildCount": s.get("scene_count", 0),
+                            "RecursiveItemCount": s.get("scene_count", 0),
+                            "ParentId": parent_id,
+                            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"studio-{s['id']}"},
+                            "ImageTags": {"Primary": "img"} if s.get("image_path") else {}
+                        }
+                        items.append(studio_item)
+                
+                elif filter_mode == "GROUPS":
+                    # Count groups/movies with filter
+                    count_q = """query CountGroups($group_filter: GroupFilterType) { 
+                        findGroups(group_filter: $group_filter) { count } 
+                    }"""
+                    count_res = stash_query(count_q, {"group_filter": object_filter})
+                    total_count = count_res.get("data", {}).get("findGroups", {}).get("count", 0)
+                    
+                    # Get paginated groups
+                    q = """query FindGroups($group_filter: GroupFilterType, $page: Int!, $per_page: Int!) { 
+                        findGroups(
+                            group_filter: $group_filter,
+                            filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}
+                        ) { 
+                            groups { id name scene_count } 
+                        } 
+                    }"""
+                    res = stash_query(q, {"group_filter": object_filter, "page": page, "per_page": limit})
+                    groups = res.get("data", {}).get("findGroups", {}).get("groups", [])
+                    logger.info(f"Saved filter returned {len(groups)} groups (page {page}, total {total_count})")
+                    for g in groups:
+                        group_item = {
+                            "Name": g["name"],
+                            "Id": f"group-{g['id']}",
+                            "ServerId": SERVER_ID,
+                            "Type": "Folder",
+                            "IsFolder": True,
+                            "CollectionType": "movies",
+                            "ChildCount": g.get("scene_count", 0),
+                            "RecursiveItemCount": g.get("scene_count", 0),
+                            "ParentId": parent_id,
+                            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"group-{g['id']}"},
+                            "ImageTags": {"Primary": "img"}
+                        }
+                        items.append(group_item)
+                
+                else:
+                    logger.warning(f"Unsupported filter mode: {filter_mode}")
+            else:
+                logger.warning(f"Saved filter not found: {filter_id}")
+    
     elif parent_id == "root-scenes":
         # Calculate page number from startIndex (Stash uses 1-indexed pages)
         page = (start_index // limit) + 1
@@ -899,7 +1179,19 @@ async def endpoint_items(request):
         # First get total count
         count_q = """query { findScenes { count } }"""
         count_res = stash_query(count_q)
-        total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
+        scene_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
+        
+        # Check if there are saved filters for scenes
+        saved_filters = stash_get_saved_filters("SCENES")
+        has_filters = len(saved_filters) > 0
+        
+        # On first page, add FILTERS folder at the top if there are saved filters
+        if start_index == 0 and has_filters:
+            items.append(format_filters_folder("root-scenes"))
+            # Adjust total count to include FILTERS folder
+            total_count = scene_count + 1
+        else:
+            total_count = scene_count
         
         # Then get paginated scenes with sort from request
         q = f"""query FindScenes($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{ 
@@ -915,7 +1207,18 @@ async def endpoint_items(request):
         # Get total count
         count_q = """query { findStudios { count } }"""
         count_res = stash_query(count_q)
-        total_count = count_res.get("data", {}).get("findStudios", {}).get("count", 0)
+        studio_count = count_res.get("data", {}).get("findStudios", {}).get("count", 0)
+        
+        # Check if there are saved filters for studios
+        saved_filters = stash_get_saved_filters("STUDIOS")
+        has_filters = len(saved_filters) > 0
+        
+        # On first page, add FILTERS folder at the top if there are saved filters
+        if start_index == 0 and has_filters:
+            items.append(format_filters_folder("root-studios"))
+            total_count = studio_count + 1
+        else:
+            total_count = studio_count
         
         # Calculate page
         page = (start_index // limit) + 1
@@ -976,7 +1279,18 @@ async def endpoint_items(request):
         # Get total count
         count_q = """query { findPerformers { count } }"""
         count_res = stash_query(count_q)
-        total_count = count_res.get("data", {}).get("findPerformers", {}).get("count", 0)
+        performer_count = count_res.get("data", {}).get("findPerformers", {}).get("count", 0)
+        
+        # Check if there are saved filters for performers
+        saved_filters = stash_get_saved_filters("PERFORMERS")
+        has_filters = len(saved_filters) > 0
+        
+        # On first page, add FILTERS folder at the top if there are saved filters
+        if start_index == 0 and has_filters:
+            items.append(format_filters_folder("root-performers"))
+            total_count = performer_count + 1
+        else:
+            total_count = performer_count
         
         # Calculate page
         page = (start_index // limit) + 1
@@ -1040,7 +1354,18 @@ async def endpoint_items(request):
         # Get total count - Stash uses "movies" for groups
         count_q = """query { findMovies { count } }"""
         count_res = stash_query(count_q)
-        total_count = count_res.get("data", {}).get("findMovies", {}).get("count", 0)
+        group_count = count_res.get("data", {}).get("findMovies", {}).get("count", 0)
+        
+        # Check if there are saved filters for groups
+        saved_filters = stash_get_saved_filters("GROUPS")
+        has_filters = len(saved_filters) > 0
+        
+        # On first page, add FILTERS folder at the top if there are saved filters
+        if start_index == 0 and has_filters:
+            items.append(format_filters_folder("root-groups"))
+            total_count = group_count + 1
+        else:
+            total_count = group_count
         
         # Calculate page
         page = (start_index // limit) + 1
@@ -1162,6 +1487,62 @@ async def endpoint_item_details(request):
     scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
     
     # Handle special folder IDs - return the folder ITSELF (not children)
+    
+    # Handle FILTERS folder details
+    if item_id.startswith("filters-"):
+        filter_mode = item_id.replace("filters-", "").upper()
+        saved_filters = stash_get_saved_filters(filter_mode)
+        filter_count = len(saved_filters)
+        
+        mode_names = {"SCENES": "Scenes", "PERFORMERS": "Performers", "STUDIOS": "Studios", "GROUPS": "Groups"}
+        mode_name = mode_names.get(filter_mode, filter_mode.capitalize())
+        
+        return JSONResponse({
+            "Name": "FILTERS",
+            "SortName": "!!!FILTERS",
+            "Id": item_id,
+            "ServerId": SERVER_ID,
+            "Type": "Folder",
+            "CollectionType": "movies",
+            "IsFolder": True,
+            "ImageTags": {"Primary": "img"},
+            "BackdropImageTags": [],
+            "ChildCount": filter_count,
+            "RecursiveItemCount": filter_count,
+            "Overview": f"Saved filters for {mode_name}",
+            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": item_id}
+        })
+    
+    # Handle individual saved filter details
+    if item_id.startswith("filter-"):
+        parts = item_id.split("-", 2)
+        if len(parts) == 3:
+            filter_mode = parts[1].upper()
+            filter_id = parts[2]
+            
+            # Get the saved filter details
+            query = """query FindSavedFilter($id: ID!) {
+                findSavedFilter(id: $id) { id name mode }
+            }"""
+            res = stash_query(query, {"id": filter_id})
+            saved_filter = res.get("data", {}).get("findSavedFilter")
+            
+            if saved_filter:
+                filter_name = saved_filter.get("name", f"Filter {filter_id}")
+                
+                return JSONResponse({
+                    "Name": filter_name,
+                    "SortName": filter_name,
+                    "Id": item_id,
+                    "ServerId": SERVER_ID,
+                    "Type": "Folder",
+                    "CollectionType": "movies",
+                    "IsFolder": True,
+                    "ImageTags": {"Primary": "img"},
+                    "BackdropImageTags": [],
+                    "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": item_id}
+                })
+    
     if item_id == "root-scenes":
         # Get actual count
         count_q = """query { findScenes { count } }"""
@@ -1841,6 +2222,31 @@ async def endpoint_image(request):
         from starlette.responses import Response
         return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
     
+    # Handle FILTERS folder icons
+    if item_id.startswith("filters-"):
+        img_data, content_type = generate_text_icon("FILTERS")
+        logger.info(f"Serving text icon for filters folder: {item_id}")
+        from starlette.responses import Response
+        return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
+    
+    # Handle individual saved filter icons
+    if item_id.startswith("filter-"):
+        # Format: filter-{mode}-{filter_id}
+        parts = item_id.split("-", 2)
+        if len(parts) == 3:
+            filter_id = parts[2]
+            # Get the filter name from Stash
+            query = """query FindSavedFilter($id: ID!) {
+                findSavedFilter(id: $id) { name }
+            }"""
+            res = stash_query(query, {"id": filter_id})
+            saved_filter = res.get("data", {}).get("findSavedFilter")
+            filter_name = saved_filter.get("name", f"Filter {filter_id}") if saved_filter else f"Filter {filter_id}"
+            img_data, content_type = generate_text_icon(filter_name)
+            logger.info(f"Serving text icon for saved filter: {filter_name}")
+            from starlette.responses import Response
+            return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
+    
     # Check query params for placeholder flag (set when group has no front_image)
     image_tag = request.query_params.get("tag", "")
     if image_tag == "placeholder" and item_id.startswith("group-"):
@@ -2047,7 +2453,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.32 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.33 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
