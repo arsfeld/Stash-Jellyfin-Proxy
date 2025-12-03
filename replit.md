@@ -133,6 +133,9 @@ Environment variables:
 - PROXY_PORT, UI_PORT: Port overrides
 - REQUIRE_AUTH_FOR_CONFIG: Password-protect config page
 
+Configuration precedence: defaults → config file → environment variables
+Environment variables ALWAYS override config file values when set.
+
 ## Recent Changes
 
 - v3.76: Docker containerization - Dockerfile, docker-entrypoint.sh, build_container.sh, docker-compose.yml; CONFIG_FILE env var support; auto-generated SERVER_ID; script continues with warning if Stash connection fails
