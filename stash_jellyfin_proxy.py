@@ -4206,6 +4206,14 @@ if __name__ == "__main__":
             loop.run_until_complete(run_servers())
         except KeyboardInterrupt:
             pass
+        except OSError as e:
+            if e.errno == 98:  # Address already in use
+                logger.error(f"ABORTING: Port already in use. Is another instance running?")
+                logger.error(f"  Proxy port {PROXY_PORT} or UI port {UI_PORT} is already bound.")
+                logger.error(f"  Try: lsof -i :{PROXY_PORT} or lsof -i :{UI_PORT}")
+            else:
+                logger.error(f"ABORTING: Network error: {e}")
+            sys.exit(1)
     else:
         logger.error("ABORTING: Could not connect to Stash. Check configuration.")
         sys.exit(1)
