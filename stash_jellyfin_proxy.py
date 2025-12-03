@@ -981,6 +981,23 @@ def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
                 # This happens with IntCriterionInput and similar types
                 if isinstance(val, dict) and 'value' in val and len(val) == 1:
                     val = val['value']
+                
+                # Handle HierarchicalMultiCriterionInput (tags, performers, studios, etc.)
+                # Structure: {'items': [{'id': '123', 'label': 'Name'}], 'depth': 0, 'excluded': []}
+                # Needs to become: {'value': ['123'], 'modifier': 'INCLUDES_ALL', 'depth': 0, 'excludes': []}
+                if isinstance(val, dict) and 'items' in val:
+                    items = val.get('items', [])
+                    # Extract IDs from items
+                    ids = [item.get('id') for item in items if item.get('id')]
+                    depth = val.get('depth', 0)
+                    # Note: Stash uses 'excluded' but GraphQL expects 'excludes'
+                    excludes = val.get('excluded', [])
+                    if isinstance(excludes, list):
+                        # Extract IDs if excludes contains objects
+                        excludes = [e.get('id') if isinstance(e, dict) else e for e in excludes]
+                    result[key] = {'value': ids, 'modifier': modifier, 'depth': depth, 'excludes': excludes}
+                    continue
+                
                 result[key] = {'value': val, 'modifier': modifier}
                 continue
             
