@@ -739,7 +739,7 @@ async def endpoint_root(request):
     return RedirectResponse(url="/System/Info/Public")
 
 async def endpoint_system_info(request):
-    logger.info("Providing System Info")
+    logger.debug("Providing System Info")
     return JSONResponse({
         "ServerName": SERVER_NAME,
         "Version": "10.8.13",
@@ -966,7 +966,7 @@ async def endpoint_latest_items(request):
     parent_id = request.query_params.get("ParentId") or request.query_params.get("parentId")
     limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 16)
     
-    logger.info(f"Latest items request - ParentId: {parent_id}, Limit: {limit}")
+    logger.debug(f"Latest items request - ParentId: {parent_id}, Limit: {limit}")
     
     # Full scene fields for queries
     scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
@@ -985,7 +985,7 @@ async def endpoint_latest_items(request):
         return False
     
     if not is_in_latest_groups(parent_id):
-        logger.info(f"Skipping latest for {parent_id} (not in LATEST_GROUPS)")
+        logger.debug(f"Skipping latest for {parent_id} (not in LATEST_GROUPS)")
         return JSONResponse(items)
     
     if parent_id == "root-scenes":
@@ -1040,11 +1040,11 @@ async def endpoint_latest_items(request):
                 }}"""
                 res = stash_query(q, {"tid": [tag_id], "page": 1, "per_page": limit})
                 scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-                logger.info(f"Tag '{tag_name}' latest: {len(scenes)} scenes")
+                logger.debug(f"Tag '{tag_name}' latest: {len(scenes)} scenes")
                 for s in scenes:
                     items.append(format_jellyfin_item(s, parent_id=parent_id))
     
-    logger.info(f"Returning {len(items)} latest items for {parent_id}")
+    logger.debug(f"Returning {len(items)} latest items for {parent_id}")
     return JSONResponse(items)
 
 async def endpoint_display_preferences(request):
@@ -1355,8 +1355,8 @@ async def endpoint_items(request):
     
     # Debug: Log ALL query params to understand what Infuse is sending
     all_params = dict(request.query_params)
-    logger.info(f"Items endpoint - ALL PARAMS: {all_params}")
-    logger.info(f"Items endpoint - ParentId: {parent_id}, Ids: {ids}, PersonIds: {person_ids}, StartIndex: {start_index}, Limit: {limit}, Sort: {sort_field} {sort_direction}")
+    logger.debug(f"Items endpoint - ALL PARAMS: {all_params}")
+    logger.debug(f"Items endpoint - ParentId: {parent_id}, Ids: {ids}, PersonIds: {person_ids}, StartIndex: {start_index}, Limit: {limit}, Sort: {sort_field} {sort_direction}")
     
     items = []
     total_count = 0
@@ -1386,7 +1386,7 @@ async def endpoint_items(request):
         else:
             performer_id = person_id
         
-        logger.info(f"PersonIds filter: fetching scenes for performer {performer_id}")
+        logger.debug(f"PersonIds filter: fetching scenes for performer {performer_id}")
         
         # Get count for this performer
         count_q = """query CountScenes($pid: [ID!]) { 
@@ -1408,7 +1408,7 @@ async def endpoint_items(request):
         }}"""
         res = stash_query(q, {"pid": [performer_id], "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
         scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-        logger.info(f"PersonIds filter: returned {len(scenes)} scenes (page {page}, total {total_count})")
+        logger.debug(f"PersonIds filter: returned {len(scenes)} scenes (page {page}, total {total_count})")
         for s in scenes:
             items.append(format_jellyfin_item(s, parent_id=f"person-{performer_id}"))
     
@@ -1418,7 +1418,7 @@ async def endpoint_items(request):
         saved_filters = stash_get_saved_filters(filter_mode)
         total_count = len(saved_filters)
         
-        logger.info(f"Listing {total_count} saved filters for mode {filter_mode}")
+        logger.debug(f"Listing {total_count} saved filters for mode {filter_mode}")
         
         for sf in saved_filters:
             items.append(format_saved_filter_item(sf, parent_id))
@@ -1459,16 +1459,16 @@ async def endpoint_items(request):
                 if object_filter is None:
                     object_filter = {}
                 
-                logger.info(f"Applying saved filter '{saved_filter.get('name')}' (id={filter_id}, mode={filter_mode})")
-                logger.info(f"Raw object_filter type: {type(object_filter)}, value: {object_filter}")
+                logger.debug(f"Applying saved filter '{saved_filter.get('name')}' (id={filter_id}, mode={filter_mode})")
+                logger.debug(f"Raw object_filter type: {type(object_filter)}, value: {object_filter}")
                 
                 # Transform saved filter format to GraphQL query format
                 graphql_filter = transform_saved_filter_to_graphql(object_filter, filter_mode)
-                logger.info(f"Transformed filter: {graphql_filter}")
+                logger.debug(f"Transformed filter: {graphql_filter}")
                 
                 # Try querying Stash directly with the filter to see what happens
                 # Also log the full saved filter data for debugging
-                logger.info(f"Full saved filter data: {saved_filter}")
+                logger.debug(f"Full saved filter data: {saved_filter}")
                 
                 logger.debug(f"Filter find_filter: {find_filter}")
                 logger.debug(f"Filter object_filter: {object_filter}")
@@ -1483,9 +1483,9 @@ async def endpoint_items(request):
                     count_q = """query CountScenes($scene_filter: SceneFilterType) { 
                         findScenes(scene_filter: $scene_filter) { count } 
                     }"""
-                    logger.info(f"Running count query with scene_filter: {graphql_filter}")
+                    logger.debug(f"Running count query with scene_filter: {graphql_filter}")
                     count_res = stash_query(count_q, {"scene_filter": graphql_filter})
-                    logger.info(f"Count query response: {count_res}")
+                    logger.debug(f"Count query response: {count_res}")
                     total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
                     
                     # Get paginated results
@@ -1505,7 +1505,7 @@ async def endpoint_items(request):
                         "direction": sort_direction
                     })
                     scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-                    logger.info(f"Saved filter returned {len(scenes)} scenes (page {page}, total {total_count})")
+                    logger.debug(f"Saved filter returned {len(scenes)} scenes (page {page}, total {total_count})")
                     for s in scenes:
                         items.append(format_jellyfin_item(s, parent_id=parent_id))
                 
@@ -1528,7 +1528,7 @@ async def endpoint_items(request):
                     }"""
                     res = stash_query(q, {"performer_filter": graphql_filter, "page": page, "per_page": limit})
                     performers = res.get("data", {}).get("findPerformers", {}).get("performers", [])
-                    logger.info(f"Saved filter returned {len(performers)} performers (page {page}, total {total_count})")
+                    logger.debug(f"Saved filter returned {len(performers)} performers (page {page}, total {total_count})")
                     for p in performers:
                         performer_item = {
                             "Name": p["name"],
@@ -1564,7 +1564,7 @@ async def endpoint_items(request):
                     }"""
                     res = stash_query(q, {"studio_filter": graphql_filter, "page": page, "per_page": limit})
                     studios = res.get("data", {}).get("findStudios", {}).get("studios", [])
-                    logger.info(f"Saved filter returned {len(studios)} studios (page {page}, total {total_count})")
+                    logger.debug(f"Saved filter returned {len(studios)} studios (page {page}, total {total_count})")
                     for s in studios:
                         studio_item = {
                             "Name": s["name"],
@@ -1600,7 +1600,7 @@ async def endpoint_items(request):
                     }"""
                     res = stash_query(q, {"group_filter": graphql_filter, "page": page, "per_page": limit})
                     groups = res.get("data", {}).get("findGroups", {}).get("groups", [])
-                    logger.info(f"Saved filter returned {len(groups)} groups (page {page}, total {total_count})")
+                    logger.debug(f"Saved filter returned {len(groups)} groups (page {page}, total {total_count})")
                     for g in groups:
                         group_item = {
                             "Name": g["name"],
@@ -1859,7 +1859,7 @@ async def endpoint_items(request):
         # Log Y-groups for debugging
         y_groups = [m["name"] for m in movies_to_return if m.get("name", "").upper().startswith("Y")]
         if y_groups:
-            logger.info(f"Groups starting with Y in this batch: {y_groups}")
+            logger.debug(f"Groups starting with Y in this batch: {y_groups}")
         
         logger.debug(f"Groups: fetched {len(fetched_movies)} total, returning {len(movies_to_return)} (offset {offset_within_page})")
         
@@ -1956,7 +1956,7 @@ async def endpoint_items(request):
                 }}"""
                 res = stash_query(q, {"tid": [tag_id], "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
                 scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-                logger.info(f"Tag '{tag_name}' (id={tag_id}) returned {len(scenes)} scenes (page {page}, total {total_count})")
+                logger.debug(f"Tag '{tag_name}' (id={tag_id}) returned {len(scenes)} scenes (page {page}, total {total_count})")
                 for s in scenes:
                     items.append(format_jellyfin_item(s, parent_id=parent_id))
             else:
@@ -2361,7 +2361,7 @@ async def endpoint_playback_info(request):
             "DeliveryUrl": f"Subtitles/{idx + 1}/0/Stream.{caption_type}"
         })
     
-    logger.info(f"PlaybackInfo for {item_id}: {len(captions)} subtitles")
+    logger.debug(f"PlaybackInfo for {item_id}: {len(captions)} subtitles")
     
     return JSONResponse({
         "MediaSources": [{
@@ -2441,7 +2441,7 @@ async def endpoint_stream(request):
     numeric_id = get_numeric_id(item_id)
     stash_stream_url = f"{STASH_URL}/scene/{numeric_id}/stream"
     
-    logger.info(f"Proxying stream for {item_id} from {stash_stream_url}")
+    logger.debug(f"Proxying stream for {item_id} from {stash_stream_url}")
     
     # Build extra headers
     extra_headers = {}
@@ -2459,7 +2459,7 @@ async def endpoint_stream(request):
             headers["Content-Range"] = resp_headers["Content-Range"]
         
         status_code = 206 if "Content-Range" in resp_headers else 200
-        logger.info(f"Stream response: {len(data)} bytes, type={content_type}")
+        logger.debug(f"Stream response: {len(data)} bytes, type={content_type}")
         return Response(content=data, media_type=content_type, headers=headers, status_code=status_code)
         
     except Exception as e:
@@ -2515,7 +2515,7 @@ async def endpoint_subtitle(request):
         lang_code = caption.get("language_code", "en") or "en"
         stash_caption_url = f"{STASH_URL}/scene/{numeric_id}/caption?lang={lang_code}&type={caption_type}"
         
-        logger.info(f"Proxying subtitle for {item_id} index {subtitle_index} from {stash_caption_url}")
+        logger.debug(f"Proxying subtitle for {item_id} index {subtitle_index} from {stash_caption_url}")
         
         # Fetch the caption file
         image_headers = {"ApiKey": STASH_API_KEY} if STASH_API_KEY else {}
@@ -2529,7 +2529,7 @@ async def endpoint_subtitle(request):
         else:
             content_type = "text/plain"
         
-        logger.info(f"Subtitle response: {len(data)} bytes, type={content_type}")
+        logger.debug(f"Subtitle response: {len(data)} bytes, type={content_type}")
         from starlette.responses import Response
         return Response(content=data, media_type=content_type, headers={
             "Content-Disposition": f'attachment; filename="subtitle.{caption_type}"'
@@ -2688,7 +2688,7 @@ async def endpoint_image(request):
     if item_id in MENU_ICONS:
         # Generate PNG icon using Pillow drawing
         img_data, content_type = generate_menu_icon(item_id)
-        logger.info(f"Serving menu icon for {item_id}")
+        logger.debug(f"Serving menu icon for {item_id}")
         from starlette.responses import Response
         return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
     
@@ -2704,14 +2704,14 @@ async def endpoint_image(request):
         # Use the tag name or fall back to the slug
         display_name = tag_name if tag_name else tag_slug.replace('-', ' ').title()
         img_data, content_type = generate_text_icon(display_name)
-        logger.info(f"Serving text icon for tag folder: {display_name}")
+        logger.debug(f"Serving text icon for tag folder: {display_name}")
         from starlette.responses import Response
         return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
     
     # Handle FILTERS folder icons
     if item_id.startswith("filters-"):
         img_data, content_type = generate_text_icon("FILTERS")
-        logger.info(f"Serving text icon for filters folder: {item_id}")
+        logger.debug(f"Serving text icon for filters folder: {item_id}")
         from starlette.responses import Response
         return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
     
@@ -2729,7 +2729,7 @@ async def endpoint_image(request):
             saved_filter = res.get("data", {}).get("findSavedFilter")
             filter_name = saved_filter.get("name", f"Filter {filter_id}") if saved_filter else f"Filter {filter_id}"
             img_data, content_type = generate_text_icon(filter_name)
-            logger.info(f"Serving text icon for saved filter: {filter_name}")
+            logger.debug(f"Serving text icon for saved filter: {filter_name}")
             from starlette.responses import Response
             return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
     
@@ -2738,7 +2738,7 @@ async def endpoint_image(request):
     if image_tag == "placeholder" and item_id.startswith("group-"):
         # Generate placeholder icon for groups without images
         img_data, content_type = generate_placeholder_icon("group")
-        logger.info(f"Serving placeholder icon for {item_id}")
+        logger.debug(f"Serving placeholder icon for {item_id}")
         from starlette.responses import Response
         return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
     
@@ -2773,7 +2773,7 @@ async def endpoint_image(request):
         numeric_id = get_numeric_id(item_id)
         stash_img_url = f"{STASH_URL}/scene/{numeric_id}/screenshot"
     
-    logger.info(f"Proxying image for {item_id} from {stash_img_url}")
+    logger.debug(f"Proxying image for {item_id} from {stash_img_url}")
     
     # Cache control headers - disable caching for now to force refresh
     cache_headers = {
@@ -2800,7 +2800,7 @@ async def endpoint_image(request):
         if not data or len(data) < 100:
             # Response too small to be a valid image
             if item_id.startswith("group-"):
-                logger.info(f"Empty/small response for group image, using placeholder: {item_id}")
+                logger.debug(f"Empty/small response for group image, using placeholder: {item_id}")
                 img_data, ct = generate_placeholder_icon("group")
                 from starlette.responses import Response
                 return Response(content=img_data, media_type=ct, headers=cache_headers)
@@ -2808,7 +2808,7 @@ async def endpoint_image(request):
         # Check if we got an image content type
         if content_type and not content_type.startswith("image/"):
             if item_id.startswith("group-"):
-                logger.info(f"Non-image response for group ({content_type}), using placeholder: {item_id}")
+                logger.debug(f"Non-image response for group ({content_type}), using placeholder: {item_id}")
                 img_data, ct = generate_placeholder_icon("group")
                 from starlette.responses import Response
                 return Response(content=img_data, media_type=ct, headers=cache_headers)
@@ -2834,10 +2834,10 @@ async def endpoint_image(request):
                         # Fetch the image using the path from GraphQL
                         import time as time_module
                         gql_img_url = f"{STASH_URL}{front_image_path}?t={int(time_module.time())}"
-                        logger.info(f"GraphQL fallback: fetching from {gql_img_url}")
+                        logger.debug(f"GraphQL fallback: fetching from {gql_img_url}")
                         data, content_type, _ = fetch_from_stash(gql_img_url, extra_headers=image_headers, timeout=30)
                         if data and len(data) > 1000 and content_type != "image/svg+xml":
-                            logger.info(f"GraphQL fallback successful: {len(data)} bytes, type={content_type}")
+                            logger.debug(f"GraphQL fallback successful: {len(data)} bytes, type={content_type}")
                         else:
                             logger.warning(f"GraphQL fallback still returned placeholder/SVG")
                             img_data, ct = generate_placeholder_icon("group")
@@ -2857,7 +2857,7 @@ async def endpoint_image(request):
         # Resize studio images to portrait 2:3 aspect ratio for Infuse tiles
         if needs_portrait_resize and PILLOW_AVAILABLE:
             data, content_type = pad_image_to_portrait(data, target_width=400, target_height=600)
-            logger.info(f"Resized studio image to 400x600 portrait (2:3)")
+            logger.debug(f"Resized studio image to 400x600 portrait (2:3)")
             
             # Cache the resized image
             if len(IMAGE_CACHE) >= IMAGE_CACHE_MAX_SIZE:
@@ -2867,7 +2867,7 @@ async def endpoint_image(request):
             IMAGE_CACHE[cache_key] = (data, content_type)
         
         from starlette.responses import Response
-        logger.info(f"Image response: {len(data)} bytes, type={content_type}")
+        logger.debug(f"Image response: {len(data)} bytes, type={content_type}")
         return Response(content=data, media_type=content_type, headers=cache_headers)
         
     except Exception as e:
@@ -2877,7 +2877,7 @@ async def endpoint_image(request):
         # For groups, return a placeholder icon instead of transparent pixel
         if item_id.startswith("group-"):
             img_data, content_type = generate_placeholder_icon("group")
-            logger.info(f"Serving placeholder icon for failed group image: {item_id}")
+            logger.debug(f"Serving placeholder icon for failed group image: {item_id}")
             return Response(content=img_data, media_type=content_type, headers=cache_headers)
         
         # Return transparent 1x1 PNG as fallback for other types
@@ -3187,7 +3187,7 @@ if __name__ == "__main__":
     if args.no_log_file:
         logger.handlers = [h for h in logger.handlers if not isinstance(h, (RotatingFileHandler, logging.FileHandler))]
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.54 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.55 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
