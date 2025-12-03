@@ -3297,8 +3297,6 @@ def fetch_from_stash(url: str, extra_headers: Dict[str, str] = None, timeout: in
 
 async def endpoint_stream(request):
     """Proxy video stream from Stash with proper authentication using true streaming."""
-    from starlette.responses import StreamingResponse
-    
     item_id = request.path_params.get("item_id")
     numeric_id = get_numeric_id(item_id)
     stash_stream_url = f"{STASH_URL}/scene/{numeric_id}/stream"
@@ -3313,52 +3311,63 @@ async def endpoint_stream(request):
     try:
         # Use authenticated session with stream=True for chunked transfer
         session = get_stash_session()
-        response = session.get(stash_stream_url, headers=extra_headers, timeout=30, stream=True, allow_redirects=True)
+        stash_response = session.get(stash_stream_url, headers=extra_headers, timeout=30, stream=True, allow_redirects=True)
         
-        content_type = response.headers.get('Content-Type', 'video/mp4')
+        content_type = stash_response.headers.get('Content-Type', 'video/mp4')
         
         # Check for auth failure (HTML instead of video)
         if 'text/html' in content_type:
             logger.error(f"Got HTML response instead of video from {stash_stream_url}")
             return JSONResponse({"error": "Authentication failed"}, status_code=401)
         
-        response.raise_for_status()
+        stash_response.raise_for_status()
         
-        # Build response headers
-        # Note: Content-Length is needed for video players to know file size and enable seeking
-        # The "Too little data" errors that appear when client disconnects mid-stream are expected
-        # and harmless - they happen when the player seeks to a new position
-        headers = {"Accept-Ranges": "bytes"}
-        if "Content-Length" in response.headers:
-            headers["Content-Length"] = response.headers["Content-Length"]
-        if "Content-Range" in response.headers:
-            headers["Content-Range"] = response.headers["Content-Range"]
-        
-        status_code = 206 if "Content-Range" in response.headers else 200
-        content_length = response.headers.get("Content-Length", "?")
+        # Build response headers for ASGI
+        status_code = 206 if "Content-Range" in stash_response.headers else 200
+        content_length = stash_response.headers.get("Content-Length", "?")
         logger.debug(f"Stream response: {content_length} bytes, type={content_type}, status={status_code}")
         
-        # Async generator that yields chunks from Stash directly to client
-        async def stream_generator():
-            try:
-                for chunk in response.iter_content(chunk_size=262144):  # 256KB chunks
-                    if chunk:
-                        yield chunk
-            except GeneratorExit:
-                # Client disconnected mid-stream (normal for video seeking)
-                pass
-            except Exception as e:
-                logger.debug(f"Stream interrupted: {e}")
-            finally:
-                response.close()
+        headers_list = [
+            (b"content-type", content_type.encode()),
+            (b"accept-ranges", b"bytes"),
+        ]
+        if "Content-Length" in stash_response.headers:
+            headers_list.append((b"content-length", stash_response.headers["Content-Length"].encode()))
+        if "Content-Range" in stash_response.headers:
+            headers_list.append((b"content-range", stash_response.headers["Content-Range"].encode()))
         
-        return StreamingResponse(
-            stream_generator(),
-            media_type=content_type,
-            headers=headers,
-            status_code=status_code,
-            background=None
-        )
+        # Return a raw ASGI streaming response to avoid middleware issues with Content-Length
+        async def raw_stream_response(scope, receive, send):
+            await send({
+                "type": "http.response.start",
+                "status": status_code,
+                "headers": headers_list,
+            })
+            
+            try:
+                for chunk in stash_response.iter_content(chunk_size=262144):  # 256KB chunks
+                    if chunk:
+                        await send({
+                            "type": "http.response.body",
+                            "body": chunk,
+                            "more_body": True,
+                        })
+            except Exception:
+                # Client disconnected - this is normal for video seeking
+                pass
+            finally:
+                stash_response.close()
+                try:
+                    await send({
+                        "type": "http.response.body",
+                        "body": b"",
+                        "more_body": False,
+                    })
+                except Exception:
+                    # Ignore errors when finalizing - client already disconnected
+                    pass
+        
+        return raw_stream_response
 
     except requests.exceptions.Timeout:
         logger.error(f"Stream timeout connecting to Stash: {stash_stream_url}")
