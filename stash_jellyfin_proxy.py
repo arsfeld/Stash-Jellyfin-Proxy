@@ -198,6 +198,7 @@ if os.getenv("LOG_DIR"):
 
 # Print effective configuration
 print(f"  User: {SJS_USER}")
+print(f"  Password: configured ({len(SJS_PASSWORD)} chars)")
 print(f"  Stash URL: {STASH_URL}")
 print(f"  Proxy: {PROXY_BIND}:{PROXY_PORT}")
 if STASH_API_KEY:
@@ -1756,9 +1757,10 @@ async def endpoint_authenticate_by_name(request):
     pw = data.get("Pw", "")
 
     logger.info(f"Auth attempt for user: {username}")
+    logger.debug(f"Auth password check: input len={len(pw)}, expected len={len(SJS_PASSWORD)}")
 
-    # Accept config password
-    if pw == SJS_PASSWORD:
+    # Accept config password (strip whitespace from both for comparison)
+    if pw.strip() == SJS_PASSWORD.strip():
         logger.info(f"Auth SUCCESS for user {SJS_USER}")
         return JSONResponse({
             "User": {
