@@ -8,6 +8,7 @@ import signal
 import uuid
 import argparse
 import time
+import re
 from typing import Optional, List, Dict, Any, Tuple
 from logging.handlers import SysLogHandler, RotatingFileHandler
 
@@ -316,22 +317,31 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             status = response.status_code
             
             # Determine log level based on request type and result
-            # INFO: errors, auth, streams, slow requests (>1s)
-            # DEBUG: images, routine API calls
+            # INFO: errors, auth, streams (first only), slow requests (>1s)
+            # DEBUG: images, routine API calls, stream continuations
             is_error = status >= 400
             is_auth = "/Authenticate" in path
             is_stream = "/stream" in path.lower() or "/Videos/" in path
             is_slow = ms > 1000
-            is_image = "/Images/" in path
-            
-            log_line = f"{path} -> {status} ({ms}ms)"
             
             if is_error:
-                logger.warning(log_line)
-            elif is_auth or is_stream or is_slow:
-                logger.info(log_line)
+                logger.warning(f"{path} -> {status} ({ms}ms)")
+            elif is_auth:
+                logger.info(f"Login attempt -> {status} ({ms}ms)")
+            elif is_stream:
+                # Extract scene ID from path like /Videos/scene-35734/stream
+                match = re.search(r'/(scene-\d+)/', path)
+                scene_id = match.group(1) if match else "unknown"
+                
+                # First request is slow (stream starting), follow-ups are fast (range requests)
+                if ms > 500:
+                    logger.info(f"▶ Stream started: {scene_id} ({ms}ms)")
+                else:
+                    logger.debug(f"Stream continue: {scene_id} ({ms}ms)")
+            elif is_slow:
+                logger.info(f"Slow request: {path} ({ms}ms)")
             else:
-                logger.debug(log_line)
+                logger.debug(f"{path} -> {status} ({ms}ms)")
             
             return response
         except Exception as e:
@@ -3221,7 +3231,7 @@ if __name__ == "__main__":
     if args.no_log_file:
         logger.handlers = [h for h in logger.handlers if not isinstance(h, (RotatingFileHandler, logging.FileHandler))]
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.58 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.59 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
