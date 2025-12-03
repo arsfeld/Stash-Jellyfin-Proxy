@@ -305,7 +305,7 @@ logger = setup_logging()
 # --- Middleware for Request Logging ---
 # Track last activity time for each scene to detect resumes
 _stream_last_seen = {}  # scene_id -> timestamp
-STREAM_RESUME_THRESHOLD = 10  # seconds of inactivity before considering it a "resume"
+STREAM_RESUME_THRESHOLD = 90  # seconds of inactivity before considering it a "resume" (Infuse buffers ~60s)
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
@@ -2311,7 +2311,21 @@ async def endpoint_item_details(request):
 
 async def endpoint_sessions(request):
     """Handle session management endpoints (Playing, Progress, Stopped)."""
-    # Accept all session reports silently
+    path = request.url.path
+    
+    # Log when video stops at INFO level
+    if "/Stopped" in path:
+        try:
+            body = await request.json()
+            item_id = body.get("ItemId", "unknown")
+            # Extract scene ID if present
+            if item_id.startswith("scene-"):
+                logger.info(f"⏹ Stream stopped: {item_id}")
+            else:
+                logger.info(f"⏹ Stream stopped: {item_id}")
+        except:
+            logger.info("⏹ Stream stopped")
+    
     return JSONResponse({})
 
 async def endpoint_playback_info(request):
@@ -3248,7 +3262,7 @@ if __name__ == "__main__":
     if args.no_log_file:
         logger.handlers = [h for h in logger.handlers if not isinstance(h, (RotatingFileHandler, logging.FileHandler))]
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.60 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.61 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
