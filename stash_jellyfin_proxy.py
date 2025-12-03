@@ -1506,13 +1506,15 @@ async def endpoint_items(request):
         # Calculate page
         page = (start_index // limit) + 1
         
-        # Query Stash with the search term - use relevance sorting for search results
-        q = f"""query FindScenes($q: String!, $page: Int!, $per_page: Int!) {{ 
-            findScenes(filter: {{q: $q, page: $page, per_page: $per_page, sort: "relevance", direction: DESC}}) {{ 
+        # Query Stash with the search term
+        # Note: Stash's q parameter already provides relevance-based filtering
+        # We use date DESC as the secondary sort for consistent ordering
+        q = f"""query FindScenes($q: String!, $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{ 
+            findScenes(filter: {{q: $q, page: $page, per_page: $per_page, sort: $sort, direction: $direction}}) {{ 
                 scenes {{ {scene_fields} }} 
             }} 
         }}"""
-        res = stash_query(q, {"q": clean_search, "page": page, "per_page": limit})
+        res = stash_query(q, {"q": clean_search, "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
         scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
         logger.debug(f"Search '{clean_search}' returned {len(scenes)} scenes (page {page}, total {total_count})")
         for s in scenes:
