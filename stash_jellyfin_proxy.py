@@ -9,7 +9,7 @@ import uuid
 import argparse
 import time
 from typing import Optional, List, Dict, Any, Tuple
-from logging.handlers import SysLogHandler
+from logging.handlers import SysLogHandler, RotatingFileHandler
 
 # Third-party dependencies
 try:
@@ -71,6 +71,13 @@ ENABLE_IMAGE_RESIZE = True
 # Performance settings
 STASH_TIMEOUT = 30
 STASH_RETRIES = 3
+
+# Logging settings
+LOG_DIR = "."  # Current directory
+LOG_FILE = "stash_jellyfin_proxy.log"
+LOG_LEVEL = "INFO"
+LOG_MAX_SIZE_MB = 10
+LOG_BACKUP_COUNT = 3
 
 # Load Config - parses config file with KEY = "value" or KEY="value" format
 def load_config(filepath):
@@ -143,6 +150,18 @@ if _config:
     if "STASH_RETRIES" in _config:
         STASH_RETRIES = int(_config.get("STASH_RETRIES", STASH_RETRIES))
     
+    # Logging settings
+    if "LOG_DIR" in _config:
+        LOG_DIR = _config.get("LOG_DIR", LOG_DIR)
+    if "LOG_FILE" in _config:
+        LOG_FILE = _config.get("LOG_FILE", LOG_FILE)
+    if "LOG_LEVEL" in _config:
+        LOG_LEVEL = _config.get("LOG_LEVEL", LOG_LEVEL).upper()
+    if "LOG_MAX_SIZE_MB" in _config:
+        LOG_MAX_SIZE_MB = int(_config.get("LOG_MAX_SIZE_MB", LOG_MAX_SIZE_MB))
+    if "LOG_BACKUP_COUNT" in _config:
+        LOG_BACKUP_COUNT = int(_config.get("LOG_BACKUP_COUNT", LOG_BACKUP_COUNT))
+    
     print(f"Loaded config from {CONFIG_FILE}")
     print(f"  User: {SJS_USER}")
     print(f"  Stash URL: {STASH_URL}")
@@ -207,13 +226,66 @@ MENU_ICONS = {
 }
 
 # --- Logging Setup ---
-# Configure root logger to output to console
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler(sys.stdout)]
-)
-logger = logging.getLogger("stash-jellyfin-proxy")
+def setup_logging():
+    """Configure logging with both console and file handlers."""
+    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    
+    # Determine log level
+    level_map = {
+        'DEBUG': logging.DEBUG,
+        'INFO': logging.INFO,
+        'WARNING': logging.WARNING,
+        'ERROR': logging.ERROR,
+    }
+    log_level = level_map.get(LOG_LEVEL.upper(), logging.INFO)
+    
+    # Create logger
+    log = logging.getLogger("stash-jellyfin-proxy")
+    log.setLevel(log_level)
+    
+    # Clear any existing handlers
+    log.handlers = []
+    
+    # Console handler (always enabled)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(logging.Formatter(log_format))
+    console_handler.setLevel(log_level)
+    log.addHandler(console_handler)
+    
+    # File handler (if LOG_FILE is set)
+    if LOG_FILE:
+        try:
+            # Build full log path
+            log_path = os.path.join(LOG_DIR, LOG_FILE) if LOG_DIR else LOG_FILE
+            
+            # Ensure log directory exists
+            log_dir = os.path.dirname(log_path)
+            if log_dir and not os.path.exists(log_dir):
+                os.makedirs(log_dir, exist_ok=True)
+            
+            # Set up rotating file handler
+            if LOG_MAX_SIZE_MB > 0:
+                max_bytes = LOG_MAX_SIZE_MB * 1024 * 1024
+                file_handler = RotatingFileHandler(
+                    log_path,
+                    maxBytes=max_bytes,
+                    backupCount=LOG_BACKUP_COUNT
+                )
+            else:
+                file_handler = logging.FileHandler(log_path)
+            
+            file_handler.setFormatter(logging.Formatter(log_format))
+            file_handler.setLevel(log_level)
+            log.addHandler(file_handler)
+            
+            print(f"  Log file: {os.path.abspath(log_path)}")
+        except Exception as e:
+            print(f"Warning: Could not set up file logging: {e}")
+    
+    return log
+
+# Initialize logger (will be reconfigured in main if needed)
+logger = setup_logging()
 
 # --- Middleware for Request Logging ---
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
@@ -3086,14 +3158,22 @@ app = Starlette(debug=True, routes=routes, middleware=middleware)
 
 # --- Main Execution ---
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser = argparse.ArgumentParser(description="Stash-Jellyfin Proxy Server")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging (overrides config)")
+    parser.add_argument("--no-log-file", action="store_true", help="Disable file logging")
     args = parser.parse_args()
 
+    # Override logging if --debug flag is set
     if args.debug:
         logger.setLevel(logging.DEBUG)
+        for handler in logger.handlers:
+            handler.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.51 ---")
+    # Remove file handler if --no-log-file is set
+    if args.no_log_file:
+        logger.handlers = [h for h in logger.handlers if not isinstance(h, (RotatingFileHandler, logging.FileHandler))]
+    
+    logger.info(f"--- Stash-Jellyfin Proxy v3.52 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     

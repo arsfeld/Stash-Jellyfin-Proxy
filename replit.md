@@ -1,97 +1,106 @@
-# Overview
+# Stash-Jellyfin Proxy
 
-This is a full-stack web application built with a modern TypeScript stack, featuring a React frontend and Express backend. The application uses PostgreSQL with Drizzle ORM for data persistence and integrates with shadcn/ui components for the user interface. Additionally, the repository contains a Python proxy server (`stash_jellyfin_proxy.py`) that bridges Stash media server with Jellyfin-compatible clients like Infuse.
+A Python proxy server that enables Jellyfin-compatible media players (like Infuse) to connect to Stash media server by emulating the Jellyfin API.
 
-# User Preferences
+## Current Version: v3.52
+
+## User Preferences
 
 Preferred communication style: Simple, everyday language.
 
-# System Architecture
+## Project Status
 
-## Frontend Architecture
+**Phase 1 (Complete)**: Core proxy functionality
+- Full Jellyfin API emulation for Infuse compatibility
+- Stash GraphQL integration for all content types
+- Saved filters support with complex transformations
+- Configurable logging with file rotation
+- Error resilience with retry logic
 
-**Technology Stack**: React with Vite bundler and TypeScript
+**Next Phases**:
+- Phase 2: Web UI for configuration and monitoring
+- Phase 3: Docker containerization
 
-The frontend is built as a single-page application using React. The project uses Vite as the build tool and development server, configured to run on port 5000 during development. The application leverages shadcn/ui components (New York style variant) built on top of Radix UI primitives for accessible, customizable UI components.
+## Core Features
 
-**Styling**: TailwindCSS with CSS variables for theming, using a neutral base color scheme. The styling system supports component composition through class-variance-authority and clsx utilities.
+### Jellyfin API Emulation
+- Authentication (username/password)
+- Library browsing (Scenes, Performers, Studios, Groups)
+- Video streaming with subtitle support
+- Image serving with caching
+- 50+ Jellyfin endpoints for client compatibility
 
-**State Management**: TanStack Query (React Query) for server state management, handling data fetching, caching, and synchronization with the backend.
+### Stash Integration
+- GraphQL API queries for all content types
+- Saved filter transformation (SCENES, PERFORMERS, STUDIOS, GROUPS)
+- Pagination handling with offset-based slicing
+- Tag-based library folders (TAG_GROUPS)
+- Latest items for home screen (LATEST_GROUPS)
 
-**Form Handling**: React Hook Form with Zod schema validation via @hookform/resolvers for type-safe form validation.
+### Configuration (stash_jellyfin_proxy.conf)
 
-**Directory Structure**: 
-- `client/src/` - Frontend source code
-- `client/public/` - Static assets including OpenGraph images
-- Component aliases configured via path mapping (@/, @/components, @/lib, etc.)
+| Setting | Description | Default |
+|---------|-------------|---------|
+| STASH_URL | Stash server URL | http://localhost:9999 |
+| PROXY_BIND | Proxy bind address | 0.0.0.0 |
+| PROXY_PORT | Proxy port | 8096 |
+| STASH_API_KEY | Stash API key | (required) |
+| SJS_USER | Infuse login username | admin |
+| SJS_PASSWORD | Infuse login password | (required) |
+| TAG_GROUPS | Comma-separated tag names for library folders | (empty) |
+| LATEST_GROUPS | Libraries to show on home screen | Scenes |
+| SERVER_NAME | Server name shown in clients | Stash Media Server |
+| STASH_TIMEOUT | API request timeout (seconds) | 30 |
+| STASH_RETRIES | API retry count | 3 |
+| LOG_DIR | Log file directory | . |
+| LOG_FILE | Log file name | stash_jellyfin_proxy.log |
+| LOG_LEVEL | Logging level (DEBUG/INFO/WARNING/ERROR) | INFO |
+| LOG_MAX_SIZE_MB | Max log file size before rotation | 10 |
+| LOG_BACKUP_COUNT | Number of backup log files | 3 |
 
-## Backend Architecture
+### Command Line Options
 
-**Technology Stack**: Node.js with Express and TypeScript
+```bash
+./stash_jellyfin_proxy.py [--debug] [--no-log-file]
+```
 
-The backend is an Express server that serves both API endpoints and the built frontend in production. The server uses ESM (ES Modules) as indicated by `"type": "module"` in package.json.
+- `--debug`: Enable debug logging (overrides LOG_LEVEL)
+- `--no-log-file`: Disable file logging (console only)
 
-**Development vs Production**:
-- Development: Runs with tsx for TypeScript execution directly (`npm run dev`)
-- Production: Builds to CommonJS bundle in dist/ directory (`npm run build` then `npm start`)
+## Technical Architecture
 
-**Session Management**: PostgreSQL-backed sessions using connect-pg-simple for persistent session storage.
+### Python Proxy Server (stash_jellyfin_proxy.py)
 
-**API Layer**: RESTful API architecture with Express routes. The shared directory contains common schemas and types used across frontend and backend.
-
-## Data Storage
-
-**Primary Database**: PostgreSQL via Neon serverless driver (@neondatabase/serverless)
-
-**ORM**: Drizzle ORM for type-safe database queries and migrations
-
-- Schema definition: `shared/schema.ts`
-- Migration files: `migrations/` directory
-- Database dialect: PostgreSQL
-- Schema push command: `npm run db:push`
-
-**Schema Validation**: Drizzle-Zod integration for generating Zod schemas from Drizzle table definitions, ensuring consistency between database schema and runtime validation.
-
-**Database Configuration**: Requires `DATABASE_URL` environment variable. The configuration enforces this requirement with an error if not provided.
-
-## External Dependencies
-
-**Third-Party Services**:
-
-1. **Neon Database** - Serverless PostgreSQL hosting (primary database)
-2. **Stash Media Server** - Adult content management system integrated via the Python proxy
-   - URL: https://stash.feldorn.com
-   - Authentication via API key
-   - GraphQL API endpoint: /graphql-local
-
-**Python Proxy Server** (stash_jellyfin_proxy.py):
-
-- **Purpose**: Translates Stash's API to Jellyfin-compatible endpoints for clients like Infuse
 - **Framework**: Starlette (ASGI) with Hypercorn server
 - **Port**: 8096 (default Jellyfin port)
-- **Authentication**: Simple shared API key authentication (user-1/infuse12345)
-- **Configuration**: Loads from `/home/chris/.scripts.conf`
-- **Key Features**:
-  - Maps Stash scenes to Jellyfin movie items
-  - Proxies video streams and images from Stash
-  - Provides Jellyfin-compatible metadata responses
-  - Supports GraphQL queries to Stash backend
+- **Authentication**: Simple shared credentials
+- **Logging**: Console + rotating file handler
 
-**UI Component Libraries**:
+### Key Components
 
-1. **Radix UI** - Comprehensive collection of accessible, unstyled component primitives
-2. **shadcn/ui** - Pre-styled Radix components with TailwindCSS
-3. **Lucide Icons** - Icon library
-4. **Embla Carousel** - Carousel/slider component
-5. **cmdk** - Command palette component
+1. **Jellyfin Endpoints**: 50+ endpoints for full client compatibility
+2. **Stash GraphQL Client**: Handles all Stash API communication with retry logic
+3. **Filter Transformer**: Converts saved filters to GraphQL query format
+4. **Image Handler**: Serves and caches images with optional resizing
+5. **Stream Proxy**: Redirects video streams to Stash
 
-**Development Tools**:
+### Dependencies
 
-1. **Replit Development Plugins** (development only):
-   - @replit/vite-plugin-runtime-error-modal - Enhanced error overlay
-   - @replit/vite-plugin-cartographer - Code navigation
-   - @replit/vite-plugin-dev-banner - Development banner
+- Python 3.8+
+- hypercorn (ASGI server)
+- starlette (web framework)
+- requests (HTTP client)
+- Pillow (optional, for image resizing)
 
-**Date/Time**: date-fns for date manipulation and formatting
+## Files
 
-**Build Process**: Custom build script (`script/build.ts`) that handles both frontend and backend compilation, producing a single distributable bundle in the dist/ directory.
+| File | Description |
+|------|-------------|
+| stash_jellyfin_proxy.py | Main proxy server (v3.52) |
+| stash_jellyfin_proxy.conf | Configuration file |
+
+## Recent Changes
+
+- v3.52: Added file logging with rotation, debug flag improvements
+- v3.51: Fixed SERVER_ID consistency for Infuse pairing
+- v3.50: Added 20+ Jellyfin endpoints, enhanced filter transformation, externalized config, retry logic
