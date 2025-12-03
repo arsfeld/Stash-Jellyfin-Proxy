@@ -526,7 +526,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v3.68</span>
+                <span id="version">v3.69</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -757,7 +757,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v3.68';
+                document.getElementById('version').textContent = data.version || 'v3.69';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
             }
@@ -1030,89 +1030,119 @@ def mark_stream_stopped(scene_id: str):
     if scene_id in _active_streams:
         del _active_streams[scene_id]
 
-class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
+class RequestLoggingMiddleware:
+    """Pure ASGI middleware that doesn't wrap streaming responses (avoids BaseHTTPMiddleware issues)."""
+    
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
         start_time = time.time()
-        client_host = request.client.host if request.client else "unknown"
-        path = request.url.path
-        method = request.method
+        path = scope.get("path", "")
+        client = scope.get("client", ("unknown", 0))
+        client_host = client[0] if client else "unknown"
+        
+        # Get headers dict for logging
+        headers = {}
+        for key, value in scope.get("headers", []):
+            headers[key.decode().lower()] = value.decode()
+
+        # Track response status
+        response_status = [0]  # Use list to allow mutation in nested function
+
+        async def send_wrapper(message):
+            if message["type"] == "http.response.start":
+                response_status[0] = message.get("status", 0)
+            try:
+                await send(message)
+            except Exception:
+                # Ignore send errors (client disconnected)
+                pass
 
         try:
-            response = await call_next(request)
-            process_time = time.time() - start_time
-            ms = int(process_time * 1000)
-            status = response.status_code
-
-            # Determine log level based on request type and result
-            # INFO: errors, auth, streams (first only), slow requests (>1s)
-            # DEBUG: images, routine API calls, stream continuations
-            is_error = status >= 400
-            is_auth = "/Authenticate" in path
-            is_stream = "/stream" in path.lower() or "/Videos/" in path
-            is_slow = ms > 1000
-
-            if is_error:
-                logger.warning(f"{path} -> {status} ({ms}ms)")
-            elif is_auth:
-                logger.info(f"Login attempt -> {status} ({ms}ms)")
-            elif is_stream:
-                # Extract scene ID from path like /Videos/scene-35734/stream
-                match = re.search(r'/(scene-\d+)/', path)
-                scene_id = match.group(1) if match else "unknown"
-                now = time.time()
-                
-                # Extract user from path (e.g., /Users/chris/...)
-                user_match = re.search(r'/Users/([^/]+)/', path)
-                user = user_match.group(1) if user_match else "unknown"
-                
-                # Get client info from headers
-                client_ip = request.headers.get("X-Forwarded-For", client_host).split(",")[0].strip()
-                user_agent = request.headers.get("User-Agent", "")
-                # Parse client type from User-Agent (Infuse, VLC, etc.)
-                if "Infuse" in user_agent:
-                    client_type = "Infuse"
-                elif "VLC" in user_agent:
-                    client_type = "VLC"
-                elif "Jellyfin" in user_agent:
-                    client_type = "Jellyfin"
-                else:
-                    client_type = user_agent.split("/")[0][:20] if user_agent else "Unknown"
-
-                # Check if this is a new stream, resume, or continuation
-                stream_info = _active_streams.get(scene_id)
-
-                if stream_info is None:
-                    # New stream - fetch title and log
-                    title = get_scene_title(scene_id)
-                    _active_streams[scene_id] = {
-                        "last_seen": now,
-                        "started": now,
-                        "title": title,
-                        "user": user,
-                        "client_ip": client_ip,
-                        "client_type": client_type
-                    }
-                    logger.info(f"▶ Stream started: {title} ({scene_id}) by {user} from {client_ip} [{client_type}]")
-                elif (now - stream_info["last_seen"]) > STREAM_RESUME_THRESHOLD:
-                    # Gap in activity = resumed after pause
-                    gap = int(now - stream_info["last_seen"])
-                    stream_info["last_seen"] = now
-                    logger.info(f"▶ Stream resumed: {stream_info['title']} ({scene_id}, paused {gap}s)")
-                else:
-                    # Continuous playback - just update timestamp
-                    stream_info["last_seen"] = now
-                    logger.debug(f"Stream continue: {scene_id} ({ms}ms)")
-            elif is_slow:
-                logger.info(f"Slow request: {path} ({ms}ms)")
-            else:
-                logger.debug(f"{path} -> {status} ({ms}ms)")
-
-            return response
+            await self.app(scope, receive, send_wrapper)
         except Exception as e:
-            process_time = time.time() - start_time
-            ms = int(process_time * 1000)
-            logger.error(f"{path} -> ERROR ({ms}ms): {str(e)}", exc_info=True)
-            return JSONResponse({"error": "Internal Server Error"}, status_code=500)
+            # Check if this is a client disconnect error (expected for streaming)
+            error_str = str(e).lower()
+            if "content-length" in error_str or "disconnect" in error_str or "cancelled" in error_str:
+                # Client disconnected during streaming - this is normal for video seeking
+                pass
+            else:
+                process_time = time.time() - start_time
+                ms = int(process_time * 1000)
+                logger.error(f"{path} -> ERROR ({ms}ms): {str(e)}")
+                return
+
+        # Log the request
+        process_time = time.time() - start_time
+        ms = int(process_time * 1000)
+        status = response_status[0]
+
+        # Determine log level based on request type and result
+        is_error = status >= 400
+        is_auth = "/Authenticate" in path
+        is_stream = "/stream" in path.lower() or "/Videos/" in path
+        is_slow = ms > 1000
+
+        if is_error and status > 0:
+            logger.warning(f"{path} -> {status} ({ms}ms)")
+        elif is_auth:
+            logger.info(f"Login attempt -> {status} ({ms}ms)")
+        elif is_stream:
+            # Extract scene ID from path like /Videos/scene-35734/stream
+            match = re.search(r'/(scene-\d+)/', path)
+            scene_id = match.group(1) if match else "unknown"
+            now = time.time()
+            
+            # Extract user from path (e.g., /Users/chris/...)
+            user_match = re.search(r'/Users/([^/]+)/', path)
+            user = user_match.group(1) if user_match else "unknown"
+            
+            # Get client info from headers
+            client_ip = headers.get("x-forwarded-for", client_host).split(",")[0].strip()
+            user_agent = headers.get("user-agent", "")
+            # Parse client type from User-Agent (Infuse, VLC, etc.)
+            if "Infuse" in user_agent:
+                client_type = "Infuse"
+            elif "VLC" in user_agent:
+                client_type = "VLC"
+            elif "Jellyfin" in user_agent:
+                client_type = "Jellyfin"
+            else:
+                client_type = user_agent.split("/")[0][:20] if user_agent else "Unknown"
+
+            # Check if this is a new stream, resume, or continuation
+            stream_info = _active_streams.get(scene_id)
+
+            if stream_info is None:
+                # New stream - fetch title and log
+                title = get_scene_title(scene_id)
+                _active_streams[scene_id] = {
+                    "last_seen": now,
+                    "started": now,
+                    "title": title,
+                    "user": user,
+                    "client_ip": client_ip,
+                    "client_type": client_type
+                }
+                logger.info(f"▶ Stream started: {title} ({scene_id}) by {user} from {client_ip} [{client_type}]")
+            elif (now - stream_info["last_seen"]) > STREAM_RESUME_THRESHOLD:
+                # Gap in activity = resumed after pause
+                gap = int(now - stream_info["last_seen"])
+                stream_info["last_seen"] = now
+                logger.info(f"▶ Stream resumed: {stream_info['title']} ({scene_id}, paused {gap}s)")
+            else:
+                # Continuous playback - just update timestamp
+                stream_info["last_seen"] = now
+                logger.debug(f"Stream continue: {scene_id} ({ms}ms)")
+        elif is_slow:
+            logger.info(f"Slow request: {path} ({ms}ms)")
+        elif status > 0:
+            logger.debug(f"{path} -> {status} ({ms}ms)")
 
 # --- Stash GraphQL Client ---
 GRAPHQL_URL = f"{STASH_URL}/graphql-local" if not STASH_URL.endswith("/graphql-local") else STASH_URL
@@ -3300,6 +3330,8 @@ def fetch_from_stash(url: str, extra_headers: Dict[str, str] = None, timeout: in
 
 async def endpoint_stream(request):
     """Proxy video stream from Stash with proper authentication using true streaming."""
+    from starlette.responses import StreamingResponse
+    
     item_id = request.path_params.get("item_id")
     numeric_id = get_numeric_id(item_id)
     stash_stream_url = f"{STASH_URL}/scene/{numeric_id}/stream"
@@ -3314,63 +3346,52 @@ async def endpoint_stream(request):
     try:
         # Use authenticated session with stream=True for chunked transfer
         session = get_stash_session()
-        stash_response = session.get(stash_stream_url, headers=extra_headers, timeout=30, stream=True, allow_redirects=True)
+        response = session.get(stash_stream_url, headers=extra_headers, timeout=30, stream=True, allow_redirects=True)
         
-        content_type = stash_response.headers.get('Content-Type', 'video/mp4')
+        content_type = response.headers.get('Content-Type', 'video/mp4')
         
         # Check for auth failure (HTML instead of video)
         if 'text/html' in content_type:
             logger.error(f"Got HTML response instead of video from {stash_stream_url}")
             return JSONResponse({"error": "Authentication failed"}, status_code=401)
         
-        stash_response.raise_for_status()
+        response.raise_for_status()
         
-        # Build response headers for ASGI
-        status_code = 206 if "Content-Range" in stash_response.headers else 200
-        content_length = stash_response.headers.get("Content-Length", "?")
+        # Build response headers
+        headers = {"Accept-Ranges": "bytes"}
+        # Only include Content-Length for range requests (206) - needed for seeking
+        # For full requests (200), omit Content-Length to use chunked transfer
+        status_code = 206 if "Content-Range" in response.headers else 200
+        if status_code == 206:
+            if "Content-Length" in response.headers:
+                headers["Content-Length"] = response.headers["Content-Length"]
+            if "Content-Range" in response.headers:
+                headers["Content-Range"] = response.headers["Content-Range"]
+        
+        content_length = response.headers.get("Content-Length", "?")
         logger.debug(f"Stream response: {content_length} bytes, type={content_type}, status={status_code}")
         
-        headers_list = [
-            (b"content-type", content_type.encode()),
-            (b"accept-ranges", b"bytes"),
-        ]
-        if "Content-Length" in stash_response.headers:
-            headers_list.append((b"content-length", stash_response.headers["Content-Length"].encode()))
-        if "Content-Range" in stash_response.headers:
-            headers_list.append((b"content-range", stash_response.headers["Content-Range"].encode()))
-        
-        # Return a raw ASGI streaming response to avoid middleware issues with Content-Length
-        async def raw_stream_response(scope, receive, send):
-            await send({
-                "type": "http.response.start",
-                "status": status_code,
-                "headers": headers_list,
-            })
-            
+        # Async generator that yields chunks from Stash directly to client
+        async def stream_generator():
             try:
-                for chunk in stash_response.iter_content(chunk_size=262144):  # 256KB chunks
+                for chunk in response.iter_content(chunk_size=262144):  # 256KB chunks
                     if chunk:
-                        await send({
-                            "type": "http.response.body",
-                            "body": chunk,
-                            "more_body": True,
-                        })
+                        yield chunk
+            except GeneratorExit:
+                # Client disconnected mid-stream (normal for video seeking)
+                pass
             except Exception:
-                # Client disconnected - this is normal for video seeking
+                # Any other error during streaming
                 pass
             finally:
-                stash_response.close()
-                try:
-                    await send({
-                        "type": "http.response.body",
-                        "body": b"",
-                        "more_body": False,
-                    })
-                except Exception:
-                    # Ignore errors when finalizing - client already disconnected
-                    pass
+                response.close()
         
-        return raw_stream_response
+        return StreamingResponse(
+            stream_generator(),
+            media_type=content_type,
+            headers=headers,
+            status_code=status_code
+        )
 
     except requests.exceptions.Timeout:
         logger.error(f"Stream timeout connecting to Stash: {stash_stream_url}")
@@ -4135,7 +4156,7 @@ async def ui_api_status(request):
     """Return proxy status."""
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v3.68",
+        "version": "v3.69",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "stashConnected": STASH_CONNECTED,
@@ -4298,7 +4319,7 @@ if __name__ == "__main__":
     if args.no_log_file:
         logger.handlers = [h for h in logger.handlers if not isinstance(h, (RotatingFileHandler, logging.FileHandler))]
 
-    logger.info(f"--- Stash-Jellyfin Proxy v3.68 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.69 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
 
