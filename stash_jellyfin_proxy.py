@@ -1316,9 +1316,6 @@ async def endpoint_items(request):
                 logger.warning(f"Saved filter not found: {filter_id}")
     
     elif parent_id == "root-scenes":
-        # Calculate page number from startIndex (Stash uses 1-indexed pages)
-        page = (start_index // limit) + 1
-        
         # First get total count
         count_q = """query { findScenes { count } }"""
         count_res = stash_query(count_q)
@@ -1331,10 +1328,22 @@ async def endpoint_items(request):
         # On first page, add FILTERS folder at the top if there are saved filters
         if start_index == 0 and has_filters:
             items.append(format_filters_folder("root-scenes"))
-            # Adjust total count to include FILTERS folder
             total_count = scene_count + 1
+            # Fetch one fewer scene since Filters takes a slot
+            stash_limit = limit - 1
+            stash_start = 0
+        elif has_filters:
+            # Adjust for the Filters folder offset
+            total_count = scene_count + 1
+            stash_start = start_index - 1  # Offset by 1 for Filters folder
+            stash_limit = limit
         else:
             total_count = scene_count
+            stash_start = start_index
+            stash_limit = limit
+        
+        # Calculate page using adjusted start index
+        page = (stash_start // stash_limit) + 1 if stash_limit > 0 else 1
         
         # Then get paginated scenes with sort from request
         q = f"""query FindScenes($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{ 
@@ -1342,7 +1351,7 @@ async def endpoint_items(request):
                 scenes {{ {scene_fields} }} 
             }} 
         }}"""
-        res = stash_query(q, {"page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
+        res = stash_query(q, {"page": page, "per_page": stash_limit, "sort": sort_field, "direction": sort_direction})
         for s in res.get("data", {}).get("findScenes", {}).get("scenes", []):
             items.append(format_jellyfin_item(s, parent_id="root-scenes"))
 
@@ -1360,18 +1369,28 @@ async def endpoint_items(request):
         if start_index == 0 and has_filters:
             items.append(format_filters_folder("root-studios"))
             total_count = studio_count + 1
+            # Fetch one fewer studio since Filters takes a slot
+            stash_limit = limit - 1
+            stash_start = 0
+        elif has_filters:
+            # Adjust for the Filters folder offset
+            total_count = studio_count + 1
+            stash_start = start_index - 1  # Offset by 1 for Filters folder
+            stash_limit = limit
         else:
             total_count = studio_count
+            stash_start = start_index
+            stash_limit = limit
         
-        # Calculate page
-        page = (start_index // limit) + 1
+        # Calculate page using adjusted start index
+        page = (stash_start // stash_limit) + 1 if stash_limit > 0 else 1
         
         q = """query FindStudios($page: Int!, $per_page: Int!) { 
             findStudios(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) { 
                 studios { id name image_path scene_count } 
             } 
         }"""
-        res = stash_query(q, {"page": page, "per_page": limit})
+        res = stash_query(q, {"page": page, "per_page": stash_limit})
         for s in res.get("data", {}).get("findStudios", {}).get("studios", []):
             studio_item = {
                 "Name": s["name"],
@@ -1432,18 +1451,28 @@ async def endpoint_items(request):
         if start_index == 0 and has_filters:
             items.append(format_filters_folder("root-performers"))
             total_count = performer_count + 1
+            # Fetch one fewer performer since Filters takes a slot
+            stash_limit = limit - 1
+            stash_start = 0
+        elif has_filters:
+            # Adjust for the Filters folder offset
+            total_count = performer_count + 1
+            stash_start = start_index - 1  # Offset by 1 for Filters folder
+            stash_limit = limit
         else:
             total_count = performer_count
+            stash_start = start_index
+            stash_limit = limit
         
-        # Calculate page
-        page = (start_index // limit) + 1
+        # Calculate page using adjusted start index
+        page = (stash_start // stash_limit) + 1 if stash_limit > 0 else 1
         
         q = """query FindPerformers($page: Int!, $per_page: Int!) { 
             findPerformers(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) { 
                 performers { id name image_path scene_count } 
             } 
         }"""
-        res = stash_query(q, {"page": page, "per_page": limit})
+        res = stash_query(q, {"page": page, "per_page": stash_limit})
         for p in res.get("data", {}).get("findPerformers", {}).get("performers", []):
             performer_item = {
                 "Name": p["name"],
@@ -1507,11 +1536,21 @@ async def endpoint_items(request):
         if start_index == 0 and has_filters:
             items.append(format_filters_folder("root-groups"))
             total_count = group_count + 1
+            # Fetch one fewer group since Filters takes a slot
+            stash_limit = limit - 1
+            stash_start = 0
+        elif has_filters:
+            # Adjust for the Filters folder offset
+            total_count = group_count + 1
+            stash_start = start_index - 1  # Offset by 1 for Filters folder
+            stash_limit = limit
         else:
             total_count = group_count
+            stash_start = start_index
+            stash_limit = limit
         
-        # Calculate page
-        page = (start_index // limit) + 1
+        # Calculate page using adjusted start index
+        page = (stash_start // stash_limit) + 1 if stash_limit > 0 else 1
         
         # Query for movies - always try to get the image, endpoint will handle failures
         q = """query FindMovies($page: Int!, $per_page: Int!) { 
@@ -1519,7 +1558,7 @@ async def endpoint_items(request):
                 movies { id name scene_count } 
             } 
         }"""
-        res = stash_query(q, {"page": page, "per_page": limit})
+        res = stash_query(q, {"page": page, "per_page": stash_limit})
         for m in res.get("data", {}).get("findMovies", {}).get("movies", []):
             group_item = {
                 "Name": m["name"],
@@ -2596,7 +2635,7 @@ if __name__ == "__main__":
     if args.debug:
         logger.setLevel(logging.DEBUG)
     
-    logger.info(f"--- Stash-Jellyfin Proxy v3.37 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.38 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
     
