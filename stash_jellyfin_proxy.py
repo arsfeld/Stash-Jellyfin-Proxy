@@ -4505,11 +4505,22 @@ async def ui_api_auth_config(request):
     try:
         data = await request.json()
         password = data.get("password", "")
-        if password == SJS_PASSWORD:
+        
+        # Debug: log password lengths for troubleshooting
+        logger.debug(f"Auth attempt: input len={len(password)}, expected len={len(SJS_PASSWORD)}")
+        
+        # Strip any whitespace from both passwords for comparison
+        input_pw = password.strip()
+        expected_pw = SJS_PASSWORD.strip()
+        
+        if input_pw == expected_pw:
+            logger.info("Config authentication successful")
             return JSONResponse({"success": True})
         else:
+            logger.warning(f"Config authentication failed - password mismatch (input: {len(input_pw)} chars, expected: {len(expected_pw)} chars)")
             return JSONResponse({"success": False, "error": "Invalid password"})
     except Exception as e:
+        logger.error(f"Config authentication error: {e}")
         return JSONResponse({"success": False, "error": str(e)})
 
 ui_routes = [
