@@ -110,15 +110,16 @@ Preferred communication style: Simple, everyday language.
 |------|-------------|
 | stash_jellyfin_proxy.py | Main proxy server (v3.76) |
 | stash_jellyfin_proxy.conf | Configuration file |
-| Dockerfile | Docker container definition |
-| docker-entrypoint.sh | Container entrypoint script |
-| build_container.sh | Build script for Docker image |
-| docker-compose.yml | Sample compose file |
+| build_docker/Dockerfile | Docker container definition |
+| build_docker/docker-entrypoint.sh | Container entrypoint script |
+| build_docker/build_container.sh | Build script for Docker image |
+| build_docker/docker-compose.yml | Sample compose file |
 
 ## Docker Usage
 
 ```bash
-# Build the image
+# From the build_docker directory:
+cd build_docker
 ./build_container.sh
 
 # Or use docker-compose

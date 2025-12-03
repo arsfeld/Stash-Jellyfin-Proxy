@@ -56,22 +56,32 @@ while [[ $# -gt 0 ]]; do
 done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
 cd "$SCRIPT_DIR"
 
 if [ ! -f "Dockerfile" ]; then
-    echo "Error: Dockerfile not found in current directory"
+    echo "Error: Dockerfile not found in ${SCRIPT_DIR}"
     exit 1
 fi
 
-if [ ! -f "stash_jellyfin_proxy.py" ]; then
-    echo "Error: stash_jellyfin_proxy.py not found in current directory"
+if [ ! -f "${PROJECT_DIR}/stash_jellyfin_proxy.py" ]; then
+    echo "Error: stash_jellyfin_proxy.py not found in ${PROJECT_DIR}"
     exit 1
 fi
 
 if [ ! -f "docker-entrypoint.sh" ]; then
-    echo "Error: docker-entrypoint.sh not found in current directory"
+    echo "Error: docker-entrypoint.sh not found in ${SCRIPT_DIR}"
     exit 1
 fi
+
+BUILD_DIR=$(mktemp -d)
+trap "rm -rf $BUILD_DIR" EXIT
+
+echo "Preparing build context..."
+cp "${PROJECT_DIR}/stash_jellyfin_proxy.py" "$BUILD_DIR/"
+cp "${SCRIPT_DIR}/Dockerfile" "$BUILD_DIR/"
+cp "${SCRIPT_DIR}/docker-entrypoint.sh" "$BUILD_DIR/"
 
 echo "Building ${IMAGE_NAME}:${IMAGE_TAG}..."
 echo ""
@@ -79,7 +89,7 @@ echo ""
 docker build ${NO_CACHE} \
     -t "${IMAGE_NAME}:${IMAGE_TAG}" \
     -t "${IMAGE_NAME}:${VERSION_TAG}" \
-    .
+    "$BUILD_DIR"
 
 BUILD_STATUS=$?
 
@@ -103,7 +113,7 @@ if [ $BUILD_STATUS -eq 0 ]; then
     echo "    ${IMAGE_NAME}:${IMAGE_TAG}"
     echo ""
     echo "Or use docker-compose:"
-    echo "  docker-compose up -d"
+    echo "  docker-compose -f ${SCRIPT_DIR}/docker-compose.yml up -d"
     
     if [ "$PUSH" = true ]; then
         echo ""
