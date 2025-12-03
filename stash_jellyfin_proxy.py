@@ -4239,9 +4239,9 @@ async def ui_api_config(request):
                 "LOG_LEVEL", "LOG_DIR", "LOG_FILE", "LOG_MAX_SIZE_MB", "LOG_BACKUP_COUNT"
             ]
 
-            # Read existing config file preserving all lines (comments, blank lines, etc.)
+            # Read existing config file preserving all lines
             original_lines = []
-            existing_values = {}
+            existing_values = {}  # Currently active (uncommented) values
             if os.path.isfile(CONFIG_FILE):
                 with open(CONFIG_FILE, 'r') as f:
                     original_lines = f.readlines()
@@ -4251,7 +4251,7 @@ async def ui_api_config(request):
                             key, _, value = stripped.partition('=')
                             existing_values[key.strip()] = value.strip().strip('"').strip("'")
 
-            # Prepare new values to update
+            # Prepare new values - only include values that actually changed
             updates = {}
             for key in config_keys:
                 if key in data:
@@ -4261,29 +4261,50 @@ async def ui_api_config(request):
                         continue
                     if isinstance(value, list):
                         value = ", ".join(value)
-                    updates[key] = str(value)
+                    new_value = str(value)
+                    # Only update if value actually changed from current
+                    current_value = existing_values.get(key, "")
+                    if new_value != current_value:
+                        updates[key] = new_value
 
-            # Update lines in-place, preserving comments and formatting
+            # Update lines in-place, handling both commented and uncommented keys
             updated_keys = set()
             new_lines = []
             for line in original_lines:
                 stripped = line.strip()
+                
+                # Check for uncommented key=value
                 if stripped and not stripped.startswith('#') and '=' in stripped:
                     key, _, old_value = stripped.partition('=')
                     key = key.strip()
                     if key in updates:
-                        # Preserve indentation from original line
                         indent = len(line) - len(line.lstrip())
                         new_lines.append(f'{" " * indent}{key} = "{updates[key]}"\n')
                         updated_keys.add(key)
                     else:
                         new_lines.append(line)
+                # Check for commented key=value (e.g., "# KEY = value")
+                elif stripped.startswith('#') and '=' in stripped:
+                    # Remove leading # and whitespace to check the key
+                    uncommented = stripped.lstrip('#').strip()
+                    if '=' in uncommented:
+                        key, _, old_value = uncommented.partition('=')
+                        key = key.strip()
+                        if key in updates and key not in updated_keys:
+                            # Uncomment and update the value
+                            indent = len(line) - len(line.lstrip())
+                            new_lines.append(f'{" " * indent}{key} = "{updates[key]}"\n')
+                            updated_keys.add(key)
+                        else:
+                            new_lines.append(line)
+                    else:
+                        new_lines.append(line)
                 else:
                     new_lines.append(line)
 
-            # Add any new keys that weren't in the original file
-            for key in config_keys:
-                if key in updates and key not in updated_keys:
+            # Only add truly new keys that don't exist anywhere in the file
+            for key in updates:
+                if key not in updated_keys:
                     new_lines.append(f'{key} = "{updates[key]}"\n')
 
             # Write updated config file
