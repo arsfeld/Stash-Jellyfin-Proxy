@@ -52,6 +52,10 @@ SJS_PASSWORD = "infuse12345"
 # Tag groups - comma-separated list of tag names to show as top-level folders
 TAG_GROUPS = []  # e.g., ["Favorites", "VR", "4K"]
 
+# Latest groups - controls which libraries show on Infuse home page
+# "Scenes" = all scenes, other entries must match TAG_GROUPS entries
+LATEST_GROUPS = ["Scenes"]  # e.g., ["Scenes", "VR", "Favorites"]
+
 # Load Config - parses config file with KEY = "value" or KEY="value" format
 def load_config(filepath):
     """Load configuration from a shell-style config file."""
@@ -86,6 +90,10 @@ if _config:
     tag_groups_str = _config.get("TAG_GROUPS", "")
     if tag_groups_str:
         TAG_GROUPS = [t.strip() for t in tag_groups_str.split(",") if t.strip()]
+    # Parse LATEST_GROUPS as comma-separated list
+    latest_groups_str = _config.get("LATEST_GROUPS", "")
+    if latest_groups_str:
+        LATEST_GROUPS = [t.strip() for t in latest_groups_str.split(",") if t.strip()]
     print(f"Loaded config from {CONFIG_FILE}")
     print(f"  User: {SJS_USER}")
     print(f"  Stash URL: {STASH_URL}")
@@ -98,6 +106,8 @@ if _config:
         print("  Get your API key from: Stash -> Settings -> Security -> API Key")
     if TAG_GROUPS:
         print(f"  Tag groups: {', '.join(TAG_GROUPS)}")
+    if LATEST_GROUPS:
+        print(f"  Latest groups: {', '.join(LATEST_GROUPS)}")
 else:
     print(f"Warning: Config file {CONFIG_FILE} not found or empty. Using defaults/env vars.")
     STASH_URL = os.getenv("STASH_URL", STASH_URL)
@@ -684,6 +694,21 @@ async def endpoint_latest_items(request):
     
     items = []
     
+    # Check if this library is in LATEST_GROUPS
+    def is_in_latest_groups(parent_id):
+        if parent_id == "root-scenes":
+            return "Scenes" in LATEST_GROUPS
+        elif parent_id and parent_id.startswith("tag-"):
+            tag_slug = parent_id[4:]
+            for t in TAG_GROUPS:
+                if t.lower().replace(' ', '-') == tag_slug:
+                    return t in LATEST_GROUPS
+        return False
+    
+    if not is_in_latest_groups(parent_id):
+        logger.info(f"Skipping latest for {parent_id} (not in LATEST_GROUPS)")
+        return JSONResponse(items)
+    
     if parent_id == "root-scenes":
         # Return latest scenes (most recently added)
         q = f"""query FindScenes($page: Int!, $per_page: Int!) {{ 
@@ -739,17 +764,6 @@ async def endpoint_latest_items(request):
                 logger.info(f"Tag '{tag_name}' latest: {len(scenes)} scenes")
                 for s in scenes:
                     items.append(format_jellyfin_item(s, parent_id=parent_id))
-    
-    elif parent_id in ("root-studios", "root-performers", "root-groups"):
-        # These are folder-type libraries, not scene libraries
-        # Return empty - they don't have "recently added" content in the same way
-        logger.info(f"Skipping latest for folder library: {parent_id}")
-        pass
-    
-    else:
-        # Unknown parent_id - return empty
-        logger.info(f"Unknown parent_id for latest: {parent_id}")
-        pass
     
     logger.info(f"Returning {len(items)} latest items for {parent_id}")
     return JSONResponse(items)
