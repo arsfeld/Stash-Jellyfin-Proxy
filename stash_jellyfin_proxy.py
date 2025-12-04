@@ -4041,20 +4041,14 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600) -> Tuple[
             logger.warning(f"No TrueType fonts found (checked: {font_paths}), using Pillow default font - text will be small")
             font = ImageFont.load_default()
 
-        # Truncate text with ellipsis if too long
+        # Truncate text with ellipsis if longer than 16 characters
+        MAX_TEXT_LENGTH = 16
         display_text = text
+        if len(display_text) > MAX_TEXT_LENGTH:
+            display_text = display_text[:MAX_TEXT_LENGTH - 3] + "..."
+        
         bbox = draw.textbbox((0, 0), display_text, font=font)
         text_width = bbox[2] - bbox[0]
-
-        if text_width > max_width:
-            # Truncate and add ellipsis
-            while text_width > max_width and len(display_text) > 1:
-                display_text = display_text[:-1]
-                bbox = draw.textbbox((0, 0), display_text + "...", font=font)
-                text_width = bbox[2] - bbox[0]
-            display_text = display_text + "..."
-            bbox = draw.textbbox((0, 0), display_text, font=font)
-            text_width = bbox[2] - bbox[0]
 
         # Calculate position to center text
         text_height = bbox[3] - bbox[1]
