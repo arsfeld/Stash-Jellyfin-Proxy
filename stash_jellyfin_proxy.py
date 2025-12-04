@@ -1192,7 +1192,11 @@ _active_streams = {}
 # Track which client is watching which scene (for single-stream-per-client enforcement)
 # client_key -> scene_id
 _client_streams = {}
+# Track recently stopped streams to prevent false "started" messages after stop
+# scene_id -> timestamp when stopped
+_recently_stopped = {}
 STREAM_RESUME_THRESHOLD = 90  # seconds of inactivity before considering it a "resume" (Infuse buffers ~60s)
+RECENTLY_STOPPED_GRACE = 5  # seconds to ignore new stream requests after a stop (prevents stop/start race)
 
 def get_scene_title(scene_id: str) -> str:
     """Fetch scene title from Stash for logging."""
@@ -1213,7 +1217,7 @@ def get_scene_title(scene_id: str) -> str:
         pass
     return scene_id  # Fallback to ID
 
-def mark_stream_stopped(scene_id: str):
+def mark_stream_stopped(scene_id: str, from_stop_notification: bool = False):
     """Mark a stream as stopped so next request shows as 'started'."""
     if scene_id in _active_streams:
         stream_info = _active_streams[scene_id]
@@ -1222,6 +1226,15 @@ def mark_stream_stopped(scene_id: str):
         if client_key and _client_streams.get(client_key) == scene_id:
             del _client_streams[client_key]
         del _active_streams[scene_id]
+    
+    # If this came from a stop notification, add to recently stopped to prevent false re-start
+    if from_stop_notification:
+        _recently_stopped[scene_id] = time.time()
+        # Clean up old entries (older than grace period)
+        now = time.time()
+        expired = [k for k, v in _recently_stopped.items() if now - v > RECENTLY_STOPPED_GRACE * 2]
+        for k in expired:
+            del _recently_stopped[k]
 
 def cancel_client_streams(client_key: str, new_scene_id: str = None) -> list:
     """Cancel any existing streams from this client (except new_scene_id). Returns list of cancelled scene_ids."""
@@ -1329,22 +1342,32 @@ class RequestLoggingMiddleware:
             stream_info = _active_streams.get(scene_id)
 
             if stream_info is None:
-                # New stream for this scene - check if client is switching from another video
-                cancel_client_streams(client_key, scene_id)
-                
-                # Now start tracking the new stream
-                title = get_scene_title(scene_id)
-                _active_streams[scene_id] = {
-                    "last_seen": now,
-                    "started": now,
-                    "title": title,
-                    "user": user,
-                    "client_ip": client_ip,
-                    "client_type": client_type,
-                    "client_key": client_key
-                }
-                _client_streams[client_key] = scene_id
-                logger.info(f"▶ Stream started: {title} ({scene_id}) by {user} from {client_ip} [{client_type}]")
+                # Check if this stream was recently stopped (prevents false start after stop notification)
+                stopped_at = _recently_stopped.get(scene_id)
+                if stopped_at and (now - stopped_at) < RECENTLY_STOPPED_GRACE:
+                    # This is a trailing request after a stop - ignore it
+                    logger.debug(f"Ignoring trailing request for recently stopped stream: {scene_id}")
+                else:
+                    # New stream for this scene - check if client is switching from another video
+                    cancel_client_streams(client_key, scene_id)
+                    
+                    # Clear from recently stopped if present
+                    if scene_id in _recently_stopped:
+                        del _recently_stopped[scene_id]
+                    
+                    # Now start tracking the new stream
+                    title = get_scene_title(scene_id)
+                    _active_streams[scene_id] = {
+                        "last_seen": now,
+                        "started": now,
+                        "title": title,
+                        "user": user,
+                        "client_ip": client_ip,
+                        "client_type": client_type,
+                        "client_key": client_key
+                    }
+                    _client_streams[client_key] = scene_id
+                    logger.info(f"▶ Stream started: {title} ({scene_id}) by {user} from {client_ip} [{client_type}]")
             elif (now - stream_info["last_seen"]) > STREAM_RESUME_THRESHOLD:
                 # Gap in activity = resumed after pause
                 gap = int(now - stream_info["last_seen"])
@@ -3370,10 +3393,12 @@ async def endpoint_sessions(request):
             # Get title from active streams cache, or fetch it
             if item_id in _active_streams:
                 title = _active_streams[item_id]["title"]
-                mark_stream_stopped(item_id)
+                mark_stream_stopped(item_id, from_stop_notification=True)
                 logger.info(f"⏹ Stream stopped: {title} ({item_id})")
             elif item_id.startswith("scene-"):
+                # Stream wasn't tracked (e.g., after server restart) - still mark as recently stopped
                 title = get_scene_title(item_id)
+                mark_stream_stopped(item_id, from_stop_notification=True)
                 logger.info(f"⏹ Stream stopped: {title} ({item_id})")
             else:
                 logger.info(f"⏹ Stream stopped: {item_id}")
