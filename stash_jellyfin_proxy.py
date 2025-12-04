@@ -716,7 +716,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v3.86</span>
+                <span id="version">v3.87</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -1052,7 +1052,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v3.86';
+                document.getElementById('version').textContent = data.version || 'v3.87';
                 document.getElementById('proxy-uptime').textContent = data.uptime ? `Uptime: ${formatDuration(data.uptime)}` : '';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
@@ -1508,6 +1508,106 @@ def cancel_client_streams(client_key: str, new_scene_id: str = None) -> list:
             cancelled.append(current_scene)
         del _client_streams[client_key]
     return cancelled
+
+# Endpoints that don't require authentication (for client discovery)
+PUBLIC_ENDPOINTS = {
+    "/",
+    "/System/Info/Public",
+    "/System/Info",
+    "/System/Ping",
+    "/Users",  # User list for login screen
+    "/Users/AuthenticateByName",
+    "/Branding/Configuration",
+}
+
+# Endpoint prefixes that don't require auth (for discovery/public info)
+PUBLIC_PREFIXES = [
+    "/System/Info",
+]
+
+class AuthenticationMiddleware:
+    """ASGI middleware that validates ACCESS_TOKEN on protected endpoints."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+        method = scope.get("method", "GET")
+
+        # Check if this is a public endpoint
+        is_public = path in PUBLIC_ENDPOINTS
+        if not is_public:
+            for prefix in PUBLIC_PREFIXES:
+                if path.startswith(prefix):
+                    is_public = True
+                    break
+
+        # Allow public endpoints without auth
+        if is_public:
+            await self.app(scope, receive, send)
+            return
+
+        # Extract token from headers
+        token = None
+        for key, value in scope.get("headers", []):
+            key_lower = key.decode().lower()
+            value_str = value.decode()
+            
+            # Check X-Emby-Token header (Jellyfin clients)
+            if key_lower == "x-emby-token":
+                token = value_str
+                break
+            # Check X-MediaBrowser-Token header (older clients)
+            elif key_lower == "x-mediabrowser-token":
+                token = value_str
+                break
+            # Check Authorization header (Bearer token or X-Emby-Authorization)
+            elif key_lower == "authorization":
+                if value_str.startswith("Bearer "):
+                    token = value_str[7:]
+                elif "Token=" in value_str:
+                    # Parse X-Emby-Authorization format: MediaBrowser Client="...", Token="..."
+                    import re
+                    match = re.search(r'Token="([^"]+)"', value_str)
+                    if match:
+                        token = match.group(1)
+                break
+            # Check X-Emby-Authorization header
+            elif key_lower == "x-emby-authorization":
+                import re
+                match = re.search(r'Token="([^"]+)"', value_str)
+                if match:
+                    token = match.group(1)
+                break
+
+        # Validate token
+        if token and token == ACCESS_TOKEN:
+            # Valid token - proceed
+            await self.app(scope, receive, send)
+            return
+
+        # No valid token - return 401
+        logger.debug(f"Auth required for {path} - token: {'present but invalid' if token else 'missing'}")
+        
+        response_body = b'{"error": "Unauthorized"}'
+        await send({
+            "type": "http.response.start",
+            "status": 401,
+            "headers": [
+                [b"content-type", b"application/json"],
+                [b"content-length", str(len(response_body)).encode()],
+            ],
+        })
+        await send({
+            "type": "http.response.body",
+            "body": response_body,
+        })
+
 
 class RequestLoggingMiddleware:
     """Pure ASGI middleware that doesn't wrap streaming responses (avoids BaseHTTPMiddleware issues)."""
@@ -4723,6 +4823,7 @@ routes = [
 ]
 
 middleware = [
+    Middleware(AuthenticationMiddleware),  # Token validation first
     Middleware(RequestLoggingMiddleware),
     Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 ]
@@ -4742,7 +4843,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - PROXY_START_TIME) if PROXY_START_TIME else 0
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v3.86",
+        "version": "v3.87",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "uptime": uptime_seconds,
@@ -5284,7 +5385,7 @@ if __name__ == "__main__":
     asyncio_logger = logging.getLogger("asyncio")
     asyncio_logger.setLevel(logging.CRITICAL)  # Only show critical asyncio errors
 
-    logger.info(f"--- Stash-Jellyfin Proxy v3.86 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.87 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
 
