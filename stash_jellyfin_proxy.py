@@ -661,6 +661,73 @@ WEB_UI_HTML = '''<!DOCTYPE html>
             border-radius: 6px;
             padding: 16px;
         }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 12px;
+        }
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 8px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .top-played-list {
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 12px;
+        }
+        .top-played-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--bg-card);
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .top-played-item:last-child {
+            margin-bottom: 0;
+        }
+        .top-played-rank {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+            width: 30px;
+            text-align: center;
+        }
+        .top-played-info {
+            flex: 1;
+            margin-left: 12px;
+            overflow: hidden;
+        }
+        .top-played-title {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .top-played-performer {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .top-played-count {
+            font-weight: 600;
+            color: var(--accent);
+            margin-left: 12px;
+        }
         .stream-item {
             display: flex;
             flex-direction: column;
@@ -773,6 +840,34 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                     <h3 class="card-title">Active Streams</h3>
                     <div id="streams-list" class="streams-list">
                         <div class="empty-state">No active streams</div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <div class="card">
+                        <h3 class="card-title">Stash Library</h3>
+                        <div class="stats-grid" id="stash-library-stats">
+                            <div class="stat-item"><span class="stat-value" id="stat-scenes">-</span><span class="stat-label">Scenes</span></div>
+                            <div class="stat-item"><span class="stat-value" id="stat-performers">-</span><span class="stat-label">Performers</span></div>
+                            <div class="stat-item"><span class="stat-value" id="stat-studios">-</span><span class="stat-label">Studios</span></div>
+                            <div class="stat-item"><span class="stat-value" id="stat-tags">-</span><span class="stat-label">Tags</span></div>
+                            <div class="stat-item"><span class="stat-value" id="stat-groups">-</span><span class="stat-label">Groups</span></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">Proxy Usage</h3>
+                        <div class="stats-grid" id="proxy-usage-stats">
+                            <div class="stat-item"><span class="stat-value" id="stat-streams-today">-</span><span class="stat-label">Streams Today</span></div>
+                            <div class="stat-item"><span class="stat-value" id="stat-total-streams">-</span><span class="stat-label">Total Streams</span></div>
+                            <div class="stat-item"><span class="stat-value" id="stat-unique-ips">-</span><span class="stat-label">Clients Today</span></div>
+                            <div class="stat-item"><span class="stat-value" id="stat-auth-success">-</span><span class="stat-label">Auth Success</span></div>
+                            <div class="stat-item"><span class="stat-value" id="stat-auth-failed">-</span><span class="stat-label">Auth Failed</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 class="card-title">Top Played</h3>
+                    <div id="top-played-list" class="top-played-list">
+                        <div class="empty-state">No play data yet</div>
                     </div>
                 </div>
                 <div class="card">
@@ -1176,6 +1271,50 @@ WEB_UI_HTML = '''<!DOCTYPE html>
             document.getElementById('dashboard-logs').innerHTML = dashboardHtml || '<div class="empty-state">No logs</div>';
         }
 
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+                
+                // Update Stash library stats
+                if (data.stash) {
+                    document.getElementById('stat-scenes').textContent = data.stash.scenes.toLocaleString();
+                    document.getElementById('stat-performers').textContent = data.stash.performers.toLocaleString();
+                    document.getElementById('stat-studios').textContent = data.stash.studios.toLocaleString();
+                    document.getElementById('stat-tags').textContent = data.stash.tags.toLocaleString();
+                    document.getElementById('stat-groups').textContent = data.stash.groups.toLocaleString();
+                }
+                
+                // Update Proxy usage stats
+                if (data.proxy) {
+                    document.getElementById('stat-streams-today').textContent = data.proxy.streams_today.toLocaleString();
+                    document.getElementById('stat-total-streams').textContent = data.proxy.total_streams.toLocaleString();
+                    document.getElementById('stat-unique-ips').textContent = data.proxy.unique_ips_today.toLocaleString();
+                    document.getElementById('stat-auth-success').textContent = data.proxy.auth_success.toLocaleString();
+                    document.getElementById('stat-auth-failed').textContent = data.proxy.auth_failed.toLocaleString();
+                    
+                    // Update top played list
+                    const topList = document.getElementById('top-played-list');
+                    if (data.proxy.top_played && data.proxy.top_played.length > 0) {
+                        topList.innerHTML = data.proxy.top_played.map((item, idx) => `
+                            <div class="top-played-item">
+                                <span class="top-played-rank">${idx + 1}</span>
+                                <div class="top-played-info">
+                                    <div class="top-played-title">${item.title}</div>
+                                    <div class="top-played-performer">${item.performer || 'Unknown'}</div>
+                                </div>
+                                <span class="top-played-count">${item.count}x</span>
+                            </div>
+                        `).join('');
+                    } else {
+                        topList.innerHTML = '<div class="empty-state">No play data yet</div>';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch stats:', e);
+            }
+        }
+
         // Default values - if field matches default, show placeholder instead
         const DEFAULTS = {
             STASH_URL: '',
@@ -1409,7 +1548,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         // Polling
         async function poll() {
             if (state.currentPage === 'dashboard') {
-                await Promise.all([fetchStatus(), fetchStreams(), fetchLogs()]);
+                await Promise.all([fetchStatus(), fetchStreams(), fetchLogs(), fetchStats()]);
             } else if (state.currentPage === 'logs') {
                 await fetchLogs();
             }
@@ -1419,6 +1558,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         fetchStatus();
         fetchStreams();
         fetchLogs();
+        fetchStats();
         fetchConfig();
         setInterval(poll, 5000);
     </script>
@@ -1502,24 +1642,170 @@ _recently_stopped = {}
 STREAM_RESUME_THRESHOLD = 90  # seconds of inactivity before considering it a "resume" (Infuse buffers ~60s)
 RECENTLY_STOPPED_GRACE = 5  # seconds to ignore new stream requests after a stop (prevents stop/start race)
 
+# --- Proxy Statistics Tracking ---
+# Stats are persisted to JSON file and survive restarts
+STATS_FILE = os.path.join(os.path.dirname(CONFIG_FILE) if CONFIG_FILE else ".", "proxy_stats.json")
+_proxy_stats = {
+    "total_streams": 0,           # Lifetime total streams
+    "streams_today": 0,           # Streams started today
+    "streams_today_date": "",     # Date string for today's count (YYYY-MM-DD)
+    "unique_ips_today": [],       # List of unique IPs that connected today
+    "auth_success": 0,            # Lifetime successful auths
+    "auth_failed": 0,             # Lifetime failed auths
+    "play_counts": {},            # scene_id -> {"count": int, "title": str, "performer": str, "last_played": timestamp}
+}
+_stats_dirty = False  # Flag to track if stats need saving
+_stats_last_save = 0  # Timestamp of last save
+
+def load_proxy_stats():
+    """Load stats from JSON file."""
+    global _proxy_stats
+    if os.path.isfile(STATS_FILE):
+        try:
+            with open(STATS_FILE, 'r') as f:
+                loaded = json.load(f)
+                # Merge with defaults to handle missing keys
+                for key in _proxy_stats:
+                    if key in loaded:
+                        _proxy_stats[key] = loaded[key]
+            logger.debug(f"Loaded proxy stats from {STATS_FILE}")
+        except Exception as e:
+            logger.warning(f"Could not load proxy stats: {e}")
+
+def save_proxy_stats():
+    """Save stats to JSON file."""
+    global _stats_dirty, _stats_last_save
+    try:
+        with open(STATS_FILE, 'w') as f:
+            json.dump(_proxy_stats, f, indent=2)
+        _stats_dirty = False
+        _stats_last_save = time.time()
+        logger.debug(f"Saved proxy stats to {STATS_FILE}")
+    except Exception as e:
+        logger.warning(f"Could not save proxy stats: {e}")
+
+def maybe_save_stats():
+    """Save stats if dirty and enough time has passed (every 60 seconds)."""
+    global _stats_dirty
+    if _stats_dirty and (time.time() - _stats_last_save) > 60:
+        save_proxy_stats()
+
+def reset_daily_stats_if_needed():
+    """Reset daily counters if the date has changed."""
+    today = time.strftime("%Y-%m-%d")
+    if _proxy_stats["streams_today_date"] != today:
+        _proxy_stats["streams_today"] = 0
+        _proxy_stats["streams_today_date"] = today
+        _proxy_stats["unique_ips_today"] = []
+
+def record_stream_started(scene_id: str, title: str, performer: str, client_ip: str):
+    """Record a stream play for statistics."""
+    global _stats_dirty
+    reset_daily_stats_if_needed()
+    
+    # Update counters
+    _proxy_stats["total_streams"] += 1
+    _proxy_stats["streams_today"] += 1
+    
+    # Track unique IPs
+    if client_ip not in _proxy_stats["unique_ips_today"]:
+        _proxy_stats["unique_ips_today"].append(client_ip)
+    
+    # Update play count for this scene
+    if scene_id not in _proxy_stats["play_counts"]:
+        _proxy_stats["play_counts"][scene_id] = {
+            "count": 0,
+            "title": title,
+            "performer": performer,
+            "last_played": 0
+        }
+    
+    _proxy_stats["play_counts"][scene_id]["count"] += 1
+    _proxy_stats["play_counts"][scene_id]["title"] = title  # Update in case it changed
+    _proxy_stats["play_counts"][scene_id]["performer"] = performer
+    _proxy_stats["play_counts"][scene_id]["last_played"] = time.time()
+    
+    _stats_dirty = True
+    maybe_save_stats()
+
+def record_auth_attempt(success: bool):
+    """Record an authentication attempt."""
+    global _stats_dirty
+    if success:
+        _proxy_stats["auth_success"] += 1
+    else:
+        _proxy_stats["auth_failed"] += 1
+    _stats_dirty = True
+
+def get_top_played_scenes(limit: int = 5) -> list:
+    """Get the top N most played scenes."""
+    play_counts = _proxy_stats.get("play_counts", {})
+    sorted_scenes = sorted(
+        play_counts.items(),
+        key=lambda x: x[1].get("count", 0),
+        reverse=True
+    )[:limit]
+    
+    return [
+        {
+            "scene_id": scene_id,
+            "title": info.get("title", scene_id),
+            "performer": info.get("performer", ""),
+            "count": info.get("count", 0)
+        }
+        for scene_id, info in sorted_scenes
+    ]
+
+def get_proxy_stats() -> dict:
+    """Get current proxy statistics."""
+    reset_daily_stats_if_needed()
+    return {
+        "total_streams": _proxy_stats["total_streams"],
+        "streams_today": _proxy_stats["streams_today"],
+        "unique_ips_today": len(_proxy_stats["unique_ips_today"]),
+        "auth_success": _proxy_stats["auth_success"],
+        "auth_failed": _proxy_stats["auth_failed"],
+        "top_played": get_top_played_scenes(5)
+    }
+
 def get_scene_title(scene_id: str) -> str:
     """Fetch scene title from Stash for logging."""
+    info = get_scene_info(scene_id)
+    return info.get("title", scene_id)
+
+def get_scene_info(scene_id: str) -> dict:
+    """Fetch scene title and performer from Stash."""
     try:
         numeric_id = scene_id.replace("scene-", "")
-        query = """query($id: ID!) { findScene(id: $id) { title files { basename } } }"""
+        query = """query($id: ID!) { 
+            findScene(id: $id) { 
+                title 
+                files { basename } 
+                performers { name }
+            } 
+        }"""
         result = stash_query(query, {"id": numeric_id})
         scene = result.get("data", {}).get("findScene")
         if scene:
             title = scene.get("title")
-            if title:
-                return title
-            # Fallback to filename
-            files = scene.get("files", [])
-            if files and files[0].get("basename"):
-                return files[0]["basename"]
+            if not title:
+                # Fallback to filename
+                files = scene.get("files", [])
+                if files and files[0].get("basename"):
+                    title = files[0]["basename"]
+            if not title:
+                title = scene_id
+            
+            # Get performer name(s)
+            performers = scene.get("performers", [])
+            performer = performers[0]["name"] if performers else ""
+            if len(performers) > 1:
+                performer = f"{performer} +{len(performers)-1}"
+            
+            return {"title": title, "performer": performer}
     except:
         pass
-    return scene_id  # Fallback to ID
+    return {"title": scene_id, "performer": ""}
 
 def mark_stream_stopped(scene_id: str, from_stop_notification: bool = False):
     """Mark a stream as stopped so next request shows as 'started'."""
@@ -1881,17 +2167,22 @@ class RequestLoggingMiddleware:
                         del _recently_stopped[scene_id]
 
                     # Now start tracking the new stream
-                    title = get_scene_title(scene_id)
+                    scene_info = get_scene_info(scene_id)
+                    title = scene_info.get("title", scene_id)
+                    performer = scene_info.get("performer", "")
                     _active_streams[scene_id] = {
                         "last_seen": now,
                         "started": now,
                         "title": title,
+                        "performer": performer,
                         "user": user,
                         "client_ip": client_ip,
                         "client_type": client_type,
                         "client_key": client_key
                     }
                     _client_streams[client_key] = scene_id
+                    # Record stats for this stream
+                    record_stream_started(scene_id, title, performer, client_ip)
                     logger.info(f"▶ Stream started: {title} ({scene_id}) by {user} from {client_ip} [{client_type}]")
             elif (now - stream_info["last_seen"]) > STREAM_RESUME_THRESHOLD:
                 # Gap in activity = resumed after pause
@@ -2389,6 +2680,7 @@ async def endpoint_authenticate_by_name(request):
             del _ip_failures[client_ip]
             logger.debug(f"Cleared auth failure tracking for {client_ip} after successful login")
         
+        record_auth_attempt(success=True)
         logger.info(f"Auth SUCCESS for user {SJS_USER}")
         return JSONResponse({
             "User": {
@@ -2404,6 +2696,7 @@ async def endpoint_authenticate_by_name(request):
             "ServerId": SERVER_ID
         })
     else:
+        record_auth_attempt(success=False)
         logger.warning("Auth FAILED - Invalid Key")
         return JSONResponse({"error": "Invalid Token"}, status_code=401)
 
@@ -5472,6 +5765,40 @@ async def ui_api_streams(request):
             })
     return JSONResponse({"streams": streams})
 
+async def ui_api_stats(request):
+    """Return Stash library stats and proxy usage stats."""
+    # Get Stash library stats
+    stash_stats = {"scenes": 0, "performers": 0, "studios": 0, "tags": 0, "groups": 0}
+    try:
+        query = """query {
+            stats {
+                scene_count
+                performer_count
+                studio_count
+                tag_count
+                movie_count
+            }
+        }"""
+        result = stash_query(query, {})
+        stats_data = result.get("data", {}).get("stats", {})
+        stash_stats = {
+            "scenes": stats_data.get("scene_count", 0),
+            "performers": stats_data.get("performer_count", 0),
+            "studios": stats_data.get("studio_count", 0),
+            "tags": stats_data.get("tag_count", 0),
+            "groups": stats_data.get("movie_count", 0)
+        }
+    except Exception as e:
+        logger.debug(f"Could not fetch Stash stats: {e}")
+    
+    # Get proxy stats
+    proxy_stats = get_proxy_stats()
+    
+    return JSONResponse({
+        "stash": stash_stats,
+        "proxy": proxy_stats
+    })
+
 # Global reference for restart functionality
 _shutdown_event = None
 _restart_requested = False
@@ -5529,6 +5856,7 @@ ui_routes = [
     Route("/api/auth-config", ui_api_auth_config, methods=["POST"]),
     Route("/api/logs", ui_api_logs),
     Route("/api/streams", ui_api_streams),
+    Route("/api/stats", ui_api_stats),
     Route("/api/restart", ui_api_restart, methods=["POST"]),
 ]
 
@@ -5585,7 +5913,7 @@ if __name__ == "__main__":
     asyncio_logger = logging.getLogger("asyncio")
     asyncio_logger.setLevel(logging.CRITICAL)  # Only show critical asyncio errors
 
-    logger.info(f"--- Stash-Jellyfin Proxy v3.87 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.88 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
 
@@ -5596,6 +5924,9 @@ if __name__ == "__main__":
 
     PROXY_RUNNING = True
     PROXY_START_TIME = time.time()
+    
+    # Load stats from file
+    load_proxy_stats()
 
     # Configure proxy server
     proxy_config = Config()
@@ -5615,6 +5946,8 @@ if __name__ == "__main__":
 
     def signal_handler():
         logger.info("Shutdown signal received...")
+        # Save stats before shutting down
+        save_proxy_stats()
         shutdown_event.set()
 
     async def run_servers():

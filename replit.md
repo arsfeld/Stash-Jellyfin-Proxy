@@ -113,7 +113,7 @@ Preferred communication style: Simple, everyday language.
 
 | File | Description |
 |------|-------------|
-| stash_jellyfin_proxy.py | Main proxy server (v3.82) |
+| stash_jellyfin_proxy.py | Main proxy server (v3.88) |
 | stash_jellyfin_proxy.conf | Configuration file |
 | build_docker/Dockerfile | Docker container definition |
 | build_docker/docker-entrypoint.sh | Container entrypoint script |
@@ -144,7 +144,7 @@ Environment variables ALWAYS override config file values when set.
 
 ## Recent Changes
 
-- v3.88: IP-based security with auto-banning - AuthenticationMiddleware enforces ACCESS_TOKEN on protected endpoints; failed auth attempts tracked per IP with rolling 15-min window; auto-ban after 10 failures (configurable via BAN_THRESHOLD/BAN_WINDOW_MINUTES); BANNED_IPS persisted to config file; Web UI config page shows banned IP editor; unauthorized requests logged with IP, user agent, and path; banned IPs get silent drop (no response, causes timeout) to avoid confirming ban to attackers
+- v3.88: Dashboard statistics cards - Stash Library stats (scenes/performers/studios/tags/groups counts from GraphQL) and Proxy Usage stats (streams today/total, unique clients today, auth success/fail counts); Top Played list showing top 5 most-played scenes with title, performer, and play count; stats persist to /config/proxy_stats.json and survive restarts; IP-based security with auto-banning - AuthenticationMiddleware enforces ACCESS_TOKEN on protected endpoints; failed auth attempts tracked per IP with rolling 15-min window; auto-ban after 10 failures (configurable via BAN_THRESHOLD/BAN_WINDOW_MINUTES); BANNED_IPS persisted to config file; Web UI config page shows banned IP editor; unauthorized requests logged with IP, user agent, and path; banned IPs get silent drop (no response, causes timeout) to avoid confirming ban to attackers
 - v3.87: Fixed critical security vulnerability - implemented AuthenticationMiddleware that validates ACCESS_TOKEN on all protected endpoints; public endpoints (/System/Info/Public, /Users, etc.) remain accessible for client discovery; protected endpoints now require valid token from Jellyfin client auth flow
 - v3.86: Dynamic font scaling for folder icons - 48px max font size that scales down to fit text width; text wraps differently for menu icons (12 chars/4 lines) vs filter icons (10 chars/6 lines) to prevent cutoff
 - v3.85: Font rendering improvements - DejaVu Sans Bold font loading with proper error handling
