@@ -1264,7 +1264,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                         showToast('Configuration saved.', 'success');
                     }
                     // Refresh config to reflect new values
-                    loadConfig();
+                    fetchConfig();
                 } else {
                     showToast('Failed to save configuration', 'error');
                 }
