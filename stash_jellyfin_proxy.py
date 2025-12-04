@@ -1617,9 +1617,14 @@ def record_auth_failure(client_ip: str, path: str, reason: str, user_agent: str 
     
     failure_count = len(_ip_failures[client_ip])
     
-    # Log the failure
+    # Log the failure - first 2 attempts at DEBUG (usually stale tokens from legit clients)
+    # After that, escalate to WARNING as it may indicate an attack
     ua_info = f", UA: {user_agent[:50]}" if user_agent else ""
-    logger.warning(f"🚫 Auth failed: {client_ip} -> {path} ({reason}) [attempt {failure_count}/{BAN_THRESHOLD}]{ua_info}")
+    log_msg = f"🚫 Auth failed: {client_ip} -> {path} ({reason}) [attempt {failure_count}/{BAN_THRESHOLD}]{ua_info}"
+    if failure_count <= 2:
+        logger.debug(log_msg)
+    else:
+        logger.warning(log_msg)
     
     # Check if threshold exceeded
     if failure_count >= BAN_THRESHOLD:
