@@ -1212,7 +1212,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                         return `
                         <div class="stream-item">
                             <div class="stream-header">
-                                <span class="stream-title">${s.title || s.id}</span>
+                                <span class="stream-title">${s.performer ? s.performer + ': ' : ''}${s.title || s.id}</span>
                                 <span class="stream-time">${duration}</span>
                             </div>
                             <div class="stream-meta">
@@ -5933,6 +5933,7 @@ async def ui_api_streams(request):
             streams.append({
                 "id": scene_id,
                 "title": info.get("title", scene_id),
+                "performer": info.get("performer", ""),
                 "started": info.get("started", 0),
                 "lastSeen": info.get("last_seen", 0),
                 "user": info.get("user", SJS_USER),
