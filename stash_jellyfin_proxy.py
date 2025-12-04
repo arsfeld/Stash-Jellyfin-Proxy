@@ -4766,4 +4766,14 @@ if __name__ == "__main__":
     if _restart_requested:
         logger.info("Executing restart...")
         time.sleep(0.5)  # Brief pause before restart
-        os.execv(sys.executable, [sys.executable, os.path.abspath(__file__)] + sys.argv[1:])
+        
+        # Detect if running in Docker (/.dockerenv exists or CONFIG_FILE points to /config)
+        in_docker = os.path.exists("/.dockerenv") or CONFIG_FILE.startswith("/config")
+        
+        if in_docker:
+            # In Docker, exit cleanly and let Docker's restart policy handle it
+            logger.info("Docker detected - exiting for container restart")
+            sys.exit(0)
+        else:
+            # Outside Docker, use os.execv for in-place restart
+            os.execv(sys.executable, [sys.executable, os.path.abspath(__file__)] + sys.argv[1:])
