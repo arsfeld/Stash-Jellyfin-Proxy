@@ -833,7 +833,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                         <div class="form-group">
                             <label class="form-label">Server ID</label>
                             <input type="text" class="form-input" name="SERVER_ID" readonly>
-                            <div class="form-hint" style="color: var(--warning);">Warning: Changing this value will likely break existing client pairings</div>
+                            <div class="form-hint" style="color: var(--warning);">Warning: Changing this value will break existing client pairings. Changes require a server restart.</div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Server Name</label>
@@ -4030,8 +4030,13 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600) -> Tuple[
                 continue
 
         if font is None:
-            # Use default font - skip resizing since we can't change its size
-            font = ImageFont.load_default()
+            # No TrueType fonts available - fall back to SVG which scales properly
+            logger.debug("No TrueType fonts found, using SVG fallback")
+            svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">
+                <rect width="{width}" height="{height}" fill="#1a1a2e"/>
+                <text x="{width//2}" y="{height//2}" text-anchor="middle" dominant-baseline="middle" fill="#4a90d9" font-size="{svg_font_size}" font-family="sans-serif" font-weight="bold">{text}</text>
+            </svg>'''
+            return svg.encode('utf-8'), "image/svg+xml"
         else:
             # Reduce font size until text fits
             while font_size > 20 and found_font_path:
