@@ -2,7 +2,7 @@
 
 A Python proxy server that enables Jellyfin-compatible media players (like Infuse) to connect to Stash media server by emulating the Jellyfin API.
 
-## Current Version: v3.80
+## Current Version: v3.81
 
 ## User Preferences
 
@@ -51,20 +51,20 @@ Preferred communication style: Simple, everyday language.
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| STASH_URL | Stash server URL | http://localhost:9999 |
+| STASH_URL | Stash server URL | https://stash:9999 |
 | PROXY_BIND | Proxy bind address | 0.0.0.0 |
 | PROXY_PORT | Proxy port | 8096 |
 | UI_PORT | Web UI port (0 to disable) | 8097 |
 | STASH_API_KEY | Stash API key | (required) |
-| SJS_USER | Infuse login username | admin |
+| SJS_USER | Infuse login username | (required) |
 | SJS_PASSWORD | Infuse login password | (required) |
 | TAG_GROUPS | Comma-separated tag names for library folders | (empty) |
 | LATEST_GROUPS | Libraries to show on home screen | Scenes |
 | SERVER_NAME | Server name shown in clients | Stash Media Server |
 | STASH_TIMEOUT | API request timeout (seconds) | 30 |
 | STASH_RETRIES | API retry count | 3 |
-| STASH_GRAPHQL_PATH | GraphQL endpoint path | /graphql-local |
-| STASH_VERIFY_TLS | Verify TLS certificates | true |
+| STASH_GRAPHQL_PATH | GraphQL endpoint path | /graphql |
+| STASH_VERIFY_TLS | Verify TLS certificates | false |
 | LOG_DIR | Log file directory | . |
 | LOG_FILE | Log file name | stash_jellyfin_proxy.log |
 | LOG_LEVEL | Logging level (DEBUG/INFO/WARNING/ERROR) | INFO |
@@ -110,7 +110,7 @@ Preferred communication style: Simple, everyday language.
 
 | File | Description |
 |------|-------------|
-| stash_jellyfin_proxy.py | Main proxy server (v3.76) |
+| stash_jellyfin_proxy.py | Main proxy server (v3.81) |
 | stash_jellyfin_proxy.conf | Configuration file |
 | build_docker/Dockerfile | Docker container definition |
 | build_docker/docker-entrypoint.sh | Container entrypoint script |
@@ -141,6 +141,7 @@ Environment variables ALWAYS override config file values when set.
 
 ## Recent Changes
 
+- v3.81: Security hardening - removed hardcoded default credentials (SJS_USER/SJS_PASSWORD now empty by default); added startup warning if auth not configured; Docker entrypoint uses "CHANGE_ME" placeholder; pagination validation (min=1, max=MAX_PAGE_SIZE) to prevent edge cases
 - v3.80: Fixed environment override detection - only marks fields as env-locked if they differ from Docker defaults (PROXY_BIND, PROXY_PORT, UI_PORT, LOG_DIR); dropdowns now always show selected value; checkboxes show "(env)" label when locked; LOG_DIR default is now /config
 - v3.79: Enhanced Configuration UI - added help text for all fields explaining their purpose; placeholders show default/example values; added STASH_GRAPHQL_PATH and STASH_VERIFY_TLS fields to UI; updated SERVER_ID warning text
 - v3.78: Smart stream cleanup - when a client starts a new video, their previous stream is automatically cancelled; prevents abandoned streams from accumulating in dashboard; also prevents false "started" messages when stop notification arrives after server restart (5 second grace period)
