@@ -47,9 +47,9 @@ STASH_API_KEY = ""  # Real Stash API key from Settings -> Security -> API Key
 PROXY_BIND = "0.0.0.0"
 PROXY_PORT = 8096
 UI_PORT = 8097  # Web UI port (set to 0 to disable)
-# User credentials for Infuse authentication
-SJS_USER = "chris"
-SJS_PASSWORD = "infuse12345"
+# User credentials for Infuse authentication (must be set in config)
+SJS_USER = ""
+SJS_PASSWORD = ""
 
 # Tag groups - comma-separated list of tag names to show as top-level folders
 TAG_GROUPS = []  # e.g., ["Favorites", "VR", "4K"]
@@ -303,8 +303,13 @@ if _env_overrides:
     print(f"  Env overrides: {', '.join(_env_overrides)}")
 
 # Print effective configuration
-print(f"  User: {SJS_USER}")
-print(f"  Password: configured ({len(SJS_PASSWORD)} chars)")
+if SJS_USER and SJS_PASSWORD:
+    print(f"  User: {SJS_USER}")
+    print(f"  Password: configured ({len(SJS_PASSWORD)} chars)")
+else:
+    print("WARNING: Login credentials not configured!")
+    print("  Set SJS_USER and SJS_PASSWORD in config file or environment.")
+    print("  Without credentials, Infuse will not be able to connect.")
 print(f"  Stash URL: {STASH_URL}")
 print(f"  GraphQL path: {STASH_GRAPHQL_PATH}")
 if not STASH_VERIFY_TLS:

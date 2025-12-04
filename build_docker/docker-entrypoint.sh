@@ -29,9 +29,9 @@ PROXY_BIND = 0.0.0.0
 PROXY_PORT = 8096
 UI_PORT = 8097
 
-# Authentication (used by Infuse to connect)
+# Authentication (used by Infuse to connect) - CHANGE THESE!
 SJS_USER = admin
-SJS_PASSWORD = password
+SJS_PASSWORD = CHANGE_ME
 
 # Server identification (must be unique, do not change after setup)
 SERVER_ID = ${SERVER_ID_VALUE}
