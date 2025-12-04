@@ -2,7 +2,7 @@
 
 A Python proxy server that enables Jellyfin-compatible media players (like Infuse) to connect to Stash media server by emulating the Jellyfin API.
 
-## Current Version: v3.82
+## Current Version: v3.83
 
 ## User Preferences
 
@@ -141,6 +141,7 @@ Environment variables ALWAYS override config file values when set.
 
 ## Recent Changes
 
+- v3.83: Fixed API error handling - stash_query now returns empty data dict instead of None on errors, preventing NoneType crashes; fixed folder icon generation - removed SVG fallbacks (Infuse doesn't support SVG), proper 400x600 dark PNG placeholder; added font loading debug logging; all version strings updated consistently
 - v3.82: Live config updates - most settings now apply immediately on save without restart (TAG_GROUPS, LATEST_GROUPS, timeouts, feature toggles, pagination, log level); UI shows feedback on which settings took effect vs need restart; fixed text scaling in folder icons (SVG now uses dynamic font sizing based on text length); fixed Pillow font loading bug (undefined variable)
 - v3.81: Security hardening - removed hardcoded default credentials (SJS_USER/SJS_PASSWORD now empty by default); added startup warning if auth not configured; Docker entrypoint uses "CHANGE_ME" placeholder; pagination validation (min=1, max=MAX_PAGE_SIZE) to prevent edge cases
 - v3.80: Fixed environment override detection - only marks fields as env-locked if they differ from Docker defaults (PROXY_BIND, PROXY_PORT, UI_PORT, LOG_DIR); dropdowns now always show selected value; checkboxes show "(env)" label when locked; LOG_DIR default is now /config

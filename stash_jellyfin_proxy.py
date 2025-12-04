@@ -36,6 +36,26 @@ except ImportError:
     PILLOW_AVAILABLE = False
     print("Note: Pillow not installed. Studio images will not be resized. Install with: pip install Pillow")
 
+# Fallback placeholder PNG (400x600 dark blue) - base64 decoded at runtime if needed
+# This is used when Pillow is not available or font generation fails
+PLACEHOLDER_PNG = None
+def _init_placeholder_png():
+    """Generate a 400x600 dark blue PNG placeholder image."""
+    global PLACEHOLDER_PNG
+    if PILLOW_AVAILABLE:
+        try:
+            img = Image.new('RGB', (400, 600), (26, 26, 46))
+            output = io.BytesIO()
+            img.save(output, format='PNG')
+            PLACEHOLDER_PNG = output.getvalue()
+        except Exception:
+            pass
+    if PLACEHOLDER_PNG is None:
+        # Minimal 1x1 dark PNG as last resort
+        PLACEHOLDER_PNG = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
+
+_init_placeholder_png()
+
 # --- Configuration Loading ---
 # Config file location: same directory as script, or specified path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -696,7 +716,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v3.82</span>
+                <span id="version">v3.83</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -1032,7 +1052,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v3.82';
+                document.getElementById('version').textContent = data.version || 'v3.83';
                 document.getElementById('proxy-uptime').textContent = data.uptime ? `Uptime: ${formatDuration(data.uptime)}` : '';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
@@ -1797,7 +1817,7 @@ def stash_query(query: str, variables: Dict[str, Any] = None, retries: int = Non
             break  # Don't retry unknown errors
 
     logger.error(f"Stash API failed after {retries + 1} attempts: {last_error}")
-    return {"errors": [str(last_error)], "data": None}
+    return {"errors": [str(last_error)], "data": {}}
 
 def stash_get_saved_filters(mode: str) -> List[Dict[str, Any]]:
     """Get saved filters from Stash for a specific mode (SCENES, PERFORMERS, STUDIOS, GROUPS)."""
@@ -3988,12 +4008,10 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600) -> Tuple[
         svg_font_size = max(24, 320 // text_len)  # Scale down for very long text
     
     if not PILLOW_AVAILABLE:
-        # Return SVG with dynamically sized text
-        svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">
-            <rect width="{width}" height="{height}" fill="#1a1a2e"/>
-            <text x="{width//2}" y="{height//2}" text-anchor="middle" dominant-baseline="middle" fill="#4a90d9" font-size="{svg_font_size}" font-family="sans-serif" font-weight="bold">{text}</text>
-        </svg>'''
-        return svg.encode('utf-8'), "image/svg+xml"
+        # Return dark PNG placeholder (Infuse doesn't support SVG)
+        # This is a pre-generated 400x600 dark blue PNG
+        logger.debug("Pillow not available, returning placeholder PNG")
+        return PLACEHOLDER_PNG, "image/png"
 
     try:
         from PIL import ImageDraw, ImageFont
@@ -4021,17 +4039,21 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600) -> Tuple[
             "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
         ]
 
+        import os
         for font_path in font_paths:
-            try:
-                font = ImageFont.truetype(font_path, font_size)
-                found_font_path = font_path
-                break
-            except (IOError, OSError):
-                continue
+            if os.path.exists(font_path):
+                try:
+                    font = ImageFont.truetype(font_path, font_size)
+                    found_font_path = font_path
+                    logger.debug(f"Loaded font: {font_path} at size {font_size}")
+                    break
+                except (IOError, OSError) as e:
+                    logger.debug(f"Font {font_path} exists but failed to load: {e}")
+                    continue
 
         if font is None:
             # No TrueType fonts - use default font (small but works)
-            logger.debug("No TrueType fonts found, using Pillow default font")
+            logger.warning(f"No TrueType fonts found (checked: {font_paths}), using Pillow default font - text will be small")
             font = ImageFont.load_default()
         else:
             # Reduce font size until text fits
@@ -4057,6 +4079,8 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600) -> Tuple[
         x = (width - text_width) // 2
         y = (height - text_height) // 2
 
+        logger.debug(f"Drawing '{text}' at ({x},{y}), size {font_size}px, bbox {text_width}x{text_height}")
+
         # Draw text
         draw.text((x, y), text, fill=text_color, font=font)
 
@@ -4067,12 +4091,8 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600) -> Tuple[
 
     except Exception as e:
         logger.warning(f"Text icon generation failed: {e}")
-        # SVG fallback with properly sized text
-        svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">
-            <rect width="{width}" height="{height}" fill="#1a1a2e"/>
-            <text x="{width//2}" y="{height//2}" text-anchor="middle" dominant-baseline="middle" fill="#4a90d9" font-size="{svg_font_size}" font-family="sans-serif" font-weight="bold">{text}</text>
-        </svg>'''
-        return svg.encode('utf-8'), "image/svg+xml"
+        # Return dark PNG placeholder (Infuse doesn't support SVG)
+        return PLACEHOLDER_PNG, "image/png"
 
 def generate_menu_icon(icon_type: str, width: int = 400, height: int = 600) -> Tuple[bytes, str]:
     """Generate a portrait 2:3 PNG menu icon with text label (matches Infuse folder tiles)."""
@@ -4091,8 +4111,8 @@ def generate_menu_icon(icon_type: str, width: int = 400, height: int = 600) -> T
 def generate_placeholder_icon(item_type: str = "group", width: int = 400, height: int = 600) -> Tuple[bytes, str]:
     """Generate a placeholder icon for items without images."""
     if not PILLOW_AVAILABLE:
-        # Return a simple dark image
-        return b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82', "image/png"
+        # Return dark PNG placeholder
+        return PLACEHOLDER_PNG, "image/png"
 
     try:
         from PIL import ImageDraw
@@ -4679,7 +4699,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - PROXY_START_TIME) if PROXY_START_TIME else 0
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v3.82",
+        "version": "v3.83",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "uptime": uptime_seconds,
@@ -5221,7 +5241,7 @@ if __name__ == "__main__":
     asyncio_logger = logging.getLogger("asyncio")
     asyncio_logger.setLevel(logging.CRITICAL)  # Only show critical asyncio errors
 
-    logger.info(f"--- Stash-Jellyfin Proxy v3.82 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.83 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
 
