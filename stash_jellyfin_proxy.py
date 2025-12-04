@@ -108,6 +108,11 @@ LOG_LEVEL = "INFO"
 LOG_MAX_SIZE_MB = 10
 LOG_BACKUP_COUNT = 3
 
+# IP Ban settings
+BANNED_IPS = set()  # Set of banned IP addresses
+BAN_THRESHOLD = 10  # Failed attempts before ban
+BAN_WINDOW_MINUTES = 15  # Rolling window for counting failures
+
 # Load Config - parses config file with KEY = "value" or KEY="value" format
 def load_config(filepath):
     """Load configuration from a shell-style config file.
@@ -258,6 +263,16 @@ if _config:
         LOG_MAX_SIZE_MB = int(_config.get("LOG_MAX_SIZE_MB", LOG_MAX_SIZE_MB))
     if "LOG_BACKUP_COUNT" in _config:
         LOG_BACKUP_COUNT = int(_config.get("LOG_BACKUP_COUNT", LOG_BACKUP_COUNT))
+
+    # IP Ban settings
+    if "BANNED_IPS" in _config:
+        banned_str = _config.get("BANNED_IPS", "")
+        if banned_str:
+            BANNED_IPS = set(ip.strip() for ip in banned_str.split(",") if ip.strip())
+    if "BAN_THRESHOLD" in _config:
+        BAN_THRESHOLD = int(_config.get("BAN_THRESHOLD", BAN_THRESHOLD))
+    if "BAN_WINDOW_MINUTES" in _config:
+        BAN_WINDOW_MINUTES = int(_config.get("BAN_WINDOW_MINUTES", BAN_WINDOW_MINUTES))
 
     print(f"Loaded config from {CONFIG_FILE}")
 else:
@@ -716,7 +731,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v3.87</span>
+                <span id="version">v3.88</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -950,6 +965,26 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                             </div>
                         </div>
                     </div>
+                    <div class="card">
+                        <h3 class="card-title">Security - IP Banning</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Ban Threshold</label>
+                                <input type="number" class="form-input" name="BAN_THRESHOLD" placeholder="10">
+                                <div class="form-hint">Failed auth attempts before auto-ban</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Ban Window (minutes)</label>
+                                <input type="number" class="form-input" name="BAN_WINDOW_MINUTES" placeholder="15">
+                                <div class="form-hint">Rolling window for counting failures</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Banned IPs</label>
+                            <textarea class="form-input" name="BANNED_IPS" rows="3" placeholder="192.168.1.100, 10.0.0.50" style="resize: vertical;"></textarea>
+                            <div class="form-hint">Comma-separated list of banned IP addresses. Edit to add/remove bans manually.</div>
+                        </div>
+                    </div>
                     <div id="env-notice" class="env-notice">
                         <strong>Environment Override:</strong> The following fields are set via environment variables and cannot be changed here: <span></span>
                     </div>
@@ -1052,7 +1087,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v3.87';
+                document.getElementById('version').textContent = data.version || 'v3.88';
                 document.getElementById('proxy-uptime').textContent = data.uptime ? `Uptime: ${formatDuration(data.uptime)}` : '';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
@@ -1161,7 +1196,10 @@ WEB_UI_HTML = '''<!DOCTYPE html>
             LOG_DIR: '/config',
             LOG_FILE: 'stash_jellyfin_proxy.log',
             LOG_MAX_SIZE_MB: 10,
-            LOG_BACKUP_COUNT: 3
+            LOG_BACKUP_COUNT: 3,
+            BAN_THRESHOLD: 10,
+            BAN_WINDOW_MINUTES: 15,
+            BANNED_IPS: ''
         };
 
         async function fetchConfig() {
@@ -1239,7 +1277,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
             e.preventDefault();
             const formData = new FormData(e.target);
             const config = {};
-            const intFields = ['PROXY_PORT', 'UI_PORT', 'STASH_TIMEOUT', 'STASH_RETRIES', 'LOG_MAX_SIZE_MB', 'LOG_BACKUP_COUNT', 'DEFAULT_PAGE_SIZE', 'MAX_PAGE_SIZE', 'IMAGE_CACHE_MAX_SIZE'];
+            const intFields = ['PROXY_PORT', 'UI_PORT', 'STASH_TIMEOUT', 'STASH_RETRIES', 'LOG_MAX_SIZE_MB', 'LOG_BACKUP_COUNT', 'DEFAULT_PAGE_SIZE', 'MAX_PAGE_SIZE', 'IMAGE_CACHE_MAX_SIZE', 'BAN_THRESHOLD', 'BAN_WINDOW_MINUTES'];
             const boolFields = ['ENABLE_FILTERS', 'ENABLE_IMAGE_RESIZE', 'REQUIRE_AUTH_FOR_CONFIG', 'STASH_VERIFY_TLS'];
 
             formData.forEach((value, key) => {
@@ -1525,8 +1563,109 @@ PUBLIC_PREFIXES = [
     "/System/Info",
 ]
 
+# IP failure tracking: {ip: [(timestamp, path), ...]}
+_ip_failures = {}
+_ip_failures_lock = False  # Simple flag to avoid concurrent modification issues
+
+def get_client_ip(scope) -> str:
+    """Extract client IP from request, checking X-Forwarded-For for proxied requests."""
+    headers = {}
+    for key, value in scope.get("headers", []):
+        headers[key.decode().lower()] = value.decode()
+    
+    # Check X-Forwarded-For first (set by reverse proxies like SWAG/nginx)
+    xff = headers.get("x-forwarded-for", "")
+    if xff:
+        # Take the first IP (original client)
+        return xff.split(",")[0].strip()
+    
+    # Check X-Real-IP (alternative header)
+    xri = headers.get("x-real-ip", "")
+    if xri:
+        return xri.strip()
+    
+    # Fall back to direct connection
+    client = scope.get("client", ("unknown", 0))
+    return client[0] if client else "unknown"
+
+def record_auth_failure(client_ip: str, path: str, reason: str, user_agent: str = ""):
+    """Record a failed auth attempt and check if IP should be banned."""
+    global BANNED_IPS, _ip_failures
+    
+    now = time.time()
+    window_seconds = BAN_WINDOW_MINUTES * 60
+    
+    # Clean up old entries for this IP
+    if client_ip in _ip_failures:
+        _ip_failures[client_ip] = [
+            (ts, p) for ts, p in _ip_failures[client_ip] 
+            if now - ts < window_seconds
+        ]
+    else:
+        _ip_failures[client_ip] = []
+    
+    # Add this failure
+    _ip_failures[client_ip].append((now, path))
+    
+    failure_count = len(_ip_failures[client_ip])
+    
+    # Log the failure
+    ua_info = f", UA: {user_agent[:50]}" if user_agent else ""
+    logger.warning(f"🚫 Auth failed: {client_ip} -> {path} ({reason}) [attempt {failure_count}/{BAN_THRESHOLD}]{ua_info}")
+    
+    # Check if threshold exceeded
+    if failure_count >= BAN_THRESHOLD:
+        # Ban this IP
+        BANNED_IPS.add(client_ip)
+        logger.warning(f"🔒 IP BANNED: {client_ip} (exceeded {BAN_THRESHOLD} failures in {BAN_WINDOW_MINUTES} minutes)")
+        
+        # Persist to config file
+        save_banned_ips_to_config()
+        
+        # Clear the failure tracking for this IP
+        del _ip_failures[client_ip]
+
+def save_banned_ips_to_config():
+    """Save the current BANNED_IPS set to the config file."""
+    global BANNED_IPS
+    
+    if not os.path.isfile(CONFIG_FILE):
+        return
+    
+    banned_str = ", ".join(sorted(BANNED_IPS)) if BANNED_IPS else ""
+    
+    try:
+        with open(CONFIG_FILE, 'r') as f:
+            lines = f.readlines()
+        
+        # Find and update BANNED_IPS line, or add it
+        found = False
+        new_lines = []
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith('BANNED_IPS') and '=' in stripped:
+                new_lines.append(f'BANNED_IPS = "{banned_str}"\n')
+                found = True
+            elif stripped.startswith('#') and 'BANNED_IPS' in stripped and '=' in stripped:
+                # Uncomment and update
+                new_lines.append(f'BANNED_IPS = "{banned_str}"\n')
+                found = True
+            else:
+                new_lines.append(line)
+        
+        # If not found, add at end
+        if not found:
+            new_lines.append(f'\n# Auto-generated by IP ban system\nBANNED_IPS = "{banned_str}"\n')
+        
+        with open(CONFIG_FILE, 'w') as f:
+            f.writelines(new_lines)
+        
+        logger.info(f"Saved banned IPs to config: {banned_str if banned_str else '(none)'}")
+    except Exception as e:
+        logger.error(f"Failed to save banned IPs to config: {e}")
+
 class AuthenticationMiddleware:
-    """ASGI middleware that validates ACCESS_TOKEN on protected endpoints."""
+    """ASGI middleware that validates ACCESS_TOKEN on protected endpoints and enforces IP bans."""
 
     def __init__(self, app):
         self.app = app
@@ -1537,7 +1676,32 @@ class AuthenticationMiddleware:
             return
 
         path = scope.get("path", "")
-        method = scope.get("method", "GET")
+        client_ip = get_client_ip(scope)
+        
+        # Get user agent for logging
+        user_agent = ""
+        for key, value in scope.get("headers", []):
+            if key.decode().lower() == "user-agent":
+                user_agent = value.decode()
+                break
+
+        # Check if IP is banned FIRST (before any other processing)
+        if client_ip in BANNED_IPS:
+            logger.warning(f"🚫 Blocked banned IP: {client_ip} -> {path}")
+            response_body = b'{"error": "Forbidden"}'
+            await send({
+                "type": "http.response.start",
+                "status": 403,
+                "headers": [
+                    [b"content-type", b"application/json"],
+                    [b"content-length", str(len(response_body)).encode()],
+                ],
+            })
+            await send({
+                "type": "http.response.body",
+                "body": response_body,
+            })
+            return
 
         # Check if this is a public endpoint
         is_public = path in PUBLIC_ENDPOINTS
@@ -1572,14 +1736,12 @@ class AuthenticationMiddleware:
                     token = value_str[7:]
                 elif "Token=" in value_str:
                     # Parse X-Emby-Authorization format: MediaBrowser Client="...", Token="..."
-                    import re
                     match = re.search(r'Token="([^"]+)"', value_str)
                     if match:
                         token = match.group(1)
                 break
             # Check X-Emby-Authorization header
             elif key_lower == "x-emby-authorization":
-                import re
                 match = re.search(r'Token="([^"]+)"', value_str)
                 if match:
                     token = match.group(1)
@@ -1591,8 +1753,9 @@ class AuthenticationMiddleware:
             await self.app(scope, receive, send)
             return
 
-        # No valid token - return 401
-        logger.debug(f"Auth required for {path} - token: {'present but invalid' if token else 'missing'}")
+        # No valid token - record failure and return 401
+        reason = "invalid token" if token else "missing token"
+        record_auth_failure(client_ip, path, reason, user_agent)
         
         response_body = b'{"error": "Unauthorized"}'
         await send({
@@ -4843,7 +5006,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - PROXY_START_TIME) if PROXY_START_TIME else 0
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v3.87",
+        "version": "v3.88",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "uptime": uptime_seconds,
@@ -4858,7 +5021,7 @@ async def ui_api_config(request):
     global TAG_GROUPS, LATEST_GROUPS, SERVER_NAME, STASH_TIMEOUT, STASH_RETRIES
     global STASH_GRAPHQL_PATH, STASH_VERIFY_TLS, ENABLE_FILTERS, ENABLE_IMAGE_RESIZE
     global IMAGE_CACHE_MAX_SIZE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, REQUIRE_AUTH_FOR_CONFIG
-    global LOG_LEVEL, _config_defined_keys
+    global LOG_LEVEL, _config_defined_keys, BANNED_IPS, BAN_THRESHOLD, BAN_WINDOW_MINUTES
 
     if request.method == "GET":
         return JSONResponse({
@@ -4888,7 +5051,10 @@ async def ui_api_config(request):
                 "LOG_DIR": LOG_DIR,
                 "LOG_FILE": LOG_FILE,
                 "LOG_MAX_SIZE_MB": LOG_MAX_SIZE_MB,
-                "LOG_BACKUP_COUNT": LOG_BACKUP_COUNT
+                "LOG_BACKUP_COUNT": LOG_BACKUP_COUNT,
+                "BAN_THRESHOLD": BAN_THRESHOLD,
+                "BAN_WINDOW_MINUTES": BAN_WINDOW_MINUTES,
+                "BANNED_IPS": ", ".join(sorted(BANNED_IPS)) if BANNED_IPS else ""
             },
             "env_fields": _env_overrides,
             "defined_fields": sorted(list(_config_defined_keys))
@@ -4903,7 +5069,8 @@ async def ui_api_config(request):
                 "TAG_GROUPS", "LATEST_GROUPS", "STASH_TIMEOUT", "STASH_RETRIES",
                 "ENABLE_FILTERS", "ENABLE_IMAGE_RESIZE", "REQUIRE_AUTH_FOR_CONFIG", "IMAGE_CACHE_MAX_SIZE",
                 "DEFAULT_PAGE_SIZE", "MAX_PAGE_SIZE",
-                "LOG_LEVEL", "LOG_DIR", "LOG_FILE", "LOG_MAX_SIZE_MB", "LOG_BACKUP_COUNT"
+                "LOG_LEVEL", "LOG_DIR", "LOG_FILE", "LOG_MAX_SIZE_MB", "LOG_BACKUP_COUNT",
+                "BAN_THRESHOLD", "BAN_WINDOW_MINUTES", "BANNED_IPS"
             ]
 
             # Sensitive keys - log changes but mask values
@@ -4958,6 +5125,9 @@ async def ui_api_config(request):
                 "LOG_FILE": LOG_FILE,
                 "LOG_MAX_SIZE_MB": str(LOG_MAX_SIZE_MB),
                 "LOG_BACKUP_COUNT": str(LOG_BACKUP_COUNT),
+                "BAN_THRESHOLD": str(BAN_THRESHOLD),
+                "BAN_WINDOW_MINUTES": str(BAN_WINDOW_MINUTES),
+                "BANNED_IPS": ", ".join(sorted(BANNED_IPS)) if BANNED_IPS else "",
             }
 
             # Default values for comparison
@@ -4988,6 +5158,9 @@ async def ui_api_config(request):
                 "LOG_FILE": "stash_jellyfin_proxy.log",
                 "LOG_MAX_SIZE_MB": "10",
                 "LOG_BACKUP_COUNT": "3",
+                "BAN_THRESHOLD": "10",
+                "BAN_WINDOW_MINUTES": "15",
+                "BANNED_IPS": "",
             }
 
             # Prepare new values and track which keys should be commented out (reverted to default)
@@ -5146,6 +5319,15 @@ async def ui_api_config(request):
                     for handler in logger.handlers:
                         handler.setLevel(level)
                     applied_immediately.append(key)
+                elif key == "BAN_THRESHOLD":
+                    BAN_THRESHOLD = int(new_val)
+                    applied_immediately.append(key)
+                elif key == "BAN_WINDOW_MINUTES":
+                    BAN_WINDOW_MINUTES = int(new_val)
+                    applied_immediately.append(key)
+                elif key == "BANNED_IPS":
+                    BANNED_IPS = set(ip.strip() for ip in new_val.split(",") if ip.strip())
+                    applied_immediately.append(key)
                 elif key in ["PROXY_BIND", "PROXY_PORT", "UI_PORT", "LOG_DIR", "LOG_FILE",
                              "STASH_URL", "STASH_API_KEY", "SJS_USER", "SJS_PASSWORD", "SERVER_ID"]:
                     needs_restart.append(key)
@@ -5197,6 +5379,15 @@ async def ui_api_config(request):
                     logger.setLevel(logging.INFO)
                     for handler in logger.handlers:
                         handler.setLevel(logging.INFO)
+                    applied_immediately.append(key)
+                elif key == "BAN_THRESHOLD":
+                    BAN_THRESHOLD = 10
+                    applied_immediately.append(key)
+                elif key == "BAN_WINDOW_MINUTES":
+                    BAN_WINDOW_MINUTES = 15
+                    applied_immediately.append(key)
+                elif key == "BANNED_IPS":
+                    BANNED_IPS = set()
                     applied_immediately.append(key)
 
             # Update _config_defined_keys to reflect new state

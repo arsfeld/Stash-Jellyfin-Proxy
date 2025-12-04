@@ -2,7 +2,7 @@
 
 A Python proxy server that enables Jellyfin-compatible media players (like Infuse) to connect to Stash media server by emulating the Jellyfin API.
 
-## Current Version: v3.84
+## Current Version: v3.88
 
 ## User Preferences
 
@@ -70,6 +70,9 @@ Preferred communication style: Simple, everyday language.
 | LOG_LEVEL | Logging level (DEBUG/INFO/WARNING/ERROR) | INFO |
 | LOG_MAX_SIZE_MB | Max log file size before rotation | 10 |
 | LOG_BACKUP_COUNT | Number of backup log files | 3 |
+| BAN_THRESHOLD | Failed auth attempts before auto-ban | 10 |
+| BAN_WINDOW_MINUTES | Rolling window for counting failures | 15 |
+| BANNED_IPS | Comma-separated list of banned IPs | (empty) |
 
 ### Command Line Options
 
@@ -141,6 +144,10 @@ Environment variables ALWAYS override config file values when set.
 
 ## Recent Changes
 
+- v3.88: IP-based security with auto-banning - AuthenticationMiddleware enforces ACCESS_TOKEN on protected endpoints; failed auth attempts tracked per IP with rolling 15-min window; auto-ban after 10 failures (configurable via BAN_THRESHOLD/BAN_WINDOW_MINUTES); BANNED_IPS persisted to config file; Web UI config page shows banned IP editor; unauthorized requests logged with IP, user agent, and path; banned IPs receive 403 Forbidden immediately
+- v3.87: Fixed critical security vulnerability - implemented AuthenticationMiddleware that validates ACCESS_TOKEN on all protected endpoints; public endpoints (/System/Info/Public, /Users, etc.) remain accessible for client discovery; protected endpoints now require valid token from Jellyfin client auth flow
+- v3.86: Dynamic font scaling for folder icons - 48px max font size that scales down to fit text width; text wraps differently for menu icons (12 chars/4 lines) vs filter icons (10 chars/6 lines) to prevent cutoff
+- v3.85: Font rendering improvements - DejaVu Sans Bold font loading with proper error handling
 - v3.84: Uniform icon font sizing - all folder icons now use consistent 48px font size; long text is truncated with ellipsis instead of shrinking; changed icon cache headers to no-cache to allow refresh
 - v3.83: Fixed API error handling - stash_query now returns empty data dict instead of None on errors, preventing NoneType crashes; fixed folder icon generation - removed SVG fallbacks (Infuse doesn't support SVG), proper 400x600 dark PNG placeholder; added font loading debug logging; all version strings updated consistently
 - v3.82: Live config updates - most settings now apply immediately on save without restart (TAG_GROUPS, LATEST_GROUPS, timeouts, feature toggles, pagination, log level); UI shows feedback on which settings took effect vs need restart; fixed text scaling in folder icons (SVG now uses dynamic font sizing based on text length); fixed Pillow font loading bug (undefined variable)
