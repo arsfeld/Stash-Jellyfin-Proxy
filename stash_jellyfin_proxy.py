@@ -1642,6 +1642,12 @@ _recently_stopped = {}
 STREAM_RESUME_THRESHOLD = 90  # seconds of inactivity before considering it a "resume" (Infuse buffers ~60s)
 RECENTLY_STOPPED_GRACE = 5  # seconds to ignore new stream requests after a stop (prevents stop/start race)
 
+# Play count cooldown - prevents double-counting rapid start/stop cycles
+# Cooldown = video duration + buffer time
+PLAY_COOLDOWN_BUFFER = 1800  # 30 minutes buffer on top of video duration
+# In-memory tracking: (scene_id, client_ip) -> {"timestamp": float, "cooldown_seconds": float}
+_play_cooldowns = {}
+
 # --- Proxy Statistics Tracking ---
 # Stats are persisted to JSON file and survive restarts
 STATS_FILE = os.path.join(os.path.dirname(CONFIG_FILE) if CONFIG_FILE else ".", "proxy_stats.json")
@@ -1698,12 +1704,23 @@ def reset_daily_stats_if_needed():
         _proxy_stats["streams_today_date"] = today
         _proxy_stats["unique_ips_today"] = []
 
-def record_stream_started(scene_id: str, title: str, performer: str, client_ip: str):
-    """Record a stream play for statistics."""
+def record_stream_started(scene_id: str, title: str, performer: str, client_ip: str, duration: float = 0):
+    """Record a stream play for statistics with cooldown protection.
+    
+    Args:
+        scene_id: The scene identifier
+        title: Scene title for display
+        performer: Performer name(s)
+        client_ip: Client IP address
+        duration: Video duration in seconds (for cooldown calculation)
+    
+    The play count is only incremented if the same client hasn't played this video
+    within the cooldown period (video duration + 30 min buffer).
+    """
     global _stats_dirty
     reset_daily_stats_if_needed()
     
-    # Update counters
+    # Always update stream counters (these track activity, not unique plays)
     _proxy_stats["total_streams"] += 1
     _proxy_stats["streams_today"] += 1
     
@@ -1711,19 +1728,47 @@ def record_stream_started(scene_id: str, title: str, performer: str, client_ip: 
     if client_ip not in _proxy_stats["unique_ips_today"]:
         _proxy_stats["unique_ips_today"].append(client_ip)
     
-    # Update play count for this scene
-    if scene_id not in _proxy_stats["play_counts"]:
-        _proxy_stats["play_counts"][scene_id] = {
-            "count": 0,
-            "title": title,
-            "performer": performer,
-            "last_played": 0
-        }
+    # Check cooldown before counting this as a unique play
+    # Ensure duration is a valid positive number (guard against None/negative)
+    safe_duration = max(0, float(duration or 0))
+    cooldown_key = (scene_id, client_ip)
+    cooldown_seconds = safe_duration + PLAY_COOLDOWN_BUFFER
+    now = time.time()
     
-    _proxy_stats["play_counts"][scene_id]["count"] += 1
-    _proxy_stats["play_counts"][scene_id]["title"] = title  # Update in case it changed
-    _proxy_stats["play_counts"][scene_id]["performer"] = performer
-    _proxy_stats["play_counts"][scene_id]["last_played"] = time.time()
+    should_count_play = True
+    if cooldown_key in _play_cooldowns:
+        last_play = _play_cooldowns[cooldown_key]
+        elapsed = now - last_play["timestamp"]
+        if elapsed < last_play["cooldown_seconds"]:
+            # Still in cooldown - don't count this play
+            should_count_play = False
+            remaining = int(last_play["cooldown_seconds"] - elapsed)
+            logger.debug(f"Play cooldown active for {scene_id} from {client_ip} ({remaining}s remaining)")
+    
+    if should_count_play:
+        # Update cooldown tracking
+        _play_cooldowns[cooldown_key] = {
+            "timestamp": now,
+            "cooldown_seconds": cooldown_seconds
+        }
+        
+        # Update play count for this scene
+        if scene_id not in _proxy_stats["play_counts"]:
+            _proxy_stats["play_counts"][scene_id] = {
+                "count": 0,
+                "title": title,
+                "performer": performer,
+                "last_played": 0
+            }
+        
+        _proxy_stats["play_counts"][scene_id]["count"] += 1
+        _proxy_stats["play_counts"][scene_id]["title"] = title  # Update in case it changed
+        _proxy_stats["play_counts"][scene_id]["performer"] = performer
+        _proxy_stats["play_counts"][scene_id]["last_played"] = now
+        
+        # Log the cooldown duration for debugging
+        cooldown_mins = int(cooldown_seconds / 60)
+        logger.debug(f"Play counted for {scene_id} from {client_ip} (cooldown: {cooldown_mins}min)")
     
     _stats_dirty = True
     maybe_save_stats()
@@ -1774,13 +1819,13 @@ def get_scene_title(scene_id: str) -> str:
     return info.get("title", scene_id)
 
 def get_scene_info(scene_id: str) -> dict:
-    """Fetch scene title and performer from Stash."""
+    """Fetch scene title, performer, and duration from Stash."""
     try:
         numeric_id = scene_id.replace("scene-", "")
         query = """query($id: ID!) { 
             findScene(id: $id) { 
                 title 
-                files { basename } 
+                files { basename duration } 
                 performers { name }
             } 
         }"""
@@ -1788,11 +1833,13 @@ def get_scene_info(scene_id: str) -> dict:
         scene = result.get("data", {}).get("findScene")
         if scene:
             title = scene.get("title")
-            if not title:
-                # Fallback to filename
-                files = scene.get("files", [])
-                if files and files[0].get("basename"):
+            duration = 0
+            files = scene.get("files", [])
+            if files:
+                if not title and files[0].get("basename"):
                     title = files[0]["basename"]
+                # Get duration from first file (in seconds)
+                duration = files[0].get("duration", 0) or 0
             if not title:
                 title = scene_id
             
@@ -1802,10 +1849,10 @@ def get_scene_info(scene_id: str) -> dict:
             if len(performers) > 1:
                 performer = f"{performer} +{len(performers)-1}"
             
-            return {"title": title, "performer": performer}
+            return {"title": title, "performer": performer, "duration": duration}
     except:
         pass
-    return {"title": scene_id, "performer": ""}
+    return {"title": scene_id, "performer": "", "duration": 0}
 
 def mark_stream_stopped(scene_id: str, from_stop_notification: bool = False):
     """Mark a stream as stopped so next request shows as 'started'."""
@@ -2170,6 +2217,7 @@ class RequestLoggingMiddleware:
                     scene_info = get_scene_info(scene_id)
                     title = scene_info.get("title", scene_id)
                     performer = scene_info.get("performer", "")
+                    duration = scene_info.get("duration", 0)
                     _active_streams[scene_id] = {
                         "last_seen": now,
                         "started": now,
@@ -2181,8 +2229,8 @@ class RequestLoggingMiddleware:
                         "client_key": client_key
                     }
                     _client_streams[client_key] = scene_id
-                    # Record stats for this stream
-                    record_stream_started(scene_id, title, performer, client_ip)
+                    # Record stats for this stream (with cooldown based on duration)
+                    record_stream_started(scene_id, title, performer, client_ip, duration)
                     logger.info(f"▶ Stream started: {title} ({scene_id}) by {user} from {client_ip} [{client_type}]")
             elif (now - stream_info["last_seen"]) > STREAM_RESUME_THRESHOLD:
                 # Gap in activity = resumed after pause
