@@ -90,8 +90,11 @@ LOG_BACKUP_COUNT = 3
 
 # Load Config - parses config file with KEY = "value" or KEY="value" format
 def load_config(filepath):
-    """Load configuration from a shell-style config file."""
+    """Load configuration from a shell-style config file.
+    Returns (config_dict, defined_keys_set) where defined_keys_set tracks
+    which keys were explicitly defined in the file."""
     config = {}
+    defined_keys = set()
     if os.path.isfile(filepath):
         try:
             with open(filepath, 'r') as f:
@@ -106,9 +109,10 @@ def load_config(filepath):
                         key = key.strip()
                         value = value.strip().strip('"').strip("'")
                         config[key] = value
+                        defined_keys.add(key)
         except Exception as e:
             print(f"Error loading config file {filepath}: {e}", file=sys.stderr)
-    return config
+    return config, defined_keys
 
 def parse_bool(value, default=True):
     """Parse a boolean value from config string."""
@@ -129,7 +133,7 @@ def normalize_path(path, default="/graphql"):
         p = p.rstrip('/')
     return p
 
-_config = load_config(CONFIG_FILE)
+_config, _config_defined_keys = load_config(CONFIG_FILE)
 if _config:
     STASH_URL = _config.get("STASH_URL", STASH_URL)
     STASH_API_KEY = _config.get("STASH_API_KEY", STASH_API_KEY)
@@ -194,6 +198,7 @@ if _config:
 
     print(f"Loaded config from {CONFIG_FILE}")
 else:
+    _config_defined_keys = set()
     print(f"Warning: Config file {CONFIG_FILE} not found or empty. Using defaults/env vars.")
 
 # Environment variables ALWAYS override config file (for Docker deployment flexibility)
@@ -1094,6 +1099,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 const data = await res.json();
                 state.config = data.config || data;
                 const envFields = data.env_fields || [];
+                const definedFields = data.defined_fields || [];
                 
                 // Show env fields notice if any exist
                 const envNotice = document.getElementById('env-notice');
@@ -1109,6 +1115,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                     if (input) {
                         const defaultVal = DEFAULTS[key];
                         const isEnvField = envFields.includes(key);
+                        const isDefinedInConfig = definedFields.includes(key);
                         
                         // Mark env fields as read-only with visual indicator
                         if (isEnvField) {
@@ -1132,13 +1139,13 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                         } else if (Array.isArray(value)) {
                             const valStr = value.join(', ');
                             const defStr = Array.isArray(defaultVal) ? defaultVal.join(', ') : '';
-                            // Only set value if different from default (let placeholder show)
-                            input.value = (valStr !== defStr) ? valStr : '';
+                            // Show value if different from default OR explicitly defined in config
+                            input.value = (valStr !== defStr || isDefinedInConfig) ? valStr : '';
                         } else {
-                            // Only set value if different from default (let placeholder show)
+                            // Show value if different from default OR explicitly defined in config
                             const strVal = String(value);
                             const strDef = String(defaultVal ?? '');
-                            input.value = (strVal !== strDef) ? value : '';
+                            input.value = (strVal !== strDef || isDefinedInConfig) ? value : '';
                         }
                     }
                 });
@@ -4627,7 +4634,8 @@ async def ui_api_config(request):
                 "LOG_MAX_SIZE_MB": LOG_MAX_SIZE_MB,
                 "LOG_BACKUP_COUNT": LOG_BACKUP_COUNT
             },
-            "env_fields": _env_overrides
+            "env_fields": _env_overrides,
+            "defined_fields": sorted(list(_config_defined_keys))
         })
     elif request.method == "POST":
         try:
