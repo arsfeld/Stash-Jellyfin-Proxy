@@ -75,8 +75,8 @@ REQUIRE_AUTH_FOR_CONFIG = False
 STASH_TIMEOUT = 30
 STASH_RETRIES = 3
 
-# GraphQL endpoint path (change to /graphql for direct Docker connection)
-STASH_GRAPHQL_PATH = "/graphql-local"  # Use /graphql-local for SWAG bypass, /graphql for Docker direct
+# GraphQL endpoint path (use /graphql-local for SWAG reverse proxy bypass)
+STASH_GRAPHQL_PATH = "/graphql"
 
 # TLS verification (set to false for self-signed certs in Docker)
 STASH_VERIFY_TLS = True
@@ -117,6 +117,17 @@ def parse_bool(value, default=True):
     if isinstance(value, str):
         return value.lower() in ('true', 'yes', '1', 'on')
     return default
+
+def normalize_path(path, default="/graphql"):
+    """Normalize a path: ensure leading /, remove trailing /."""
+    if not path or not path.strip():
+        return default
+    p = path.strip()
+    if not p.startswith('/'):
+        p = '/' + p
+    if len(p) > 1 and p.endswith('/'):
+        p = p.rstrip('/')
+    return p
 
 _config = load_config(CONFIG_FILE)
 if _config:
@@ -165,7 +176,7 @@ if _config:
     
     # GraphQL endpoint settings
     if "STASH_GRAPHQL_PATH" in _config:
-        STASH_GRAPHQL_PATH = _config.get("STASH_GRAPHQL_PATH", STASH_GRAPHQL_PATH)
+        STASH_GRAPHQL_PATH = normalize_path(_config.get("STASH_GRAPHQL_PATH", STASH_GRAPHQL_PATH))
     if "STASH_VERIFY_TLS" in _config:
         STASH_VERIFY_TLS = parse_bool(_config.get("STASH_VERIFY_TLS"), STASH_VERIFY_TLS)
 
@@ -234,7 +245,7 @@ if os.getenv("REQUIRE_AUTH_FOR_CONFIG"):
     REQUIRE_AUTH_FOR_CONFIG = os.getenv("REQUIRE_AUTH_FOR_CONFIG", "").lower() in ('true', 'yes', '1', 'on')
     _env_overrides.append("REQUIRE_AUTH_FOR_CONFIG")
 if os.getenv("STASH_GRAPHQL_PATH"):
-    STASH_GRAPHQL_PATH = os.getenv("STASH_GRAPHQL_PATH")
+    STASH_GRAPHQL_PATH = normalize_path(os.getenv("STASH_GRAPHQL_PATH"))
     _env_overrides.append("STASH_GRAPHQL_PATH")
 if os.getenv("STASH_VERIFY_TLS"):
     STASH_VERIFY_TLS = os.getenv("STASH_VERIFY_TLS", "").lower() in ('true', 'yes', '1', 'on')
@@ -1136,6 +1147,15 @@ WEB_UI_HTML = '''<!DOCTYPE html>
             }
         }
 
+        // Normalize path: ensure leading /, remove trailing /
+        function normalizePath(path) {
+            if (!path || path.trim() === '') return '/graphql';
+            let p = path.trim();
+            if (!p.startsWith('/')) p = '/' + p;
+            if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
+            return p;
+        }
+
         // Form submission
         document.getElementById('config-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1153,6 +1173,9 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                     } else {
                         config[key] = value.split(',').map(s => s.trim()).filter(Boolean);
                     }
+                } else if (key === 'STASH_GRAPHQL_PATH') {
+                    // Normalize GraphQL path: ensure leading /, remove trailing /
+                    config[key] = normalizePath(value);
                 } else if (intFields.includes(key)) {
                     config[key] = value.trim() === '' ? defaultVal : (parseInt(value) || 0);
                 } else {
