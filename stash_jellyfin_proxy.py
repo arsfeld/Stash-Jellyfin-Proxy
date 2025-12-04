@@ -2651,7 +2651,8 @@ async def endpoint_items(request):
 
     # Pagination parameters
     start_index = int(request.query_params.get("startIndex") or request.query_params.get("StartIndex") or 0)
-    limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 50)
+    limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or DEFAULT_PAGE_SIZE)
+    limit = min(limit, MAX_PAGE_SIZE)  # Cap at maximum
 
     # Sort parameters
     sort_field, sort_direction = get_stash_sort_params(request)
@@ -4275,7 +4276,7 @@ async def endpoint_image(request):
                 return Response(content=img_data, media_type=ct, headers=cache_headers)
 
         # Resize studio images to portrait 2:3 aspect ratio for Infuse tiles
-        if needs_portrait_resize and PILLOW_AVAILABLE:
+        if needs_portrait_resize and ENABLE_IMAGE_RESIZE and PILLOW_AVAILABLE:
             data, content_type = pad_image_to_portrait(data, target_width=400, target_height=600)
             logger.debug(f"Resized studio image to 400x600 portrait (2:3)")
 
@@ -4416,7 +4417,8 @@ async def endpoint_persons(request):
     """Return persons - maps to Stash performers."""
     # This is an alternative endpoint for accessing performers
     start_index = int(request.query_params.get("startIndex") or request.query_params.get("StartIndex") or 0)
-    limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 50)
+    limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or DEFAULT_PAGE_SIZE)
+    limit = min(limit, MAX_PAGE_SIZE)  # Cap at maximum
 
     # Check for searchTerm parameter (Infuse search functionality)
     search_term = request.query_params.get("searchTerm") or request.query_params.get("SearchTerm")
@@ -4479,7 +4481,8 @@ async def endpoint_persons(request):
 async def endpoint_studios(request):
     """Return studios list via /Studios endpoint."""
     start_index = int(request.query_params.get("startIndex") or request.query_params.get("StartIndex") or 0)
-    limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 50)
+    limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or DEFAULT_PAGE_SIZE)
+    limit = min(limit, MAX_PAGE_SIZE)  # Cap at maximum
 
     try:
         count_q = """query { findStudios { count } }"""
