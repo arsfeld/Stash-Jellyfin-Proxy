@@ -1712,27 +1712,41 @@ def reset_daily_stats_if_needed():
         _proxy_stats["streams_today_date"] = today
         _proxy_stats["unique_ips_today"] = []
 
-def should_count_as_new_stream(scene_id: str, client_ip: str, byte_position: int, file_size: int) -> bool:
+def should_count_as_new_stream(scene_id: str, client_ip: str, byte_position: int, file_size: int) -> tuple:
     """Determine if this stream request should count as a new stream.
     
     Uses smart detection based on playback position:
     - 30+ min since last activity → always counts as new stream
     - Seek to start (first 5%) with 5+ min gap → counts as new stream
+    - First request at start of file → counts as new stream
+    - First request mid-file → likely trailing request after restart, DON'T count
     - Otherwise (seeking within video) → doesn't count
     
-    Returns True if this should be counted as a new stream.
+    Returns tuple of (should_count: bool, is_trailing_after_restart: bool).
+    is_trailing_after_restart indicates this appears to be a post-restart trailing request.
     """
     position_key = (scene_id, client_ip)
     now = time.time()
     
-    # First time seeing this scene from this client - always count
+    # First time seeing this scene from this client
     if position_key not in _stream_positions:
         _stream_positions[position_key] = {
             "last_position": byte_position,
             "last_time": now,
             "file_size": file_size
         }
-        return True
+        # Only count if starting from beginning of file
+        # If position is mid-file (or unknown size but non-zero position), this is likely a trailing request after server restart
+        if file_size > 0:
+            position_ratio = byte_position / file_size
+            if position_ratio > STREAM_START_THRESHOLD:
+                logger.debug(f"Ignoring mid-file first request for {scene_id}: position {position_ratio:.1%} (likely post-restart trailing request)")
+                return (False, True)  # Don't count, IS trailing after restart
+        elif byte_position > 0:
+            # Unknown file size but non-zero position - likely trailing request
+            logger.debug(f"Ignoring non-zero first request for {scene_id}: position {byte_position} bytes, unknown size (likely post-restart)")
+            return (False, True)  # Don't count, IS trailing after restart
+        return (True, False)  # Count, NOT trailing after restart
     
     last_info = _stream_positions[position_key]
     elapsed = now - last_info["last_time"]
@@ -1747,7 +1761,7 @@ def should_count_as_new_stream(scene_id: str, client_ip: str, byte_position: int
     # Check 1: 30+ minute gap - definitely a new stream
     if elapsed >= STREAM_COUNT_COOLDOWN:
         logger.debug(f"New stream counted for {scene_id}: {int(elapsed/60)}min gap exceeds cooldown")
-        return True
+        return (True, False)
     
     # Check 2: Seek to start with sufficient gap
     effective_file_size = file_size or last_info["file_size"]
@@ -1758,13 +1772,13 @@ def should_count_as_new_stream(scene_id: str, client_ip: str, byte_position: int
         
         if is_at_start and has_sufficient_gap:
             logger.debug(f"New stream counted for {scene_id}: seek to start ({position_ratio:.1%}) with {int(elapsed/60)}min gap")
-            return True
+            return (True, False)
         elif is_at_start:
             logger.debug(f"Seek to start ignored for {scene_id}: only {int(elapsed)}s gap (need {STREAM_START_GAP}s)")
     
     # Otherwise, this is just seeking/buffering within the same session
     logger.debug(f"Same stream session for {scene_id}: position {byte_position}, {int(elapsed)}s since last")
-    return False
+    return (False, False)
 
 def record_play_count(scene_id: str, title: str, performer: str, client_ip: str, duration: float = 0):
     """Record a play count for the Top Played list with duration-based cooldown.
@@ -2272,7 +2286,10 @@ class RequestLoggingMiddleware:
             
             # Smart stream counting: check on EVERY request if this should count as new stream
             # This runs independently of _active_streams tracking (which is for UI display)
-            if should_count_as_new_stream(scene_id, client_ip, byte_position, cached_file_size):
+            count_result = should_count_as_new_stream(scene_id, client_ip, byte_position, cached_file_size)
+            should_count, is_trailing_after_restart = count_result
+            
+            if should_count:
                 reset_daily_stats_if_needed()
                 _proxy_stats["total_streams"] += 1
                 _proxy_stats["streams_today"] += 1
@@ -2296,6 +2313,23 @@ class RequestLoggingMiddleware:
                 if stopped_at and (now - stopped_at) < RECENTLY_STOPPED_GRACE:
                     # This is a trailing request after a stop - ignore it
                     logger.debug(f"Ignoring trailing request for recently stopped stream: {scene_id}")
+                elif is_trailing_after_restart:
+                    # This is a trailing request after server restart - track for UI but don't log as "started"
+                    scene_info = get_scene_info(scene_id)
+                    title = scene_info.get("title", scene_id)
+                    _active_streams[scene_id] = {
+                        "last_seen": now,
+                        "started": now,
+                        "title": title,
+                        "performer": scene_info.get("performer", ""),
+                        "user": user,
+                        "client_ip": client_ip,
+                        "client_type": client_type,
+                        "client_key": client_key,
+                        "file_size": cached_file_size
+                    }
+                    _client_streams[client_key] = scene_id
+                    logger.info(f"⏸ Stream resuming (post-restart): {title} ({scene_id}) from {client_ip}")
                 else:
                     # New stream for this scene - check if client is switching from another video
                     cancel_client_streams(client_key, scene_id)
@@ -2305,10 +2339,7 @@ class RequestLoggingMiddleware:
                         del _recently_stopped[scene_id]
 
                     # Now start tracking the new stream (for UI display)
-                    if not cached_file_size:
-                        scene_info = get_scene_info(scene_id)
-                    else:
-                        scene_info = get_scene_info(scene_id)
+                    scene_info = get_scene_info(scene_id)
                     title = scene_info.get("title", scene_id)
                     performer = scene_info.get("performer", "")
                     duration = scene_info.get("duration", 0)
