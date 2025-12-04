@@ -4151,13 +4151,16 @@ async def endpoint_image(request):
 
     item_id = request.path_params.get("item_id")
 
+    # Cache headers - short cache for generated icons to allow refresh
+    icon_cache_headers = {"Cache-Control": "no-cache, must-revalidate", "Pragma": "no-cache"}
+
     # Handle menu icons for root folders
     if item_id in MENU_ICONS:
         # Generate PNG icon using Pillow drawing
         img_data, content_type = generate_menu_icon(item_id)
         logger.debug(f"Serving menu icon for {item_id}")
         from starlette.responses import Response
-        return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
+        return Response(content=img_data, media_type=content_type, headers=icon_cache_headers)
 
     # Handle tag folder icons - use the actual tag name from config
     if item_id.startswith("tag-"):
@@ -4173,14 +4176,14 @@ async def endpoint_image(request):
         img_data, content_type = generate_text_icon(display_name)
         logger.debug(f"Serving text icon for tag folder: {display_name}")
         from starlette.responses import Response
-        return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
+        return Response(content=img_data, media_type=content_type, headers=icon_cache_headers)
 
     # Handle FILTERS folder icons
     if item_id.startswith("filters-"):
         img_data, content_type = generate_text_icon("FILTERS")
         logger.debug(f"Serving text icon for filters folder: {item_id}")
         from starlette.responses import Response
-        return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
+        return Response(content=img_data, media_type=content_type, headers=icon_cache_headers)
 
     # Handle individual saved filter icons
     if item_id.startswith("filter-"):
@@ -4198,7 +4201,7 @@ async def endpoint_image(request):
             img_data, content_type = generate_text_icon(filter_name)
             logger.debug(f"Serving text icon for saved filter: {filter_name}")
             from starlette.responses import Response
-            return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
+            return Response(content=img_data, media_type=content_type, headers=icon_cache_headers)
 
     # Check query params for placeholder flag (set when group has no front_image)
     image_tag = request.query_params.get("tag", "")
@@ -4207,7 +4210,7 @@ async def endpoint_image(request):
         img_data, content_type = generate_placeholder_icon("group")
         logger.debug(f"Serving placeholder icon for {item_id}")
         from starlette.responses import Response
-        return Response(content=img_data, media_type=content_type, headers={"Cache-Control": "max-age=86400"})
+        return Response(content=img_data, media_type=content_type, headers=icon_cache_headers)
 
     # Determine image URL and whether to resize based on item type
     needs_portrait_resize = False
