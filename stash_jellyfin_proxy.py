@@ -852,7 +852,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                         <h3 class="card-title">Server Identity</h3>
                         <div class="form-group">
                             <label class="form-label">Server ID</label>
-                            <input type="text" class="form-input" name="SERVER_ID" readonly>
+                            <input type="text" class="form-input" name="SERVER_ID">
                             <div class="form-hint" style="color: var(--warning);">Warning: Changing this value will break existing client pairings. Changes require a server restart.</div>
                         </div>
                         <div class="form-group">
