@@ -3991,32 +3991,36 @@ async def endpoint_subtitle(request):
         logger.error(f"Subtitle proxy error: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
-def generate_text_icon(text: str, width: int = 400, height: int = 600) -> Tuple[bytes, str]:
-    """Generate a portrait 2:3 PNG icon with text label (matches Infuse folder tiles).
+def generate_text_icon(text: str, width: int = 400, height: int = 600, 
+                       max_chars_per_line: int = 16, max_lines: int = 4) -> Tuple[bytes, str]:
+    """Generate a portrait 2:3 PNG icon with word-wrapped text label.
     
-    Uses uniform font size across all icons. Long text is truncated with ellipsis.
+    Args:
+        text: The text to display
+        width: Image width in pixels
+        height: Image height in pixels  
+        max_chars_per_line: Maximum characters per line before wrapping
+        max_lines: Maximum number of lines (text truncated after this)
     """
     if not PILLOW_AVAILABLE:
-        # Return dark PNG placeholder (Infuse doesn't support SVG)
         logger.debug("Pillow not available, returning placeholder PNG")
         return PLACEHOLDER_PNG, "image/png"
 
     try:
         from PIL import ImageDraw, ImageFont
 
-        # Create portrait image with dark background (2:3 aspect for Infuse folder tiles)
+        # Create portrait image with dark background
         img = Image.new('RGB', (width, height), (26, 26, 46))
         draw = ImageDraw.Draw(img)
 
         # Text color (Stash-like blue)
         text_color = (74, 144, 217)  # #4a90d9
 
-        # UNIFORM font size for all icons
+        # Uniform font size
         UNIFORM_FONT_SIZE = 48
-        max_width = width - 40  # Leave 20px padding on each side
         font = None
 
-        # Try to load a nice font, fall back to default
+        # Try to load a nice font
         font_paths = [
             "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
             "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf",
@@ -4037,28 +4041,66 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600) -> Tuple[
                     continue
 
         if font is None:
-            # No TrueType fonts - use default font (small but works)
-            logger.warning(f"No TrueType fonts found (checked: {font_paths}), using Pillow default font - text will be small")
+            logger.warning(f"No TrueType fonts found, using Pillow default font")
             font = ImageFont.load_default()
 
-        # Truncate text with ellipsis if longer than 16 characters
-        MAX_TEXT_LENGTH = 16
-        display_text = text
-        if len(display_text) > MAX_TEXT_LENGTH:
-            display_text = display_text[:MAX_TEXT_LENGTH - 3] + "..."
+        # Word wrap the text
+        words = text.split()
+        lines = []
+        current_line = ""
         
-        bbox = draw.textbbox((0, 0), display_text, font=font)
-        text_width = bbox[2] - bbox[0]
+        for word in words:
+            # Check if adding this word would exceed the line limit
+            test_line = (current_line + " " + word).strip() if current_line else word
+            
+            if len(test_line) <= max_chars_per_line:
+                current_line = test_line
+            else:
+                # Word doesn't fit on current line
+                if current_line:
+                    lines.append(current_line)
+                # If the word itself is too long, truncate it
+                if len(word) > max_chars_per_line:
+                    current_line = word[:max_chars_per_line - 3] + "..."
+                else:
+                    current_line = word
+        
+        # Don't forget the last line
+        if current_line:
+            lines.append(current_line)
+        
+        # Truncate to max lines
+        if len(lines) > max_lines:
+            lines = lines[:max_lines]
+            # Add ellipsis to last line if we truncated
+            if len(lines[-1]) > max_chars_per_line - 3:
+                lines[-1] = lines[-1][:max_chars_per_line - 3] + "..."
+            else:
+                lines[-1] = lines[-1] + "..."
 
-        # Calculate position to center text
-        text_height = bbox[3] - bbox[1]
-        x = (width - text_width) // 2
-        y = (height - text_height) // 2
+        # Calculate total text block height
+        line_heights = []
+        line_widths = []
+        for line in lines:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            line_widths.append(bbox[2] - bbox[0])
+            line_heights.append(bbox[3] - bbox[1])
+        
+        line_spacing = 10  # pixels between lines
+        total_height = sum(line_heights) + (len(lines) - 1) * line_spacing if lines else 0
+        
+        # Starting Y position to center the text block vertically
+        start_y = (height - total_height) // 2
 
-        logger.debug(f"Drawing '{display_text}' at ({x},{y}), size {UNIFORM_FONT_SIZE}px, bbox {text_width}x{text_height}")
+        # Draw each line centered horizontally
+        current_y = start_y
+        for i, line in enumerate(lines):
+            line_width = line_widths[i]
+            x = (width - line_width) // 2
+            draw.text((x, current_y), line, fill=text_color, font=font)
+            current_y += line_heights[i] + line_spacing
 
-        # Draw text
-        draw.text((x, y), display_text, fill=text_color, font=font)
+        logger.debug(f"Drawing '{text}' as {len(lines)} lines, size {UNIFORM_FONT_SIZE}px")
 
         # Save as PNG
         output = io.BytesIO()
@@ -4067,12 +4109,10 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600) -> Tuple[
 
     except Exception as e:
         logger.warning(f"Text icon generation failed: {e}")
-        # Return dark PNG placeholder (Infuse doesn't support SVG)
         return PLACEHOLDER_PNG, "image/png"
 
 def generate_menu_icon(icon_type: str, width: int = 400, height: int = 600) -> Tuple[bytes, str]:
-    """Generate a portrait 2:3 PNG menu icon with text label (matches Infuse folder tiles)."""
-    # Map icon types to display names
+    """Generate a menu icon for top-level folders (16 chars wide, 4 lines max)."""
     icon_names = {
         "root-scenes": "Scenes",
         "root-studios": "Studios",
@@ -4082,7 +4122,11 @@ def generate_menu_icon(icon_type: str, width: int = 400, height: int = 600) -> T
     }
 
     text = icon_names.get(icon_type, icon_type.replace("root-", "").replace("-", " ").title())
-    return generate_text_icon(text, width, height)
+    return generate_text_icon(text, width, height, max_chars_per_line=16, max_lines=4)
+
+def generate_filter_icon(text: str, width: int = 400, height: int = 600) -> Tuple[bytes, str]:
+    """Generate a filter icon (10 chars wide, 6 lines max for poster-sized display)."""
+    return generate_text_icon(text, width, height, max_chars_per_line=10, max_lines=6)
 
 def generate_placeholder_icon(item_type: str = "group", width: int = 400, height: int = 600) -> Tuple[bytes, str]:
     """Generate a placeholder icon for items without images."""
@@ -4156,7 +4200,7 @@ async def endpoint_image(request):
 
     # Handle FILTERS folder icons
     if item_id.startswith("filters-"):
-        img_data, content_type = generate_text_icon("FILTERS")
+        img_data, content_type = generate_filter_icon("FILTERS")
         logger.debug(f"Serving text icon for filters folder: {item_id}")
         from starlette.responses import Response
         return Response(content=img_data, media_type=content_type, headers=icon_cache_headers)
@@ -4174,7 +4218,7 @@ async def endpoint_image(request):
             res = stash_query(query, {"id": filter_id})
             saved_filter = res.get("data", {}).get("findSavedFilter")
             filter_name = saved_filter.get("name", f"Filter {filter_id}") if saved_filter else f"Filter {filter_id}"
-            img_data, content_type = generate_text_icon(filter_name)
+            img_data, content_type = generate_filter_icon(filter_name)
             logger.debug(f"Serving text icon for saved filter: {filter_name}")
             from starlette.responses import Response
             return Response(content=img_data, media_type=content_type, headers=icon_cache_headers)
