@@ -582,7 +582,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v3.76</span>
+                <span id="version">v3.77</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -890,7 +890,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v3.76';
+                document.getElementById('version').textContent = data.version || 'v3.77';
                 document.getElementById('proxy-uptime').textContent = data.uptime ? `Uptime: ${formatDuration(data.uptime)}` : '';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
@@ -4173,13 +4173,16 @@ async def endpoint_persons(request):
 
         items = []
         for p in performers:
-            items.append({
+            has_image = bool(p.get("image_path"))
+            item = {
                 "Name": p["name"],
                 "Id": f"performer-{p['id']}",
                 "ServerId": SERVER_ID,
                 "Type": "Person",
-                "PrimaryImageTag": "img" if p.get("image_path") else None
-            })
+                "ImageTags": {"Primary": "img"} if has_image else {},
+                "BackdropImageTags": []
+            }
+            items.append(item)
         return JSONResponse({"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index})
     except Exception as e:
         logger.error(f"Error getting persons: {e}")
@@ -4206,13 +4209,16 @@ async def endpoint_studios(request):
 
         items = []
         for s in studios:
-            items.append({
+            has_image = bool(s.get("image_path"))
+            item = {
                 "Name": s["name"],
                 "Id": f"studio-{s['id']}",
                 "ServerId": SERVER_ID,
                 "Type": "Studio",
-                "PrimaryImageTag": "img" if s.get("image_path") else None
-            })
+                "ImageTags": {"Primary": "img"} if has_image else {},
+                "BackdropImageTags": []
+            }
+            items.append(item)
         return JSONResponse({"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index})
     except Exception as e:
         logger.error(f"Error getting studios: {e}")
@@ -4353,7 +4359,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - PROXY_START_TIME) if PROXY_START_TIME else 0
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v3.76",
+        "version": "v3.77",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "uptime": uptime_seconds,
@@ -4696,7 +4702,7 @@ if __name__ == "__main__":
     asyncio_logger = logging.getLogger("asyncio")
     asyncio_logger.setLevel(logging.CRITICAL)  # Only show critical asyncio errors
 
-    logger.info(f"--- Stash-Jellyfin Proxy v3.76 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.77 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
 
