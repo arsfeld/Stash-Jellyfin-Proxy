@@ -1,6 +1,6 @@
 # Stash-Jellyfin Proxy
 
-**Version 5.00**
+**Version 5.04**
 
 A Python proxy server that enables Jellyfin-compatible media players (like Infuse) to connect to Stash by emulating the Jellyfin API.
 
