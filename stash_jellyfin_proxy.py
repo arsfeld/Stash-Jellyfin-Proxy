@@ -811,7 +811,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v3.88</span>
+                <span id="version">v3.89</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -1218,7 +1218,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v3.88';
+                document.getElementById('version').textContent = data.version || 'v3.89';
                 document.getElementById('proxy-uptime').textContent = data.uptime ? `Uptime: ${formatDuration(data.uptime)}` : '';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
@@ -2030,7 +2030,11 @@ def get_client_ip(scope) -> str:
     return client[0] if client else "unknown"
 
 def record_auth_failure(client_ip: str, path: str, reason: str, user_agent: str = ""):
-    """Record a failed auth attempt and check if IP should be banned."""
+    """Record a failed auth attempt and check if IP should be banned.
+    
+    Rate limits failure counting to 1 per second per IP to avoid instant bans
+    from parallel requests (e.g., Infuse makes many requests on startup).
+    """
     global BANNED_IPS, _ip_failures
     
     now = time.time()
@@ -2044,6 +2048,16 @@ def record_auth_failure(client_ip: str, path: str, reason: str, user_agent: str 
         ]
     else:
         _ip_failures[client_ip] = []
+    
+    # Rate limit: only count 1 failure per second to avoid instant bans from parallel requests
+    # Infuse can make 10+ parallel requests on startup, all with stale tokens
+    recent_failures = _ip_failures[client_ip]
+    if recent_failures:
+        last_failure_time = recent_failures[-1][0]
+        if now - last_failure_time < 1.0:
+            # Already recorded a failure within the last second, skip counting this one
+            logger.debug(f"🚫 Auth failed (rate limited): {client_ip} -> {path} ({reason})")
+            return
     
     # Add this failure
     _ip_failures[client_ip].append((now, path))
@@ -5863,7 +5877,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - PROXY_START_TIME) if PROXY_START_TIME else 0
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v3.88",
+        "version": "v3.89",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "uptime": uptime_seconds,
@@ -5877,6 +5891,7 @@ async def ui_api_config(request):
     # Declare globals at top of function (required before any reference)
     global TAG_GROUPS, LATEST_GROUPS, SERVER_NAME, STASH_TIMEOUT, STASH_RETRIES
     global STASH_GRAPHQL_PATH, STASH_VERIFY_TLS, ENABLE_FILTERS, ENABLE_IMAGE_RESIZE
+    global ENABLE_TAG_FILTERS, ENABLE_ALL_TAGS
     global IMAGE_CACHE_MAX_SIZE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, REQUIRE_AUTH_FOR_CONFIG
     global LOG_LEVEL, _config_defined_keys, BANNED_IPS, BAN_THRESHOLD, BAN_WINDOW_MINUTES
 
@@ -6487,7 +6502,7 @@ if __name__ == "__main__":
     asyncio_logger = logging.getLogger("asyncio")
     asyncio_logger.setLevel(logging.CRITICAL)  # Only show critical asyncio errors
 
-    logger.info(f"--- Stash-Jellyfin Proxy v3.88 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.89 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
 
