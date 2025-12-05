@@ -1003,9 +1003,9 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                             <div class="form-group">
                                 <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;">
                                     <input type="checkbox" name="ENABLE_FILTERS" checked style="width: auto;">
-                                    Enable Filters
+                                    Enable Scene Filters
                                 </label>
-                                <div class="form-hint">Show FILTERS folder in library (uses saved filters from Stash)</div>
+                                <div class="form-hint">Show FILTERS folder in library (uses saved scene filters from Stash)</div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem;">
@@ -4216,10 +4216,8 @@ async def endpoint_items(request):
                 "ParentId": parent_id,
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": True, "Played": False, "Key": f"tagitem-{t['id']}"}
             }
-            if t.get("image_path"):
-                tag_item["ImageTags"] = {"Primary": "img"}
-            else:
-                tag_item["ImageTags"] = {}
+            # Always set ImageTags so Infuse requests an image - we serve text icon if no Stash image
+            tag_item["ImageTags"] = {"Primary": "img"}
             items.append(tag_item)
 
     elif parent_id == "tags-all":
@@ -4247,10 +4245,8 @@ async def endpoint_items(request):
                 "ParentId": parent_id,
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": t.get("favorite", False), "Played": False, "Key": f"tagitem-{t['id']}"}
             }
-            if t.get("image_path"):
-                tag_item["ImageTags"] = {"Primary": "img"}
-            else:
-                tag_item["ImageTags"] = {}
+            # Always set ImageTags so Infuse requests an image - we serve text icon if no Stash image
+            tag_item["ImageTags"] = {"Primary": "img"}
             items.append(tag_item)
 
     elif parent_id and parent_id.startswith("tagitem-"):
