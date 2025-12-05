@@ -811,7 +811,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v3.92</span>
+                <span id="version">v3.93</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -1218,7 +1218,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v3.92';
+                document.getElementById('version').textContent = data.version || 'v3.93';
                 document.getElementById('proxy-uptime').textContent = data.uptime ? `Uptime: ${formatDuration(data.uptime)}` : '';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
@@ -3802,9 +3802,18 @@ async def endpoint_items(request):
                         items.append(group_item)
 
                 elif filter_mode == "TAGS":
-                    # Get count and paginated tags in single query for consistency
-                    # Log pagination params for debugging duplicates
-                    logger.debug(f"TAGS filter pagination: startIndex={start_index}, limit={limit}, calculated page={page}")
+                    # Use fixed page size for Stash queries to avoid pagination misalignment
+                    # when Infuse changes limit between requests (e.g., 50 then 31)
+                    # Stash pagination: items start at (page-1) * per_page
+                    # If we use varying per_page, the offsets won't align with startIndex
+                    STASH_PAGE_SIZE = 50  # Fixed internal page size
+                    
+                    # Calculate which Stash page contains start_index
+                    stash_page = (start_index // STASH_PAGE_SIZE) + 1
+                    # Offset within that page
+                    offset_in_page = start_index % STASH_PAGE_SIZE
+                    
+                    logger.debug(f"TAGS filter pagination: startIndex={start_index}, limit={limit}, stash_page={stash_page}, offset_in_page={offset_in_page}")
                     
                     q = """query FindTags($tag_filter: TagFilterType, $page: Int!, $per_page: Int!) {
                         findTags(
@@ -3815,15 +3824,25 @@ async def endpoint_items(request):
                             tags { id name scene_count image_path favorite }
                         }
                     }"""
-                    res = stash_query(q, {"tag_filter": graphql_filter, "page": page, "per_page": limit})
+                    res = stash_query(q, {"tag_filter": graphql_filter, "page": stash_page, "per_page": STASH_PAGE_SIZE})
                     data = res.get("data", {}).get("findTags", {})
                     total_count = data.get("count", 0)
-                    tags = data.get("tags", [])
+                    all_tags = data.get("tags", [])
+                    
+                    # Slice from offset_in_page, up to limit items
+                    tags = all_tags[offset_in_page:offset_in_page + limit]
+                    
+                    # If we need more items than remaining in this page, fetch next page too
+                    while len(tags) < limit and (stash_page * STASH_PAGE_SIZE) < total_count:
+                        stash_page += 1
+                        res = stash_query(q, {"tag_filter": graphql_filter, "page": stash_page, "per_page": STASH_PAGE_SIZE})
+                        next_tags = res.get("data", {}).get("findTags", {}).get("tags", [])
+                        tags.extend(next_tags[:limit - len(tags)])
                     
                     # Log first and last 3 tag IDs to help identify duplicates/overlaps
                     first_ids = [t.get("id") for t in tags[:3]] if tags else []
                     last_ids = [t.get("id") for t in tags[-3:]] if len(tags) > 3 else first_ids
-                    logger.debug(f"TAGS filter page {page}: {len(tags)} tags (total {total_count}), first IDs: {first_ids}, last IDs: {last_ids}")
+                    logger.debug(f"TAGS filter: returning {len(tags)} tags (total {total_count}), first IDs: {first_ids}, last IDs: {last_ids}")
                     for t in tags:
                         tag_item = {
                             "Name": t["name"],
@@ -5886,7 +5905,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - PROXY_START_TIME) if PROXY_START_TIME else 0
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v3.92",
+        "version": "v3.93",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "uptime": uptime_seconds,
@@ -6511,7 +6530,7 @@ if __name__ == "__main__":
     asyncio_logger = logging.getLogger("asyncio")
     asyncio_logger.setLevel(logging.CRITICAL)  # Only show critical asyncio errors
 
-    logger.info(f"--- Stash-Jellyfin Proxy v3.92 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.93 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
 
