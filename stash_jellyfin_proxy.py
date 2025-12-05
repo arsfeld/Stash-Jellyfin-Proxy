@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Stash-Jellyfin Proxy v5.03
+Stash-Jellyfin Proxy v5.01
 Enables Infuse and other Jellyfin clients to connect to Stash by emulating the Jellyfin API.
 
 # =============================================================================
@@ -836,7 +836,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v5.03</span>
+                <span id="version">v5.01</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -1245,7 +1245,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v5.03';
+                document.getElementById('version').textContent = data.version || 'v5.01';
                 document.getElementById('proxy-uptime').textContent = data.uptime ? `Uptime: ${formatDuration(data.uptime)}` : '';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
@@ -2041,22 +2041,14 @@ PUBLIC_ENDPOINTS = {
     "/system/info",
     "/system/ping",
     "/users",  # User list for login screen
-    "/users/public",  # Public user list for Swiftfin
     "/users/authenticatebyname",
     "/branding/configuration",
-    "/branding/splashscreen",  # Swiftfin requests this on startup
-    "/branding/css",
-    "/quickconnect/enabled",  # QuickConnect discovery
-    "/quickconnect/initiate",
-    "/localization/options",  # Language/locale settings
 }
 
 # Endpoint prefixes that don't require auth (for discovery/public info)
 # All lowercase for case-insensitive comparison
 PUBLIC_PREFIXES = [
     "/system/info",
-    "/branding/",  # All branding endpoints are public
-    "/quickconnect/",  # QuickConnect endpoints
 ]
 
 # IP failure tracking: {ip: [(timestamp, path), ...]}
@@ -2178,73 +2170,6 @@ def save_banned_ips_to_config():
         logger.info(f"Saved banned IPs to config: {banned_str if banned_str else '(none)'}")
     except Exception as e:
         logger.error(f"Failed to save banned IPs to config: {e}")
-
-# Path segment normalization map for Jellyfin API endpoints
-# Maps lowercase -> proper casing for common path segments
-PATH_SEGMENT_MAP = {
-    "system": "System", "info": "Info", "public": "Public", "ping": "Ping",
-    "branding": "Branding", "configuration": "Configuration",
-    "users": "Users", "authenticatebyname": "AuthenticateByName",
-    "views": "Views", "items": "Items", "latest": "Latest", "resume": "Resume",
-    "groupingoptions": "GroupingOptions", "favoriteitems": "FavoriteItems",
-    "rating": "Rating", "delete": "Delete", "playeditems": "PlayedItems",
-    "playingitems": "PlayingItems", "unplayeditems": "UnplayedItems",
-    "library": "Library", "virtualfolders": "VirtualFolders",
-    "displaypreferences": "DisplayPreferences",
-    "shows": "Shows", "nextup": "NextUp",
-    "counts": "Counts", "playbackinfo": "PlaybackInfo",
-    "similar": "Similar", "intros": "Intros", "specialfeatures": "SpecialFeatures",
-    "videos": "Videos", "stream": "stream", "subtitles": "Subtitles",
-    "images": "Images", "primary": "Primary", "thumb": "Thumb",
-    "sessions": "Sessions", "playing": "Playing", "progress": "Progress",
-    "stopped": "Stopped", "capabilities": "Capabilities", "full": "Full",
-    "collections": "Collections", "playlists": "Playlists",
-    "genres": "Genres", "musicgenres": "MusicGenres",
-    "persons": "Persons", "studios": "Studios", "artists": "Artists",
-    "years": "Years", "movies": "Movies", "recommendations": "Recommendations",
-    "instantmix": "InstantMix", "mediasegments": "MediaSegments",
-    "quickconnect": "QuickConnect", "enabled": "Enabled", "initiate": "Initiate",
-    "connect": "Connect", "localization": "Localization", "options": "Options",
-    "audio": "Audio",
-}
-
-def normalize_jellyfin_path(path: str) -> str:
-    """Normalize path to match Jellyfin API casing expectations."""
-    if not path or path == "/":
-        return path
-    
-    segments = path.split("/")
-    normalized = []
-    for segment in segments:
-        if not segment:
-            normalized.append(segment)
-            continue
-        # Check if segment looks like a GUID/ID (preserve as-is)
-        if len(segment) == 32 or (len(segment) == 36 and segment.count("-") == 4):
-            normalized.append(segment)
-        # Check if it's a file extension like .mp4, .srt, .vtt
-        elif "." in segment:
-            normalized.append(segment)
-        else:
-            # Look up in map, fallback to original
-            normalized.append(PATH_SEGMENT_MAP.get(segment.lower(), segment))
-    return "/".join(normalized)
-
-class PathNormalizationMiddleware:
-    """ASGI middleware that normalizes path casing for Jellyfin API compatibility."""
-
-    def __init__(self, app):
-        self.app = app
-
-    async def __call__(self, scope, receive, send):
-        if scope["type"] == "http":
-            original_path = scope.get("path", "")
-            normalized_path = normalize_jellyfin_path(original_path)
-            if normalized_path != original_path:
-                # Create a new scope with the normalized path
-                scope = dict(scope)
-                scope["path"] = normalized_path
-        await self.app(scope, receive, send)
 
 class AuthenticationMiddleware:
     """ASGI middleware that validates ACCESS_TOKEN on protected endpoints and enforces IP bans."""
@@ -2396,10 +2321,6 @@ class RequestLoggingMiddleware:
         process_time = time.time() - start_time
         ms = int(process_time * 1000)
         status = response_status[0]
-
-        # VERBOSE: Log ALL requests for debugging Swiftfin
-        method = scope.get("method", "?")
-        logger.debug(f"REQUEST: {method} {path} -> {status} ({ms}ms)")
 
         # Determine log level based on request type and result
         is_error = status >= 400
@@ -3051,35 +2972,8 @@ async def endpoint_root(request):
     """Infuse might check root for life."""
     return RedirectResponse(url="/System/Info/Public")
 
-def get_local_address(request) -> str:
-    """Get the local address from the request, using the Host header or X-Forwarded-Host."""
-    host = None
-    # Check X-Forwarded-Host first (for reverse proxy setups)
-    for key, value in request.scope.get("headers", []):
-        key_lower = key.decode().lower()
-        if key_lower == "x-forwarded-host":
-            host = value.decode().split(",")[0].strip()
-            break
-        elif key_lower == "host" and not host:
-            host = value.decode()
-    
-    if host:
-        # Check if we need to add the protocol
-        if not host.startswith("http"):
-            # Check X-Forwarded-Proto for the scheme
-            scheme = "http"
-            for key, value in request.scope.get("headers", []):
-                if key.decode().lower() == "x-forwarded-proto":
-                    scheme = value.decode().split(",")[0].strip()
-                    break
-            return f"{scheme}://{host}"
-        return host
-    # Fallback to configured bind address
-    return f"http://{PROXY_BIND}:{PROXY_PORT}"
-
 async def endpoint_system_info(request):
     logger.debug("Providing System Info")
-    local_address = get_local_address(request)
     return JSONResponse({
         "ServerName": SERVER_NAME,
         "Version": "10.8.13",
@@ -3090,19 +2984,17 @@ async def endpoint_system_info(request):
         "CompletedInstallations": [{"Guid": SERVER_ID, "Name": SERVER_NAME}],
         "CanSelfRestart": False,
         "CanLaunchWebBrowser": False,
-        "LocalAddress": local_address
+        "LocalAddress": f"http://{PROXY_BIND}:{PROXY_PORT}"
     })
 
 async def endpoint_public_info(request):
-    local_address = get_local_address(request)
     return JSONResponse({
-        "LocalAddress": local_address,
+        "LocalAddress": f"http://{PROXY_BIND}:{PROXY_PORT}",
         "ServerName": SERVER_NAME,
         "Version": "10.8.13",
         "Id": SERVER_ID,
         "ProductName": "Jellyfin Server",
-        "OperatingSystem": "Linux",
-        "StartupWizardCompleted": True
+        "OperatingSystem": "Linux"
     })
 
 async def endpoint_authenticate_by_name(request):
@@ -3128,140 +3020,19 @@ async def endpoint_authenticate_by_name(request):
 
         record_auth_attempt(success=True)
         logger.info(f"Auth SUCCESS for user {SJS_USER}")
-        
-        # Generate a consistent user ID (proper UUID format) from the username
-        import hashlib
-        user_id_hex = hashlib.md5(SJS_USER.encode()).hexdigest()
-        # Format as proper UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        user_id_hash = f"{user_id_hex[:8]}-{user_id_hex[8:12]}-{user_id_hex[12:16]}-{user_id_hex[16:20]}-{user_id_hex[20:]}"
-        
-        # Get client info from request headers for session
-        client_name = "Stash Proxy Client"
-        device_name = "Unknown"
-        device_id = "stash-proxy-device"
-        app_version = "1.0"
-        
-        for key, value in request.scope.get("headers", []):
-            key_lower = key.decode().lower()
-            value_str = value.decode()
-            if key_lower == "x-emby-authorization" or key_lower == "authorization":
-                # Parse: MediaBrowser Client="...", Device="...", DeviceId="...", Version="..."
-                import re
-                client_match = re.search(r'Client="([^"]*)"', value_str)
-                device_match = re.search(r'Device="([^"]*)"', value_str)
-                device_id_match = re.search(r'DeviceId="([^"]*)"', value_str)
-                version_match = re.search(r'Version="([^"]*)"', value_str)
-                if client_match:
-                    client_name = client_match.group(1)
-                if device_match:
-                    device_name = device_match.group(1)
-                if device_id_match:
-                    device_id = device_id_match.group(1)
-                if version_match:
-                    app_version = version_match.group(1)
-                break
-        
-        # Get current time in Jellyfin format
-        from datetime import datetime, timezone
-        now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.0000000Z")
-        
-        # Build auth response matching real Jellyfin format
-        auth_response = {
+        return JSONResponse({
             "User": {
                 "Name": username,
-                "ServerId": SERVER_ID,
-                "Id": user_id_hash,
-                "HasPassword": True,
-                "HasConfiguredPassword": True,
-                "HasConfiguredEasyPassword": False,
-                "EnableAutoLogin": False,
-                "LastLoginDate": now_iso,
-                "LastActivityDate": now_iso,
-                "Configuration": {
-                    "PlayDefaultAudioTrack": True,
-                    "SubtitleLanguagePreference": "",
-                    "DisplayMissingEpisodes": False,
-                    "GroupedFolders": [],
-                    "SubtitleMode": "Default",
-                    "DisplayCollectionsView": False,
-                    "EnableLocalPassword": False,
-                    "OrderedViews": [],
-                    "LatestItemsExcludes": [],
-                    "MyMediaExcludes": [],
-                    "HidePlayedInLatest": True,
-                    "RememberAudioSelections": True,
-                    "RememberSubtitleSelections": True,
-                    "EnableNextEpisodeAutoPlay": True
-                },
-                "Policy": {
-                    "IsAdministrator": True,
-                    "IsHidden": False,
-                    "IsDisabled": False,
-                    "EnableUserPreferenceAccess": True,
-                    "EnableRemoteAccess": True,
-                    "EnableContentDeletion": False,
-                    "EnablePlaybackRemuxing": True,
-                    "ForceRemoteSourceTranscoding": False,
-                    "EnableMediaPlayback": True,
-                    "EnableAudioPlaybackTranscoding": True,
-                    "EnableVideoPlaybackTranscoding": True,
-                    "EnableAllFolders": True,
-                    "EnableAllChannels": True,
-                    "EnableAllDevices": True,
-                    "EnabledDevices": [],
-                    "EnabledChannels": [],
-                    "EnabledFolders": [],
-                    "BlockedTags": [],
-                    "AllowedTags": [],
-                    "AccessSchedules": [],
-                    "BlockUnratedItems": [],
-                    "EnableContentDeletionFromFolders": [],
-                    "SyncPlayAccess": "CreateAndJoinGroups"
-                }
+                "Id": SJS_USER,
+                "Policy": {"IsAdministrator": True}
             },
             "SessionInfo": {
-                "PlayState": {
-                    "CanSeek": False,
-                    "IsPaused": False,
-                    "IsMuted": False,
-                    "RepeatMode": "RepeatNone",
-                    "PlaybackOrder": "Default"
-                },
-                "AdditionalUsers": [],
-                "Capabilities": {
-                    "SupportedCommands": [],
-                    "SupportsMediaControl": False,
-                    "SupportsPersistentIdentifier": True
-                },
-                "RemoteEndPoint": client_ip,
-                "PlayableMediaTypes": ["Video"],
-                "Id": (lambda h: f"{h[:8]}-{h[8:12]}-{h[12:16]}-{h[16:20]}-{h[20:]}")(hashlib.md5(f"{device_id}{SJS_USER}".encode()).hexdigest()),
-                "UserId": user_id_hash,
-                "UserName": username,
-                "Client": client_name,
-                "LastActivityDate": now_iso,
-                "LastPlaybackCheckIn": "0001-01-01T00:00:00.0000000Z",
-                "DeviceName": device_name,
-                "DeviceId": device_id,
-                "ApplicationVersion": app_version,
-                "IsActive": True,
-                "SupportsMediaControl": False,
-                "SupportsRemoteControl": False,
-                "NowPlayingQueue": [],
-                "NowPlayingQueueFullItems": [],
-                "HasCustomDeviceName": False,
-                "ServerId": SERVER_ID,
-                "SupportedCommands": []
+                "UserId": SJS_USER,
+                "IsActive": True
             },
             "AccessToken": ACCESS_TOKEN,
             "ServerId": SERVER_ID
-        }
-        
-        # Debug log the full response
-        import json
-        logger.debug(f"AUTH RESPONSE JSON: {json.dumps(auth_response, indent=2)}")
-        
-        return JSONResponse(auth_response)
+        })
     else:
         record_auth_attempt(success=False)
         logger.warning("Auth FAILED - Invalid Key")
@@ -3269,26 +3040,10 @@ async def endpoint_authenticate_by_name(request):
 
 async def endpoint_users(request):
     return JSONResponse([{
-        "Name": SJS_USER,
+        "Name": "Stash User",
         "Id": SJS_USER,
-        "ServerId": SERVER_ID,
         "HasPassword": True,
-        "HasConfiguredPassword": True,
-        "HasConfiguredEasyPassword": False,
-        "PrimaryImageTag": None,
         "Policy": {"IsAdministrator": True, "EnableContentDeletion": False}
-    }])
-
-async def endpoint_users_public(request):
-    """Return list of public users that can be selected on login screen."""
-    return JSONResponse([{
-        "Name": SJS_USER,
-        "Id": SJS_USER,
-        "ServerId": SERVER_ID,
-        "HasPassword": True,
-        "HasConfiguredPassword": True,
-        "HasConfiguredEasyPassword": False,
-        "PrimaryImageTag": None
     }])
 
 async def endpoint_user_by_id(request):
@@ -6178,33 +5933,6 @@ async def endpoint_branding(request):
         "SplashscreenEnabled": False
     })
 
-async def endpoint_branding_splashscreen(request):
-    """Return splash screen - we don't have one, return 204 No Content."""
-    from starlette.responses import Response
-    return Response(status_code=204)
-
-async def endpoint_branding_css(request):
-    """Return custom CSS - we don't have any."""
-    from starlette.responses import Response
-    return Response(content="", media_type="text/css")
-
-async def endpoint_quickconnect_enabled(request):
-    """Return if QuickConnect is enabled - we don't support it."""
-    # Return false as a JSON boolean, not a string
-    from starlette.responses import Response
-    return Response(content="false", media_type="application/json")
-
-async def endpoint_quickconnect_initiate(request):
-    """QuickConnect initiate - not supported."""
-    return JSONResponse({"Error": "QuickConnect is not enabled on this server"}, status_code=400)
-
-async def endpoint_localization_options(request):
-    """Return localization options."""
-    return JSONResponse([{
-        "Name": "English",
-        "Value": "en-US"
-    }])
-
 async def endpoint_media_segments(request):
     """
     Return media segments for a scene - stub endpoint.
@@ -6228,13 +5956,6 @@ routes = [
     Route("/System/Info/Public", endpoint_public_info),
     Route("/System/Ping", endpoint_ping),
     Route("/Branding/Configuration", endpoint_branding),
-    Route("/Branding/Splashscreen", endpoint_branding_splashscreen),
-    Route("/Branding/Css", endpoint_branding_css),
-    Route("/QuickConnect/Enabled", endpoint_quickconnect_enabled),
-    Route("/QuickConnect/Initiate", endpoint_quickconnect_initiate, methods=["POST"]),
-    Route("/Localization/Options", endpoint_localization_options),
-    Route("/Users", endpoint_users),
-    Route("/Users/Public", endpoint_users_public),
     Route("/Users/AuthenticateByName", endpoint_authenticate_by_name, methods=["POST"]),
     Route("/Users/{user_id}", endpoint_user_by_id),
     Route("/Users/{user_id}/Views", endpoint_user_views),
@@ -6290,8 +6011,7 @@ routes = [
 ]
 
 middleware = [
-    Middleware(PathNormalizationMiddleware),  # Normalize path casing first
-    Middleware(AuthenticationMiddleware),  # Token validation
+    Middleware(AuthenticationMiddleware),  # Token validation first
     Middleware(RequestLoggingMiddleware),
     Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 ]
@@ -6312,7 +6032,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - PROXY_START_TIME) if PROXY_START_TIME else 0
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v5.03",
+        "version": "v5.01",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "uptime": uptime_seconds,
@@ -6495,7 +6215,7 @@ async def ui_api_config(request):
                     # Check if value equals default
                     default_value = defaults.get(key, "")
                     is_default = (new_value == default_value)
-                    
+
                     # If user cleared the field (empty) and there's a non-empty default,
                     # treat this as wanting the default value
                     is_cleared_for_default = (new_value == "" and default_value != "")
@@ -6830,12 +6550,12 @@ async def ui_api_stats(request):
 async def ui_api_stats_reset(request):
     """Reset all proxy statistics."""
     global _proxy_stats, _stats_dirty
-    
+
     if request.method != "POST":
         return JSONResponse({"error": "Method not allowed"}, status_code=405)
-    
+
     logger.info("Statistics reset requested via Web UI")
-    
+
     # Reset all stats to initial values
     _proxy_stats = {
         "total_streams": 0,
@@ -6848,7 +6568,7 @@ async def ui_api_stats_reset(request):
     }
     _stats_dirty = True
     save_proxy_stats()
-    
+
     return JSONResponse({"success": True, "message": "Statistics reset"})
 
 # Global reference for restart functionality
@@ -6966,7 +6686,7 @@ if __name__ == "__main__":
     asyncio_logger = logging.getLogger("asyncio")
     asyncio_logger.setLevel(logging.CRITICAL)  # Only show critical asyncio errors
 
-    logger.info(f"--- Stash-Jellyfin Proxy v5.03 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v5.01 ---")
 
     stash_ok = check_stash_connection()
     if not stash_ok:

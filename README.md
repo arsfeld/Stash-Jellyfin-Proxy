@@ -1,6 +1,6 @@
 # Stash-Jellyfin Proxy
 
-**Version 5.04**
+**Version 5.00**
 
 A Python proxy server that enables Jellyfin-compatible media players (like Infuse) to connect to Stash by emulating the Jellyfin API.
 
@@ -99,20 +99,6 @@ Access the configuration dashboard at `http://your-server:8097`:
 - **Dashboard**: Proxy status, Stash connection, active streams, usage statistics
 - **Configuration**: All settings with live updates
 - **Logs**: Filterable log viewer with download
-
-## Client Compatibility
-
-| Client | Status | Notes |
-|--------|--------|-------|
-| **Infuse** (iOS/tvOS/macOS) | Fully Supported | Primary target, works perfectly |
-| **Swiftfin** (iOS/tvOS) | Not Supported | Requires full Jellyfin server internals beyond API |
-| **Jellyfin Mobile** (iOS/Android) | Not Supported | Web wrapper requiring full Jellyfin web UI |
-| Other Jellyfin clients | Varies | May work if they use API-only authentication |
-
-**Why some clients don't work:**
-- This proxy emulates the Jellyfin API but is not a full Jellyfin server
-- Some clients (like Swiftfin) have internal validation requirements beyond the public API
-- Web-based clients require the full Jellyfin web interface, not just API endpoints
 
 ## Known Limitations
 
