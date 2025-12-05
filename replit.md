@@ -1,188 +1,28 @@
 # Stash-Jellyfin Proxy
 
-A Python proxy server that enables Jellyfin-compatible media players (like Infuse) to connect to Stash media server by emulating the Jellyfin API.
-
-## Current Version: v3.90
+## Overview
+The Stash-Jellyfin Proxy is a Python-based proxy server designed to bridge the gap between Stash media server and Jellyfin-compatible media players like Infuse. It achieves this by emulating the Jellyfin API, allowing users to access their Stash content through familiar Jellyfin client interfaces. The project aims to provide a seamless viewing experience for Stash users who prefer the robust client ecosystem of Jellyfin. Key capabilities include comprehensive Jellyfin API emulation, robust Stash GraphQL integration, and a user-friendly web interface for configuration and monitoring.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
 
-## Project Status
+## System Architecture
+The proxy is built on a Python backend using the Starlette ASGI framework with Hypercorn as the server. It listens on port 8096 (default Jellyfin port). Core components include a comprehensive suite of Jellyfin API endpoints, a Stash GraphQL client with retry logic, a filter transformer for Stash saved filters, an image handler with caching and optional resizing, and a stream proxy for video content. The system supports tag-based library folders, latest item displays, and provides a web-based UI for configuration, status monitoring, and log viewing. Authentication uses simple shared credentials. Docker containerization is supported for easy deployment, including environment variable overrides and health checks.
 
-**Phase 1 (Complete)**: Core proxy functionality
-- Full Jellyfin API emulation for Infuse compatibility
-- Stash GraphQL integration for all content types
-- Saved filters support with complex transformations
-- Configurable logging with file rotation
-- Error resilience with retry logic
+### UI/UX
+An embedded Web UI is served from the Python script on UI_PORT (default 8097). It features a dashboard displaying proxy status, Stash connection health, and active streams. A configuration editor allows management of all settings, and a log viewer provides filtering and download capabilities.
 
-**Phase 2 (Complete)**: Web UI
-- Embedded Web UI served from Python script on UI_PORT (8097)
-- Dashboard with proxy status, Stash connection, active streams
-- Configuration editor with all settings
-- Log viewer with filtering and download
+### Technical Implementations
+- **Jellyfin API Emulation**: Supports over 50 Jellyfin endpoints to ensure broad client compatibility, including authentication, library browsing (Scenes, Performers, Studios, Groups), video streaming with subtitle support, and image serving.
+- **Stash Integration**: Utilizes GraphQL API for all content types, transforms Stash saved filters, handles pagination, and enables tag-based library organization.
+- **Configuration**: Managed via `stash_jellyfin_proxy.conf` with extensive settings for Stash connection, proxy behavior, logging, and security. Most settings apply dynamically without server restart.
+- **Security**: Implements IP-based security with auto-banning for failed authentication attempts and requires an ACCESS_TOKEN for protected endpoints.
+- **Streaming**: Uses chunked streaming for video content and includes enhanced stream tracking on the dashboard with user, client IP, and client type information.
 
-**Phase 3 (Complete)**: Docker containerization
-- Dockerfile with Python 3.11-slim-bookworm base
-- PUID/PGID/TZ environment variable support
-- Auto-generated SERVER_ID on first run
-- Config and logs in /config volume
-- Healthcheck on proxy port
-- build_container.sh and docker-compose.yml sample
-
-## Core Features
-
-### Jellyfin API Emulation
-- Authentication (username/password)
-- Library browsing (Scenes, Performers, Studios, Groups)
-- Video streaming with subtitle support
-- Image serving with caching
-- 50+ Jellyfin endpoints for client compatibility
-
-### Stash Integration
-- GraphQL API queries for all content types
-- Saved filter transformation (SCENES, PERFORMERS, STUDIOS, GROUPS, TAGS)
-- Pagination handling with offset-based slicing
-- Tag-based library folders (TAG_GROUPS)
-- Tags folder for browsing tags and their scenes (ENABLE_TAG_FILTERS)
-- Latest items for home screen (LATEST_GROUPS)
-
-### Configuration (stash_jellyfin_proxy.conf)
-
-| Setting | Description | Default |
-|---------|-------------|---------|
-| STASH_URL | Stash server URL | https://stash:9999 |
-| PROXY_BIND | Proxy bind address | 0.0.0.0 |
-| PROXY_PORT | Proxy port | 8096 |
-| UI_PORT | Web UI port (0 to disable) | 8097 |
-| STASH_API_KEY | Stash API key | (required) |
-| SJS_USER | Infuse login username | (required) |
-| SJS_PASSWORD | Infuse login password | (required) |
-| TAG_GROUPS | Comma-separated tag names for library folders | (empty) |
-| ENABLE_TAG_FILTERS | Show Tags folder for browsing tags and scenes | false |
-| ENABLE_ALL_TAGS | Show "All Tags" subfolder (may be large) | false |
-| LATEST_GROUPS | Libraries to show on home screen | Scenes |
-| SERVER_NAME | Server name shown in clients | Stash Media Server |
-| STASH_TIMEOUT | API request timeout (seconds) | 30 |
-| STASH_RETRIES | API retry count | 3 |
-| STASH_GRAPHQL_PATH | GraphQL endpoint path | /graphql |
-| STASH_VERIFY_TLS | Verify TLS certificates | false |
-| LOG_DIR | Log file directory | . |
-| LOG_FILE | Log file name | stash_jellyfin_proxy.log |
-| LOG_LEVEL | Logging level (DEBUG/INFO/WARNING/ERROR) | INFO |
-| LOG_MAX_SIZE_MB | Max log file size before rotation | 10 |
-| LOG_BACKUP_COUNT | Number of backup log files | 3 |
-| BAN_THRESHOLD | Failed auth attempts before auto-ban | 10 |
-| BAN_WINDOW_MINUTES | Rolling window for counting failures | 15 |
-| BANNED_IPS | Comma-separated list of banned IPs | (empty) |
-
-### Command Line Options
-
-```bash
-./stash_jellyfin_proxy.py [--debug] [--no-log-file] [--no-ui]
-```
-
-- `--debug`: Enable debug logging (overrides LOG_LEVEL)
-- `--no-log-file`: Disable file logging (console only)
-- `--no-ui`: Disable Web UI server
-
-## Technical Architecture
-
-### Python Proxy Server (stash_jellyfin_proxy.py)
-
-- **Framework**: Starlette (ASGI) with Hypercorn server
-- **Port**: 8096 (default Jellyfin port)
-- **Authentication**: Simple shared credentials
-- **Logging**: Console + rotating file handler
-
-### Key Components
-
-1. **Jellyfin Endpoints**: 50+ endpoints for full client compatibility
-2. **Stash GraphQL Client**: Handles all Stash API communication with retry logic
-3. **Filter Transformer**: Converts saved filters to GraphQL query format
-4. **Image Handler**: Serves and caches images with optional resizing
-5. **Stream Proxy**: Redirects video streams to Stash
-
-### Dependencies
-
-- Python 3.8+
-- hypercorn (ASGI server)
-- starlette (web framework)
-- requests (HTTP client)
-- Pillow (optional, for image resizing)
-
-## Files
-
-| File | Description |
-|------|-------------|
-| stash_jellyfin_proxy.py | Main proxy server (v3.89) |
-| stash_jellyfin_proxy.conf | Configuration file |
-| build_docker/Dockerfile | Docker container definition |
-| build_docker/docker-entrypoint.sh | Container entrypoint script |
-| build_docker/build_container.sh | Build script for Docker image |
-| build_docker/docker-compose.yml | Sample compose file |
-
-## Docker Usage
-
-```bash
-# From the build_docker directory:
-cd build_docker
-./build_container.sh
-
-# Or use docker-compose
-docker-compose up -d
-```
-
-Environment variables:
-- PUID/PGID: User/Group ID for file permissions
-- TZ: Timezone (e.g., America/New_York)
-- STASH_URL, STASH_API_KEY: Override config file
-- SJS_USER, SJS_PASSWORD: Login credentials
-- PROXY_PORT, UI_PORT: Port overrides
-- REQUIRE_AUTH_FOR_CONFIG: Password-protect config page
-
-Configuration precedence: defaults → config file → environment variables
-Environment variables ALWAYS override config file values when set.
-
-## Recent Changes
-
-- v3.90: Fixed tag filter pagination - consolidated count and data queries into single query for consistency, preventing missing items at end of paginated lists; renamed "Enable Filters" to "Enable Scene Filters" in Web UI for clarity; fixed ImageTags always being set for filter-tags items so Infuse requests images
-- v3.89: Tags folder feature - new library folder for browsing tags; ENABLE_TAG_FILTERS option shows Tags folder with Favorites (favorite tags), All Tags (optional via ENABLE_ALL_TAGS, may be large), and saved TAGS filters from Stash; clicking a tag shows its scenes; tags show images from Stash if available, otherwise generates text icons; uses existing filter infrastructure for TAGS mode filters; root-tags icon with layered tag shapes; Fixed global variable declarations for new config options in UI API; Rate-limited auth failure counting to 1/second/IP to prevent instant bans from parallel requests (e.g., Infuse startup sends 10+ requests at once)
-- v3.88: Dashboard statistics cards - Stash Library stats (scenes/performers/studios/tags/groups counts from GraphQL) and Proxy Usage stats (streams today/total, unique clients today, auth success/fail counts); Top Played list showing top 5 most-played scenes with title, performer, and play count; stats persist to /config/proxy_stats.json and survive restarts; Smart play count cooldown - plays only count once per (scene, client IP) within video duration + 30 min buffer to prevent inflation from start/stop cycles; Smart stream counting - tracks byte position from Range headers; only counts as new stream if 30min+ gap OR seek to start (first 5%) with 5min+ gap; prevents inflation from seeking/buffering; Post-restart handling - detects trailing requests after server restart (mid-file position on first request OR non-zero position with unknown file size) and logs as "Stream resuming (post-restart)" instead of counting as new play; Dashboard browser tab title now uses SERVER_NAME config field; IP-based security with auto-banning - AuthenticationMiddleware enforces ACCESS_TOKEN on protected endpoints; failed auth attempts tracked per IP with rolling 15-min window; auto-ban after 10 failures (configurable via BAN_THRESHOLD/BAN_WINDOW_MINUTES); BANNED_IPS persisted to config file; Web UI config page shows banned IP editor; unauthorized requests logged with IP, user agent, and path; banned IPs get silent drop (no response, causes timeout) to avoid confirming ban to attackers
-- v3.87: Fixed critical security vulnerability - implemented AuthenticationMiddleware that validates ACCESS_TOKEN on all protected endpoints; public endpoints (/System/Info/Public, /Users, etc.) remain accessible for client discovery; protected endpoints now require valid token from Jellyfin client auth flow
-- v3.86: Dynamic font scaling for folder icons - 48px max font size that scales down to fit text width; text wraps differently for menu icons (12 chars/4 lines) vs filter icons (10 chars/6 lines) to prevent cutoff
-- v3.85: Font rendering improvements - DejaVu Sans Bold font loading with proper error handling
-- v3.84: Uniform icon font sizing - all folder icons now use consistent 48px font size; long text is truncated with ellipsis instead of shrinking; changed icon cache headers to no-cache to allow refresh
-- v3.83: Fixed API error handling - stash_query now returns empty data dict instead of None on errors, preventing NoneType crashes; fixed folder icon generation - removed SVG fallbacks (Infuse doesn't support SVG), proper 400x600 dark PNG placeholder; added font loading debug logging; all version strings updated consistently
-- v3.82: Live config updates - most settings now apply immediately on save without restart (TAG_GROUPS, LATEST_GROUPS, timeouts, feature toggles, pagination, log level); UI shows feedback on which settings took effect vs need restart; fixed text scaling in folder icons (SVG now uses dynamic font sizing based on text length); fixed Pillow font loading bug (undefined variable)
-- v3.81: Security hardening - removed hardcoded default credentials (SJS_USER/SJS_PASSWORD now empty by default); added startup warning if auth not configured; Docker entrypoint uses "CHANGE_ME" placeholder; pagination validation (min=1, max=MAX_PAGE_SIZE) to prevent edge cases
-- v3.80: Fixed environment override detection - only marks fields as env-locked if they differ from Docker defaults (PROXY_BIND, PROXY_PORT, UI_PORT, LOG_DIR); dropdowns now always show selected value; checkboxes show "(env)" label when locked; LOG_DIR default is now /config
-- v3.79: Enhanced Configuration UI - added help text for all fields explaining their purpose; placeholders show default/example values; added STASH_GRAPHQL_PATH and STASH_VERIFY_TLS fields to UI; updated SERVER_ID warning text
-- v3.78: Smart stream cleanup - when a client starts a new video, their previous stream is automatically cancelled; prevents abandoned streams from accumulating in dashboard; also prevents false "started" messages when stop notification arrives after server restart (5 second grace period)
-- v3.77: Fixed performer/studio images not appearing in search results - /Persons and /Studios endpoints now use correct ImageTags format; Docker restart button now works (uses exit(0) + restart policy instead of os.execv)
-- v3.76: Docker containerization - Dockerfile, docker-entrypoint.sh, build_container.sh, docker-compose.yml; CONFIG_FILE env var support; auto-generated SERVER_ID; script continues with warning if Stash connection fails
-- v3.74: Added uptime display to dashboard; fixed config save to properly uncomment and update commented values; fixed restart to execute after event loop exits
-- v3.73: Added REQUIRE_AUTH_FOR_CONFIG option to password-protect config page; stream dashboard now shows login username instead of "unknown"; config changes logged at INFO level with old/new values (sensitive fields masked); removed "(requires Pillow)" from UI
-- v3.72: Added Feature Toggles (ENABLE_FILTERS, ENABLE_IMAGE_RESIZE), Pagination settings (DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE), and IMAGE_CACHE_MAX_SIZE to Web UI config page; fixed config save to preserve commented lines (no longer uncomments them when saving)
-- v3.71: Added "Restart Server" button in Web UI config page; uses os.execv for clean process restart with same command-line args
-- v3.70: Config save now preserves comments and formatting (updates values in-place); fixed socket.send() errors by suppressing asyncio logger; v3.69 middleware improvements included
-- v3.69: Fixed streaming disconnect errors - replaced BaseHTTPMiddleware with pure ASGI middleware to suppress expected client disconnect errors during video seeking; dashboard logs now show last 10 complete entries
-- v3.68: Fixed video streaming - now uses true chunked streaming instead of buffering entire file, eliminating 20+ second delays on large videos
-- v3.67: Enhanced stream tracking - Dashboard now shows start time, user, client IP, and client type for active streams; graceful error on port-in-use
-- v3.66: Fixed person-performer-* ID parsing for Infuse requests, added null checking for performer lookups, fixed Ctrl-C graceful shutdown with proper signal handling
-- v3.65: Embedded Web UI in Python script - Dashboard, Configuration editor, Log viewer all served on UI_PORT (8097)
-- v3.64: Implemented Infuse search functionality - now queries Stash with searchTerm parameter using relevance sorting
-- v3.62: Stream logging now shows video title (or filename), fixed duplicate "started" messages by tracking active streams
-- v3.61: Added "Stream stopped" logging, fixed false resume detection (threshold now 90s to match Infuse buffering)
-- v3.60: Added stream resume detection - logs when video resumes after pause (10+ seconds of inactivity)
-- v3.59: Descriptive stream logging - shows "Stream started: scene-12345" for new streams, range requests go to DEBUG
-- v3.58: Smarter logging - only important events at INFO level (auth, streams, errors, slow requests)
-- v3.57: Improved request logging - cleaner single-line format showing path -> status (time)
-- v3.56: Added MediaSegments endpoint (stub) - Infuse doesn't support this API yet
-- v3.55: Cleaned up logging - moved verbose messages from INFO to DEBUG level
-- v3.54: Made SERVER_ID a required config value (app stops if not set)
-- v3.53: Fixed log level not being properly applied to all handlers
-- v3.52: Added file logging with rotation, debug flag improvements
-- v3.51: Fixed SERVER_ID consistency for Infuse pairing
-- v3.50: Added 20+ Jellyfin endpoints, enhanced filter transformation, externalized config, retry logic
+## External Dependencies
+- **Stash Media Server**: The primary backend media server.
+- **Python 3.8+**: Runtime environment.
+- **hypercorn**: ASGI server for the Python application.
+- **starlette**: Web framework for building the API and UI.
+- **requests**: HTTP client for interacting with the Stash API.
+- **Pillow**: (Optional) For image resizing functionalities.

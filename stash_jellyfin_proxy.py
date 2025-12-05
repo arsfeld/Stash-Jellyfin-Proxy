@@ -811,7 +811,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v3.90</span>
+                <span id="version">v3.91</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -1218,7 +1218,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v3.90';
+                document.getElementById('version').textContent = data.version || 'v3.91';
                 document.getElementById('proxy-uptime').textContent = data.uptime ? `Uptime: ${formatDuration(data.uptime)}` : '';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
@@ -4331,6 +4331,11 @@ async def endpoint_items(request):
         else:
             logger.warning(f"Tag slug '{tag_slug}' not found in TAG_GROUPS config")
 
+    # Log pagination info for debugging
+    logger.debug(f"Items response: returning {len(items)} items, TotalRecordCount={total_count}, StartIndex={start_index}")
+    if len(items) > 0 and total_count > start_index + len(items):
+        logger.debug(f"More items available: next page would start at {start_index + len(items)}")
+    
     return JSONResponse({"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index})
 
 async def endpoint_item_details(request):
@@ -5344,19 +5349,24 @@ async def endpoint_image(request):
         res = stash_query(q, {"id": tag_id})
         tag = res.get("data", {}).get("findTag")
         if tag:
+            tag_name = tag.get("name", f"Tag {tag_id}")
             if tag.get("image_path"):
                 # Fetch the tag image from Stash
                 tag_img_url = f"{STASH_URL}/tag/{tag_id}/image"
                 image_headers = {"ApiKey": STASH_API_KEY} if STASH_API_KEY else {}
                 try:
                     data, content_type, _ = fetch_from_stash(tag_img_url, extra_headers=image_headers, timeout=30)
-                    if data and len(data) > 100:
+                    # Check for valid image data - must be non-SVG (Infuse doesn't support SVG)
+                    # Stash returns SVG placeholders for tags without custom images
+                    if data and len(data) > 100 and content_type != "image/svg+xml":
+                        logger.debug(f"Serving Stash image for tag '{tag_name}': {len(data)} bytes, {content_type}")
                         from starlette.responses import Response
                         return Response(content=data, media_type=content_type, headers=icon_cache_headers)
+                    elif content_type == "image/svg+xml":
+                        logger.debug(f"Tag '{tag_name}' has SVG placeholder, generating PNG text icon instead")
                 except Exception as e:
-                    logger.debug(f"Failed to fetch tag image, using text icon: {e}")
-            # No image or fetch failed - generate text icon with tag name
-            tag_name = tag.get("name", f"Tag {tag_id}")
+                    logger.debug(f"Failed to fetch tag image for '{tag_name}', using text icon: {e}")
+            # No image, SVG placeholder, or fetch failed - generate text icon with tag name
             img_data, content_type = generate_filter_icon(tag_name)
             logger.debug(f"Serving text icon for tag: {tag_name}")
             from starlette.responses import Response
@@ -5869,7 +5879,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - PROXY_START_TIME) if PROXY_START_TIME else 0
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v3.90",
+        "version": "v3.91",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "uptime": uptime_seconds,
@@ -6494,7 +6504,7 @@ if __name__ == "__main__":
     asyncio_logger = logging.getLogger("asyncio")
     asyncio_logger.setLevel(logging.CRITICAL)  # Only show critical asyncio errors
 
-    logger.info(f"--- Stash-Jellyfin Proxy v3.90 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.91 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
 
