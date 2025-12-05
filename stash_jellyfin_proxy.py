@@ -2043,12 +2043,19 @@ PUBLIC_ENDPOINTS = {
     "/users",  # User list for login screen
     "/users/authenticatebyname",
     "/branding/configuration",
+    "/branding/splashscreen",  # Swiftfin requests this on startup
+    "/branding/css",
+    "/quickconnect/enabled",  # QuickConnect discovery
+    "/quickconnect/initiate",
+    "/localization/options",  # Language/locale settings
 }
 
 # Endpoint prefixes that don't require auth (for discovery/public info)
 # All lowercase for case-insensitive comparison
 PUBLIC_PREFIXES = [
     "/system/info",
+    "/branding/",  # All branding endpoints are public
+    "/quickconnect/",  # QuickConnect endpoints
 ]
 
 # IP failure tracking: {ip: [(timestamp, path), ...]}
@@ -3120,11 +3127,48 @@ async def endpoint_authenticate_by_name(request):
             "User": {
                 "Name": username,
                 "Id": SJS_USER,
-                "Policy": {"IsAdministrator": True}
+                "ServerId": SERVER_ID,
+                "ServerName": SERVER_NAME,
+                "HasPassword": True,
+                "HasConfiguredPassword": True,
+                "HasConfiguredEasyPassword": False,
+                "EnableAutoLogin": False,
+                "Policy": {
+                    "IsAdministrator": True,
+                    "IsHidden": False,
+                    "IsDisabled": False,
+                    "EnableUserPreferenceAccess": True,
+                    "EnableRemoteAccess": True,
+                    "EnableContentDeletion": False,
+                    "EnablePlaybackRemuxing": True,
+                    "ForceRemoteSourceTranscoding": False,
+                    "EnableMediaPlayback": True,
+                    "EnableAudioPlaybackTranscoding": True,
+                    "EnableVideoPlaybackTranscoding": True,
+                    "EnableAllFolders": True,
+                    "EnableAllChannels": True,
+                    "EnableAllDevices": True
+                },
+                "Configuration": {
+                    "PlayDefaultAudioTrack": True,
+                    "SubtitleLanguagePreference": "",
+                    "DisplayMissingEpisodes": False,
+                    "SubtitleMode": "Default",
+                    "EnableLocalPassword": False,
+                    "HidePlayedInLatest": True,
+                    "RememberAudioSelections": True,
+                    "RememberSubtitleSelections": True
+                }
             },
             "SessionInfo": {
                 "UserId": SJS_USER,
-                "IsActive": True
+                "UserName": username,
+                "Id": SERVER_ID,
+                "ServerId": SERVER_ID,
+                "IsActive": True,
+                "SupportsRemoteControl": False,
+                "PlayableMediaTypes": ["Video"],
+                "SupportedCommands": []
             },
             "AccessToken": ACCESS_TOKEN,
             "ServerId": SERVER_ID
@@ -6029,6 +6073,33 @@ async def endpoint_branding(request):
         "SplashscreenEnabled": False
     })
 
+async def endpoint_branding_splashscreen(request):
+    """Return splash screen - we don't have one, return 204 No Content."""
+    from starlette.responses import Response
+    return Response(status_code=204)
+
+async def endpoint_branding_css(request):
+    """Return custom CSS - we don't have any."""
+    from starlette.responses import Response
+    return Response(content="", media_type="text/css")
+
+async def endpoint_quickconnect_enabled(request):
+    """Return if QuickConnect is enabled - we don't support it."""
+    # Return false as a JSON boolean, not a string
+    from starlette.responses import Response
+    return Response(content="false", media_type="application/json")
+
+async def endpoint_quickconnect_initiate(request):
+    """QuickConnect initiate - not supported."""
+    return JSONResponse({"Error": "QuickConnect is not enabled on this server"}, status_code=400)
+
+async def endpoint_localization_options(request):
+    """Return localization options."""
+    return JSONResponse([{
+        "Name": "English",
+        "Value": "en-US"
+    }])
+
 async def endpoint_media_segments(request):
     """
     Return media segments for a scene - stub endpoint.
@@ -6052,6 +6123,11 @@ routes = [
     Route("/System/Info/Public", endpoint_public_info),
     Route("/System/Ping", endpoint_ping),
     Route("/Branding/Configuration", endpoint_branding),
+    Route("/Branding/Splashscreen", endpoint_branding_splashscreen),
+    Route("/Branding/Css", endpoint_branding_css),
+    Route("/QuickConnect/Enabled", endpoint_quickconnect_enabled),
+    Route("/QuickConnect/Initiate", endpoint_quickconnect_initiate, methods=["POST"]),
+    Route("/Localization/Options", endpoint_localization_options),
     Route("/Users/AuthenticateByName", endpoint_authenticate_by_name, methods=["POST"]),
     Route("/Users/{user_id}", endpoint_user_by_id),
     Route("/Users/{user_id}/Views", endpoint_user_views),
