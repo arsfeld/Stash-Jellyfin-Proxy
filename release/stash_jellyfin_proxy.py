@@ -3129,9 +3129,11 @@ async def endpoint_authenticate_by_name(request):
         record_auth_attempt(success=True)
         logger.info(f"Auth SUCCESS for user {SJS_USER}")
         
-        # Generate a consistent user ID (GUID format) from the username
+        # Generate a consistent user ID (proper UUID format) from the username
         import hashlib
-        user_id_hash = hashlib.md5(SJS_USER.encode()).hexdigest()
+        user_id_hex = hashlib.md5(SJS_USER.encode()).hexdigest()
+        # Format as proper UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        user_id_hash = f"{user_id_hex[:8]}-{user_id_hex[8:12]}-{user_id_hex[12:16]}-{user_id_hex[16:20]}-{user_id_hex[20:]}"
         
         # Get client info from request headers for session
         client_name = "Stash Proxy Client"
@@ -3234,7 +3236,7 @@ async def endpoint_authenticate_by_name(request):
                 },
                 "RemoteEndPoint": client_ip,
                 "PlayableMediaTypes": ["Video"],
-                "Id": hashlib.md5(f"{device_id}{SJS_USER}".encode()).hexdigest(),
+                "Id": (lambda h: f"{h[:8]}-{h[8:12]}-{h[12:16]}-{h[16:20]}-{h[20:]}")(hashlib.md5(f"{device_id}{SJS_USER}".encode()).hexdigest()),
                 "UserId": user_id_hash,
                 "UserName": username,
                 "Client": client_name,
