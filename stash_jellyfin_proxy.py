@@ -3802,24 +3802,20 @@ async def endpoint_items(request):
                         items.append(group_item)
 
                 elif filter_mode == "TAGS":
-                    # Count tags with filter
-                    count_q = """query CountTags($tag_filter: TagFilterType) {
-                        findTags(tag_filter: $tag_filter) { count }
-                    }"""
-                    count_res = stash_query(count_q, {"tag_filter": graphql_filter})
-                    total_count = count_res.get("data", {}).get("findTags", {}).get("count", 0)
-
-                    # Get paginated tags
+                    # Get count and paginated tags in single query for consistency
                     q = """query FindTags($tag_filter: TagFilterType, $page: Int!, $per_page: Int!) {
                         findTags(
                             tag_filter: $tag_filter,
                             filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}
                         ) {
+                            count
                             tags { id name scene_count image_path favorite }
                         }
                     }"""
                     res = stash_query(q, {"tag_filter": graphql_filter, "page": page, "per_page": limit})
-                    tags = res.get("data", {}).get("findTags", {}).get("tags", [])
+                    data = res.get("data", {}).get("findTags", {})
+                    total_count = data.get("count", 0)
+                    tags = data.get("tags", [])
                     logger.debug(f"Saved filter returned {len(tags)} tags (page {page}, total {total_count})")
                     for t in tags:
                         tag_item = {
