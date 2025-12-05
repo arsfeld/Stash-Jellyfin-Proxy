@@ -867,7 +867,10 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                         </div>
                     </div>
                     <div class="card">
-                        <h3 class="card-title">Proxy Usage</h3>
+                        <h3 class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                            Proxy Usage
+                            <button type="button" id="reset-stats-btn" class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Reset</button>
+                        </h3>
                         <div class="stats-grid" id="proxy-usage-stats">
                             <div class="stat-item"><span class="stat-value" id="stat-streams-today">-</span><span class="stat-label">Streams Today</span></div>
                             <div class="stat-item"><span class="stat-value" id="stat-total-streams">-</span><span class="stat-label">Total Streams</span></div>
@@ -1564,6 +1567,24 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 URL.revokeObjectURL(url);
             } catch (e) {
                 showToast('Failed to download logs', 'error');
+            }
+        });
+
+        // Reset statistics
+        document.getElementById('reset-stats-btn').addEventListener('click', async () => {
+            if (!confirm('Reset all usage statistics? This will clear stream counts, play history, and auth stats.')) {
+                return;
+            }
+            try {
+                const res = await fetch('/api/stats/reset', { method: 'POST' });
+                if (res.ok) {
+                    showToast('Statistics reset successfully', 'success');
+                    fetchStats();
+                } else {
+                    showToast('Failed to reset statistics', 'error');
+                }
+            } catch (e) {
+                showToast('Failed to reset statistics', 'error');
             }
         });
 
@@ -6498,6 +6519,30 @@ async def ui_api_stats(request):
         "proxy": proxy_stats
     })
 
+async def ui_api_stats_reset(request):
+    """Reset all proxy statistics."""
+    global _proxy_stats, _stats_dirty
+    
+    if request.method != "POST":
+        return JSONResponse({"error": "Method not allowed"}, status_code=405)
+    
+    logger.info("Statistics reset requested via Web UI")
+    
+    # Reset all stats to initial values
+    _proxy_stats = {
+        "total_streams": 0,
+        "streams_today": 0,
+        "streams_today_date": time.strftime("%Y-%m-%d"),
+        "unique_ips_today": [],
+        "auth_success": 0,
+        "auth_failed": 0,
+        "play_counts": {},
+    }
+    _stats_dirty = True
+    save_proxy_stats()
+    
+    return JSONResponse({"success": True, "message": "Statistics reset"})
+
 # Global reference for restart functionality
 _shutdown_event = None
 _restart_requested = False
@@ -6556,6 +6601,7 @@ ui_routes = [
     Route("/api/logs", ui_api_logs),
     Route("/api/streams", ui_api_streams),
     Route("/api/stats", ui_api_stats),
+    Route("/api/stats/reset", ui_api_stats_reset, methods=["POST"]),
     Route("/api/restart", ui_api_restart, methods=["POST"]),
 ]
 
