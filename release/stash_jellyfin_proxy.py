@@ -3039,8 +3039,35 @@ async def endpoint_root(request):
     """Infuse might check root for life."""
     return RedirectResponse(url="/System/Info/Public")
 
+def get_local_address(request) -> str:
+    """Get the local address from the request, using the Host header or X-Forwarded-Host."""
+    host = None
+    # Check X-Forwarded-Host first (for reverse proxy setups)
+    for key, value in request.scope.get("headers", []):
+        key_lower = key.decode().lower()
+        if key_lower == "x-forwarded-host":
+            host = value.decode().split(",")[0].strip()
+            break
+        elif key_lower == "host" and not host:
+            host = value.decode()
+    
+    if host:
+        # Check if we need to add the protocol
+        if not host.startswith("http"):
+            # Check X-Forwarded-Proto for the scheme
+            scheme = "http"
+            for key, value in request.scope.get("headers", []):
+                if key.decode().lower() == "x-forwarded-proto":
+                    scheme = value.decode().split(",")[0].strip()
+                    break
+            return f"{scheme}://{host}"
+        return host
+    # Fallback to configured bind address
+    return f"http://{PROXY_BIND}:{PROXY_PORT}"
+
 async def endpoint_system_info(request):
     logger.debug("Providing System Info")
+    local_address = get_local_address(request)
     return JSONResponse({
         "ServerName": SERVER_NAME,
         "Version": "10.8.13",
@@ -3051,17 +3078,19 @@ async def endpoint_system_info(request):
         "CompletedInstallations": [{"Guid": SERVER_ID, "Name": SERVER_NAME}],
         "CanSelfRestart": False,
         "CanLaunchWebBrowser": False,
-        "LocalAddress": f"http://{PROXY_BIND}:{PROXY_PORT}"
+        "LocalAddress": local_address
     })
 
 async def endpoint_public_info(request):
+    local_address = get_local_address(request)
     return JSONResponse({
-        "LocalAddress": f"http://{PROXY_BIND}:{PROXY_PORT}",
+        "LocalAddress": local_address,
         "ServerName": SERVER_NAME,
         "Version": "10.8.13",
         "Id": SERVER_ID,
         "ProductName": "Jellyfin Server",
-        "OperatingSystem": "Linux"
+        "OperatingSystem": "Linux",
+        "StartupWizardCompleted": True
     })
 
 async def endpoint_authenticate_by_name(request):
