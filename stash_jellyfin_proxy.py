@@ -811,7 +811,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v3.95</span>
+                <span id="version">v3.94</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -1199,7 +1199,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
             document.querySelector(`[data-page="${page}"]`).classList.add('active');
             document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
             document.getElementById(`page-${page}`).classList.remove('hidden');
-            
+
             // Refresh data when switching pages
             if (page === 'config') {
                 fetchConfig();
@@ -1218,7 +1218,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v3.95';
+                document.getElementById('version').textContent = data.version || 'v3.94';
                 document.getElementById('proxy-uptime').textContent = data.uptime ? `Uptime: ${formatDuration(data.uptime)}` : '';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
@@ -1304,7 +1304,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
             try {
                 const res = await fetch('/api/stats');
                 const data = await res.json();
-                
+
                 // Update Stash library stats
                 if (data.stash) {
                     document.getElementById('stat-scenes').textContent = data.stash.scenes.toLocaleString();
@@ -1313,7 +1313,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                     document.getElementById('stat-tags').textContent = data.stash.tags.toLocaleString();
                     document.getElementById('stat-groups').textContent = data.stash.groups.toLocaleString();
                 }
-                
+
                 // Update Proxy usage stats
                 if (data.proxy) {
                     document.getElementById('stat-streams-today').textContent = data.proxy.streams_today.toLocaleString();
@@ -1321,7 +1321,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                     document.getElementById('stat-unique-ips').textContent = data.proxy.unique_ips_today.toLocaleString();
                     document.getElementById('stat-auth-success').textContent = data.proxy.auth_success.toLocaleString();
                     document.getElementById('stat-auth-failed').textContent = data.proxy.auth_failed.toLocaleString();
-                    
+
                     // Update top played list
                     const topList = document.getElementById('top-played-list');
                     if (data.proxy.top_played && data.proxy.top_played.length > 0) {
@@ -1745,20 +1745,20 @@ def reset_daily_stats_if_needed():
 
 def should_count_as_new_stream(scene_id: str, client_ip: str, byte_position: int, file_size: int) -> tuple:
     """Determine if this stream request should count as a new stream.
-    
+
     Uses smart detection based on playback position:
     - 30+ min since last activity → always counts as new stream
     - Seek to start (first 5%) with 5+ min gap → counts as new stream
     - First request at start of file → counts as new stream
     - First request mid-file → likely trailing request after restart, DON'T count
     - Otherwise (seeking within video) → doesn't count
-    
+
     Returns tuple of (should_count: bool, is_trailing_after_restart: bool).
     is_trailing_after_restart indicates this appears to be a post-restart trailing request.
     """
     position_key = (scene_id, client_ip)
     now = time.time()
-    
+
     # First time seeing this scene from this client
     if position_key not in _stream_positions:
         _stream_positions[position_key] = {
@@ -1778,60 +1778,60 @@ def should_count_as_new_stream(scene_id: str, client_ip: str, byte_position: int
             logger.debug(f"Ignoring non-zero first request for {scene_id}: position {byte_position} bytes, unknown size (likely post-restart)")
             return (False, True)  # Don't count, IS trailing after restart
         return (True, False)  # Count, NOT trailing after restart
-    
+
     last_info = _stream_positions[position_key]
     elapsed = now - last_info["last_time"]
-    
+
     # Update position tracking
     _stream_positions[position_key] = {
         "last_position": byte_position,
         "last_time": now,
         "file_size": file_size or last_info["file_size"]
     }
-    
+
     # Check 1: 30+ minute gap - definitely a new stream
     if elapsed >= STREAM_COUNT_COOLDOWN:
         logger.debug(f"New stream counted for {scene_id}: {int(elapsed/60)}min gap exceeds cooldown")
         return (True, False)
-    
+
     # Check 2: Seek to start with sufficient gap
     effective_file_size = file_size or last_info["file_size"]
     if effective_file_size > 0:
         position_ratio = byte_position / effective_file_size
         is_at_start = position_ratio <= STREAM_START_THRESHOLD
         has_sufficient_gap = elapsed >= STREAM_START_GAP
-        
+
         if is_at_start and has_sufficient_gap:
             logger.debug(f"New stream counted for {scene_id}: seek to start ({position_ratio:.1%}) with {int(elapsed/60)}min gap")
             return (True, False)
         elif is_at_start:
             logger.debug(f"Seek to start ignored for {scene_id}: only {int(elapsed)}s gap (need {STREAM_START_GAP}s)")
-    
+
     # Otherwise, this is just seeking/buffering within the same session
     logger.debug(f"Same stream session for {scene_id}: position {byte_position}, {int(elapsed)}s since last")
     return (False, False)
 
 def record_play_count(scene_id: str, title: str, performer: str, client_ip: str, duration: float = 0):
     """Record a play count for the Top Played list with duration-based cooldown.
-    
+
     Args:
         scene_id: The scene identifier
         title: Scene title for display
         performer: Performer name(s)
         client_ip: Client IP address
         duration: Video duration in seconds (for cooldown calculation)
-    
+
     Play counts use duration-based cooldown (duration + 30 min buffer) to count unique views.
     Stream counts are handled separately by should_count_as_new_stream().
     """
     global _stats_dirty
-    
+
     # Ensure duration is a valid positive number (guard against None/negative)
     safe_duration = max(0, float(duration or 0))
     cooldown_key = (scene_id, client_ip)
     cooldown_seconds = safe_duration + PLAY_COOLDOWN_BUFFER
     now = time.time()
-    
+
     should_count_play = True
     if cooldown_key in _play_cooldowns:
         last_play = _play_cooldowns[cooldown_key]
@@ -1841,14 +1841,14 @@ def record_play_count(scene_id: str, title: str, performer: str, client_ip: str,
             should_count_play = False
             remaining = int(last_play["cooldown_seconds"] - elapsed)
             logger.debug(f"Play cooldown active for {scene_id} from {client_ip} ({remaining}s remaining)")
-    
+
     if should_count_play:
         # Update cooldown tracking
         _play_cooldowns[cooldown_key] = {
             "timestamp": now,
             "cooldown_seconds": cooldown_seconds
         }
-        
+
         # Update play count for this scene
         if scene_id not in _proxy_stats["play_counts"]:
             _proxy_stats["play_counts"][scene_id] = {
@@ -1857,16 +1857,16 @@ def record_play_count(scene_id: str, title: str, performer: str, client_ip: str,
                 "performer": performer,
                 "last_played": 0
             }
-        
+
         _proxy_stats["play_counts"][scene_id]["count"] += 1
         _proxy_stats["play_counts"][scene_id]["title"] = title  # Update in case it changed
         _proxy_stats["play_counts"][scene_id]["performer"] = performer
         _proxy_stats["play_counts"][scene_id]["last_played"] = now
-        
+
         # Log the cooldown duration for debugging
         cooldown_mins = int(cooldown_seconds / 60)
         logger.debug(f"Play counted for {scene_id} from {client_ip} (cooldown: {cooldown_mins}min)")
-    
+
     _stats_dirty = True
     maybe_save_stats()
 
@@ -1887,7 +1887,7 @@ def get_top_played_scenes(limit: int = 5) -> list:
         key=lambda x: x[1].get("count", 0),
         reverse=True
     )[:limit]
-    
+
     return [
         {
             "scene_id": scene_id,
@@ -1919,12 +1919,12 @@ def get_scene_info(scene_id: str) -> dict:
     """Fetch scene title, performer, duration, and file size from Stash."""
     try:
         numeric_id = scene_id.replace("scene-", "")
-        query = """query($id: ID!) { 
-            findScene(id: $id) { 
-                title 
-                files { basename duration size } 
+        query = """query($id: ID!) {
+            findScene(id: $id) {
+                title
+                files { basename duration size }
                 performers { name }
-            } 
+            }
         }"""
         result = stash_query(query, {"id": numeric_id})
         scene = result.get("data", {}).get("findScene")
@@ -1942,13 +1942,13 @@ def get_scene_info(scene_id: str) -> dict:
                 file_size = files[0].get("size", 0) or 0
             if not title:
                 title = scene_id
-            
+
             # Get performer name(s)
             performers = scene.get("performers", [])
             performer = performers[0]["name"] if performers else ""
             if len(performers) > 1:
                 performer = f"{performer} +{len(performers)-1}"
-            
+
             return {"title": title, "performer": performer, "duration": duration, "file_size": file_size}
     except:
         pass
@@ -2013,42 +2013,42 @@ def get_client_ip(scope) -> str:
     headers = {}
     for key, value in scope.get("headers", []):
         headers[key.decode().lower()] = value.decode()
-    
+
     # Check X-Forwarded-For first (set by reverse proxies like SWAG/nginx)
     xff = headers.get("x-forwarded-for", "")
     if xff:
         # Take the first IP (original client)
         return xff.split(",")[0].strip()
-    
+
     # Check X-Real-IP (alternative header)
     xri = headers.get("x-real-ip", "")
     if xri:
         return xri.strip()
-    
+
     # Fall back to direct connection
     client = scope.get("client", ("unknown", 0))
     return client[0] if client else "unknown"
 
 def record_auth_failure(client_ip: str, path: str, reason: str, user_agent: str = ""):
     """Record a failed auth attempt and check if IP should be banned.
-    
+
     Rate limits failure counting to 1 per second per IP to avoid instant bans
     from parallel requests (e.g., Infuse makes many requests on startup).
     """
     global BANNED_IPS, _ip_failures
-    
+
     now = time.time()
     window_seconds = BAN_WINDOW_MINUTES * 60
-    
+
     # Clean up old entries for this IP
     if client_ip in _ip_failures:
         _ip_failures[client_ip] = [
-            (ts, p) for ts, p in _ip_failures[client_ip] 
+            (ts, p) for ts, p in _ip_failures[client_ip]
             if now - ts < window_seconds
         ]
     else:
         _ip_failures[client_ip] = []
-    
+
     # Rate limit: only count 1 failure per second to avoid instant bans from parallel requests
     # Infuse can make 10+ parallel requests on startup, all with stale tokens
     recent_failures = _ip_failures[client_ip]
@@ -2058,12 +2058,12 @@ def record_auth_failure(client_ip: str, path: str, reason: str, user_agent: str 
             # Already recorded a failure within the last second, skip counting this one
             logger.debug(f"🚫 Auth failed (rate limited): {client_ip} -> {path} ({reason})")
             return
-    
+
     # Add this failure
     _ip_failures[client_ip].append((now, path))
-    
+
     failure_count = len(_ip_failures[client_ip])
-    
+
     # Log the failure - first 2 attempts at DEBUG (usually stale tokens from legit clients)
     # After that, escalate to WARNING as it may indicate an attack
     ua_info = f", UA: {user_agent[:50]}" if user_agent else ""
@@ -2072,32 +2072,32 @@ def record_auth_failure(client_ip: str, path: str, reason: str, user_agent: str 
         logger.debug(log_msg)
     else:
         logger.warning(log_msg)
-    
+
     # Check if threshold exceeded
     if failure_count >= BAN_THRESHOLD:
         # Ban this IP
         BANNED_IPS.add(client_ip)
         logger.warning(f"🔒 IP BANNED: {client_ip} (exceeded {BAN_THRESHOLD} failures in {BAN_WINDOW_MINUTES} minutes)")
-        
+
         # Persist to config file
         save_banned_ips_to_config()
-        
+
         # Clear the failure tracking for this IP
         del _ip_failures[client_ip]
 
 def save_banned_ips_to_config():
     """Save the current BANNED_IPS set to the config file."""
     global BANNED_IPS
-    
+
     if not os.path.isfile(CONFIG_FILE):
         return
-    
+
     banned_str = ", ".join(sorted(BANNED_IPS)) if BANNED_IPS else ""
-    
+
     try:
         with open(CONFIG_FILE, 'r') as f:
             lines = f.readlines()
-        
+
         # Find and update BANNED_IPS line, or add it
         found = False
         new_lines = []
@@ -2112,14 +2112,14 @@ def save_banned_ips_to_config():
                 found = True
             else:
                 new_lines.append(line)
-        
+
         # If not found, add at end
         if not found:
             new_lines.append(f'\n# Auto-generated by IP ban system\nBANNED_IPS = "{banned_str}"\n')
-        
+
         with open(CONFIG_FILE, 'w') as f:
             f.writelines(new_lines)
-        
+
         logger.info(f"Saved banned IPs to config: {banned_str if banned_str else '(none)'}")
     except Exception as e:
         logger.error(f"Failed to save banned IPs to config: {e}")
@@ -2137,7 +2137,7 @@ class AuthenticationMiddleware:
 
         path = scope.get("path", "")
         client_ip = get_client_ip(scope)
-        
+
         # Get user agent for logging
         user_agent = ""
         for key, value in scope.get("headers", []):
@@ -2171,7 +2171,7 @@ class AuthenticationMiddleware:
         for key, value in scope.get("headers", []):
             key_lower = key.decode().lower()
             value_str = value.decode()
-            
+
             # Check X-Emby-Token header (Jellyfin clients)
             if key_lower == "x-emby-token":
                 token = value_str
@@ -2206,7 +2206,7 @@ class AuthenticationMiddleware:
         # No valid token - record failure and return 401
         reason = "invalid token" if token else "missing token"
         record_auth_failure(client_ip, path, reason, user_agent)
-        
+
         response_body = b'{"error": "Unauthorized"}'
         await send({
             "type": "http.response.start",
@@ -2306,7 +2306,7 @@ class RequestLoggingMiddleware:
                 client_type = "Jellyfin"
             else:
                 client_type = user_agent.split("/")[0][:20] if user_agent else "Unknown"
-            
+
             # Extract byte position from Range header (e.g., "bytes=12345-" or "bytes=12345-67890")
             range_header = headers.get("range", "")
             byte_position = 0
@@ -2322,18 +2322,18 @@ class RequestLoggingMiddleware:
 
             # Check if this is a new stream, resume, or continuation
             stream_info = _active_streams.get(scene_id)
-            
+
             # Get scene info for file_size (needed for position-based counting)
             cached_file_size = stream_info.get("file_size", 0) if stream_info else 0
             if not cached_file_size:
                 scene_info = get_scene_info(scene_id)
                 cached_file_size = scene_info.get("file_size", 0)
-            
+
             # Smart stream counting: check on EVERY request if this should count as new stream
             # This runs independently of _active_streams tracking (which is for UI display)
             count_result = should_count_as_new_stream(scene_id, client_ip, byte_position, cached_file_size)
             should_count, is_trailing_after_restart = count_result
-            
+
             if should_count:
                 reset_daily_stats_if_needed()
                 _proxy_stats["total_streams"] += 1
@@ -2344,7 +2344,7 @@ class RequestLoggingMiddleware:
                 global _stats_dirty
                 _stats_dirty = True
                 maybe_save_stats()
-            
+
             # Check if stream_info has expired (gap > 30 min = treat as new for UI purposes)
             if stream_info and (now - stream_info["last_seen"]) >= STREAM_COUNT_COOLDOWN:
                 logger.debug(f"Stream expired for {scene_id}: {int((now - stream_info['last_seen'])/60)}min gap")
@@ -2604,14 +2604,14 @@ def is_sort_only_filter(saved_filter: Dict[str, Any]) -> bool:
     """
     # Get the object_filter (the actual filtering criteria)
     object_filter = saved_filter.get("object_filter")
-    
+
     # Parse if string
     if isinstance(object_filter, str):
         try:
             object_filter = json.loads(object_filter)
         except:
             object_filter = {}
-    
+
     # Null or empty object_filter means no filtering
     if not object_filter or object_filter == {}:
         # Check find_filter for search query
@@ -2622,7 +2622,7 @@ def is_sort_only_filter(saved_filter: Dict[str, Any]) -> bool:
         # Only has sort/direction or page/per_page - it's sort-only
         logger.debug(f"Filter '{saved_filter.get('name')}' is sort-only (empty object_filter, no search query)")
         return True
-    
+
     # Check if object_filter only has empty values
     def has_meaningful_filter(obj):
         """Recursively check if object has any non-empty filter values."""
@@ -2645,16 +2645,16 @@ def is_sort_only_filter(saved_filter: Dict[str, Any]) -> bool:
         if isinstance(obj, (int, float)):
             return True  # Numeric criteria is meaningful
         return False
-    
+
     if not has_meaningful_filter(object_filter):
         logger.debug(f"Filter '{saved_filter.get('name')}' is sort-only (no meaningful filter criteria)")
         return True
-    
+
     return False
 
 def stash_get_saved_filters(mode: str, exclude_sort_only: bool = True) -> List[Dict[str, Any]]:
     """Get saved filters from Stash for a specific mode (SCENES, PERFORMERS, STUDIOS, GROUPS).
-    
+
     Args:
         mode: Filter mode (SCENES, PERFORMERS, STUDIOS, GROUPS, TAGS)
         exclude_sort_only: If True, exclude filters that only define sorting
@@ -2671,14 +2671,14 @@ def stash_get_saved_filters(mode: str, exclude_sort_only: bool = True) -> List[D
     }"""
     res = stash_query(query, {"mode": mode})
     filters = res.get("data", {}).get("findSavedFilters", [])
-    
+
     if exclude_sort_only:
         original_count = len(filters)
         filters = [f for f in filters if not is_sort_only_filter(f)]
         skipped = original_count - len(filters)
         if skipped > 0:
             logger.debug(f"Excluded {skipped} sort-only filters for mode {mode}")
-    
+
     logger.debug(f"Found {len(filters)} saved filters for mode {mode}")
     return filters
 
@@ -2711,7 +2711,7 @@ def format_filters_folder(parent_id: str) -> Dict[str, Any]:
         "ChildCount": filter_count,
         "RecursiveItemCount": filter_count,
         "ParentId": parent_id,
-        "ImageTags": {"Primary": get_image_tag()},
+        "ImageTags": {"Primary": "img"},
         "UserData": {
             "PlaybackPositionTicks": 0,
             "PlayCount": 0,
@@ -2738,7 +2738,7 @@ def format_saved_filter_item(saved_filter: Dict[str, Any], parent_id: str) -> Di
         "IsFolder": True,
         "CollectionType": "movies",
         "ParentId": parent_id,
-        "ImageTags": {"Primary": get_image_tag()},
+        "ImageTags": {"Primary": "img"},
         "UserData": {
             "PlaybackPositionTicks": 0,
             "PlayCount": 0,
@@ -2751,17 +2751,6 @@ def format_saved_filter_item(saved_filter: Dict[str, Any], parent_id: str) -> Di
 # --- Jellyfin Models & Helpers ---
 # Note: SERVER_ID is now configured at the top of the file and loaded from config
 ACCESS_TOKEN = str(uuid.uuid4())
-
-def get_image_tag(base_tag: str = "img") -> str:
-    """
-    Generate an image tag for Jellyfin ImageTags.
-    In DEBUG mode, appends a timestamp to force Infuse to refresh images.
-    In normal mode, returns the base tag for efficient caching.
-    """
-    if LOG_LEVEL.upper() == "DEBUG":
-        # Append timestamp to bust Infuse's image cache during testing
-        return f"{base_tag}-{int(time.time())}"
-    return base_tag
 
 def make_guid(numeric_id: str) -> str:
     """Convert a numeric ID to a GUID-like format that Jellyfin clients expect."""
@@ -2809,7 +2798,7 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
         "IsFolder": False,
         "MediaType": "Video",
         "ParentId": parent_id,
-        "ImageTags": {"Primary": get_image_tag()},  # Triggers image requests
+        "ImageTags": {"Primary": "img"},  # Triggers image requests
         "BackdropImageTags": [],
         "RunTimeTicks": int(duration * 10000000) if duration else 0,
         "UserData": {
@@ -2851,10 +2840,10 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
                     "Type": "Actor",
                     "Role": "",
                     "Id": f"person-{p.get('id')}",
-                    "PrimaryImageTag": get_image_tag() if p.get("image_path") else None
+                    "PrimaryImageTag": "img" if p.get("image_path") else None
                 }
                 if p.get("image_path"):
-                    person["ImageTags"] = {"Primary": get_image_tag()}
+                    person["ImageTags"] = {"Primary": "img"}
                 people_list.append(person)
         item["People"] = people_list
 
@@ -2980,7 +2969,7 @@ async def endpoint_authenticate_by_name(request):
         if client_ip in _ip_failures:
             del _ip_failures[client_ip]
             logger.debug(f"Cleared auth failure tracking for {client_ip} after successful login")
-        
+
         record_auth_attempt(success=True)
         logger.info(f"Auth SUCCESS for user {SJS_USER}")
         return JSONResponse({
@@ -3058,7 +3047,7 @@ async def endpoint_user_views(request):
             "Type": "CollectionFolder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag("icon")},
+            "ImageTags": {"Primary": "icon"},
             "BackdropImageTags": [],
             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-scenes"}
         },
@@ -3069,7 +3058,7 @@ async def endpoint_user_views(request):
             "Type": "CollectionFolder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag("icon")},
+            "ImageTags": {"Primary": "icon"},
             "BackdropImageTags": [],
             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-studios"}
         },
@@ -3080,7 +3069,7 @@ async def endpoint_user_views(request):
             "Type": "CollectionFolder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag("icon")},
+            "ImageTags": {"Primary": "icon"},
             "BackdropImageTags": [],
             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-performers"}
         },
@@ -3091,7 +3080,7 @@ async def endpoint_user_views(request):
             "Type": "CollectionFolder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag("icon")},
+            "ImageTags": {"Primary": "icon"},
             "BackdropImageTags": [],
             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-groups"}
         }
@@ -3106,7 +3095,7 @@ async def endpoint_user_views(request):
             "Type": "CollectionFolder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag("icon")},
+            "ImageTags": {"Primary": "icon"},
             "BackdropImageTags": [],
             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-tags"}
         })
@@ -3121,7 +3110,7 @@ async def endpoint_user_views(request):
             "Type": "CollectionFolder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag("icon")},
+            "ImageTags": {"Primary": "icon"},
             "BackdropImageTags": [],
             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": tag_id}
         })
@@ -3805,7 +3794,7 @@ async def endpoint_items(request):
                             "RecursiveItemCount": p.get("scene_count", 0),
                             "ParentId": parent_id,
                             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"performer-{p['id']}"},
-                            "ImageTags": {"Primary": get_image_tag()} if p.get("image_path") else {}
+                            "ImageTags": {"Primary": "img"} if p.get("image_path") else {}
                         }
                         items.append(performer_item)
 
@@ -3841,7 +3830,7 @@ async def endpoint_items(request):
                             "RecursiveItemCount": s.get("scene_count", 0),
                             "ParentId": parent_id,
                             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"studio-{s['id']}"},
-                            "ImageTags": {"Primary": get_image_tag()} if s.get("image_path") else {}
+                            "ImageTags": {"Primary": "img"} if s.get("image_path") else {}
                         }
                         items.append(studio_item)
 
@@ -3877,7 +3866,7 @@ async def endpoint_items(request):
                             "RecursiveItemCount": g.get("scene_count", 0),
                             "ParentId": parent_id,
                             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"group-{g['id']}"},
-                            "ImageTags": {"Primary": get_image_tag()}
+                            "ImageTags": {"Primary": "img"}
                         }
                         items.append(group_item)
 
@@ -3887,14 +3876,14 @@ async def endpoint_items(request):
                     # Stash pagination: items start at (page-1) * per_page
                     # If we use varying per_page, the offsets won't align with startIndex
                     STASH_PAGE_SIZE = 50  # Fixed internal page size
-                    
+
                     # Calculate which Stash page contains start_index
                     stash_page = (start_index // STASH_PAGE_SIZE) + 1
                     # Offset within that page
                     offset_in_page = start_index % STASH_PAGE_SIZE
-                    
+
                     logger.debug(f"TAGS filter pagination: startIndex={start_index}, limit={limit}, stash_page={stash_page}, offset_in_page={offset_in_page}")
-                    
+
                     q = """query FindTags($tag_filter: TagFilterType, $page: Int!, $per_page: Int!) {
                         findTags(
                             tag_filter: $tag_filter,
@@ -3908,17 +3897,17 @@ async def endpoint_items(request):
                     data = res.get("data", {}).get("findTags", {})
                     total_count = data.get("count", 0)
                     all_tags = data.get("tags", [])
-                    
+
                     # Slice from offset_in_page, up to limit items
                     tags = all_tags[offset_in_page:offset_in_page + limit]
-                    
+
                     # If we need more items than remaining in this page, fetch next page too
                     while len(tags) < limit and (stash_page * STASH_PAGE_SIZE) < total_count:
                         stash_page += 1
                         res = stash_query(q, {"tag_filter": graphql_filter, "page": stash_page, "per_page": STASH_PAGE_SIZE})
                         next_tags = res.get("data", {}).get("findTags", {}).get("tags", [])
                         tags.extend(next_tags[:limit - len(tags)])
-                    
+
                     # Log first and last 3 tag IDs to help identify duplicates/overlaps
                     first_ids = [t.get("id") for t in tags[:3]] if tags else []
                     last_ids = [t.get("id") for t in tags[-3:]] if len(tags) > 3 else first_ids
@@ -3935,7 +3924,7 @@ async def endpoint_items(request):
                             "RecursiveItemCount": t.get("scene_count", 0),
                             "ParentId": parent_id,
                             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": t.get("favorite", False), "Played": False, "Key": f"tagitem-{t['id']}"},
-                            "ImageTags": {"Primary": get_image_tag()}  # Always set - we serve text icon if no Stash image
+                            "ImageTags": {"Primary": "img"}  # Always set - we serve text icon if no Stash image
                         }
                         items.append(tag_item)
 
@@ -4205,7 +4194,7 @@ async def endpoint_items(request):
                 "RecursiveItemCount": m.get("scene_count", 0),
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"group-{m['id']}"},
                 # Always advertise image - endpoint will try to fetch and fall back to placeholder if needed
-                "ImageTags": {"Primary": get_image_tag()}
+                "ImageTags": {"Primary": "img"}
             }
             items.append(group_item)
 
@@ -4250,7 +4239,7 @@ async def endpoint_items(request):
             "IsFolder": True,
             "CollectionType": "movies",
             "ParentId": parent_id,
-            "ImageTags": {"Primary": get_image_tag()},
+            "ImageTags": {"Primary": "img"},
             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "tags-favorites"}
         })
         items_count += 1
@@ -4266,7 +4255,7 @@ async def endpoint_items(request):
                 "IsFolder": True,
                 "CollectionType": "movies",
                 "ParentId": parent_id,
-                "ImageTags": {"Primary": get_image_tag()},
+                "ImageTags": {"Primary": "img"},
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "tags-all"}
             })
             items_count += 1
@@ -4286,7 +4275,7 @@ async def endpoint_items(request):
                 "IsFolder": True,
                 "CollectionType": "movies",
                 "ParentId": parent_id,
-                "ImageTags": {"Primary": get_image_tag()},
+                "ImageTags": {"Primary": "img"},
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": item_id}
             })
             items_count += 1
@@ -4319,7 +4308,7 @@ async def endpoint_items(request):
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": True, "Played": False, "Key": f"tagitem-{t['id']}"}
             }
             # Always set ImageTags so Infuse requests an image - we serve text icon if no Stash image
-            tag_item["ImageTags"] = {"Primary": get_image_tag()}
+            tag_item["ImageTags"] = {"Primary": "img"}
             items.append(tag_item)
 
     elif parent_id == "tags-all":
@@ -4348,7 +4337,7 @@ async def endpoint_items(request):
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": t.get("favorite", False), "Played": False, "Key": f"tagitem-{t['id']}"}
             }
             # Always set ImageTags so Infuse requests an image - we serve text icon if no Stash image
-            tag_item["ImageTags"] = {"Primary": get_image_tag()}
+            tag_item["ImageTags"] = {"Primary": "img"}
             items.append(tag_item)
 
     elif parent_id and parent_id.startswith("tagitem-"):
@@ -4441,7 +4430,7 @@ async def endpoint_items(request):
     logger.debug(f"Items response: returning {len(items)} items, TotalRecordCount={total_count}, StartIndex={start_index}")
     if len(items) > 0 and total_count > start_index + len(items):
         logger.debug(f"More items available: next page would start at {start_index + len(items)}")
-    
+
     return JSONResponse({"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index})
 
 async def endpoint_item_details(request):
@@ -4469,7 +4458,7 @@ async def endpoint_item_details(request):
             "Type": "Folder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag()},
+            "ImageTags": {"Primary": "img"},
             "BackdropImageTags": [],
             "ChildCount": filter_count,
             "RecursiveItemCount": filter_count,
@@ -4502,7 +4491,7 @@ async def endpoint_item_details(request):
                     "Type": "Folder",
                     "CollectionType": "movies",
                     "IsFolder": True,
-                    "ImageTags": {"Primary": get_image_tag()},
+                    "ImageTags": {"Primary": "img"},
                     "BackdropImageTags": [],
                     "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": item_id}
                 })
@@ -4568,7 +4557,7 @@ async def endpoint_item_details(request):
             "Type": "Folder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag()} if has_image else {},
+            "ImageTags": {"Primary": "img"} if has_image else {},
             "BackdropImageTags": [],
             "ChildCount": scene_count,
             "RecursiveItemCount": scene_count,
@@ -4625,7 +4614,7 @@ async def endpoint_item_details(request):
             "Type": "Folder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag()} if has_image else {},
+            "ImageTags": {"Primary": "img"} if has_image else {},
             "BackdropImageTags": [],
             "ChildCount": scene_count,
             "RecursiveItemCount": scene_count,
@@ -4672,7 +4661,7 @@ async def endpoint_item_details(request):
             "Type": "Folder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag()} if has_image else {},
+            "ImageTags": {"Primary": "img"} if has_image else {},
             "BackdropImageTags": [],
             "ChildCount": scene_count,
             "RecursiveItemCount": scene_count,
@@ -4696,7 +4685,7 @@ async def endpoint_item_details(request):
             "Type": "CollectionFolder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag("icon")},
+            "ImageTags": {"Primary": "icon"},
             "BackdropImageTags": [],
             "ChildCount": count,
             "RecursiveItemCount": count,
@@ -4717,7 +4706,7 @@ async def endpoint_item_details(request):
             "Type": "Folder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag()},
+            "ImageTags": {"Primary": "img"},
             "BackdropImageTags": [],
             "ChildCount": total_count,
             "RecursiveItemCount": total_count,
@@ -4738,7 +4727,7 @@ async def endpoint_item_details(request):
             "Type": "Folder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag()},
+            "ImageTags": {"Primary": "img"},
             "BackdropImageTags": [],
             "ChildCount": total_count,
             "RecursiveItemCount": total_count,
@@ -4768,7 +4757,7 @@ async def endpoint_item_details(request):
             "Type": "Folder",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": get_image_tag()} if has_image else {},
+            "ImageTags": {"Primary": "img"} if has_image else {},
             "BackdropImageTags": [],
             "ChildCount": scene_count,
             "RecursiveItemCount": scene_count,
@@ -4813,7 +4802,7 @@ async def endpoint_item_details(request):
                 "Type": "CollectionFolder",
                 "CollectionType": "movies",
                 "IsFolder": True,
-                "ImageTags": {"Primary": get_image_tag("icon")},
+                "ImageTags": {"Primary": "icon"},
                 "BackdropImageTags": [],
                 "ChildCount": scene_count,
                 "RecursiveItemCount": scene_count,
@@ -5182,14 +5171,14 @@ async def endpoint_subtitle(request):
         logger.error(f"Subtitle proxy error: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
-def generate_text_icon(text: str, width: int = 400, height: int = 600, 
+def generate_text_icon(text: str, width: int = 400, height: int = 600,
                        max_chars_per_line: int = 16, max_lines: int = 4) -> Tuple[bytes, str]:
     """Generate a portrait 2:3 PNG icon with word-wrapped text label.
-    
+
     Args:
         text: The text to display
         width: Image width in pixels
-        height: Image height in pixels  
+        height: Image height in pixels
         max_chars_per_line: Maximum characters per line before wrapping
         max_lines: Maximum number of lines (text truncated after this)
     """
@@ -5220,7 +5209,7 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600,
             "/System/Library/Fonts/Helvetica.ttc",
             "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
         ]
-        
+
         font_path_found = None
         for font_path in font_paths:
             if os.path.exists(font_path):
@@ -5231,10 +5220,10 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600,
         words = text.split()
         lines = []
         current_line = ""
-        
+
         for word in words:
             test_line = (current_line + " " + word).strip() if current_line else word
-            
+
             if len(test_line) <= max_chars_per_line:
                 current_line = test_line
             else:
@@ -5244,10 +5233,10 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600,
                     current_line = word[:max_chars_per_line - 3] + "..."
                 else:
                     current_line = word
-        
+
         if current_line:
             lines.append(current_line)
-        
+
         # Truncate to max lines
         if len(lines) > max_lines:
             lines = lines[:max_lines]
@@ -5261,7 +5250,7 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600,
         font_size = 48
         min_font_size = 24
         font = None
-        
+
         while font_size >= min_font_size:
             if font_path_found:
                 try:
@@ -5272,7 +5261,7 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600,
             else:
                 font = ImageFont.load_default()
                 break
-            
+
             # Check if all lines fit
             all_fit = True
             for line in lines:
@@ -5281,15 +5270,15 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600,
                 if line_width > max_text_width:
                     all_fit = False
                     break
-            
+
             if all_fit:
                 break
-            
+
             font_size -= 2  # Try smaller font
 
         if font is None:
             font = ImageFont.load_default()
-        
+
         logger.debug(f"Icon '{text}': {len(lines)} lines, font size {font_size}px")
 
         # Calculate line dimensions with final font
@@ -5299,10 +5288,10 @@ def generate_text_icon(text: str, width: int = 400, height: int = 600,
             bbox = draw.textbbox((0, 0), line, font=font)
             line_widths.append(bbox[2] - bbox[0])
             line_heights.append(bbox[3] - bbox[1])
-        
+
         line_spacing = 10
         total_height = sum(line_heights) + (len(lines) - 1) * line_spacing if lines else 0
-        
+
         # Center vertically
         start_y = (height - total_height) // 2
 
@@ -5463,13 +5452,13 @@ async def endpoint_image(request):
                 try:
                     data, content_type, _ = fetch_from_stash(tag_img_url, extra_headers=image_headers, timeout=30)
                     # Check for valid image data:
-                    # - Reject SVG (Infuse doesn't support SVG) 
+                    # - Reject SVG (Infuse doesn't support SVG)
                     # - Reject GIF (often transparent placeholders that appear as black boxes)
                     # - Reject tiny images (<500 bytes, likely 1x1 placeholders)
                     is_svg = content_type == "image/svg+xml"
                     is_gif = content_type == "image/gif"
                     is_tiny = data and len(data) < 500
-                    
+
                     if data and len(data) > 100 and not is_svg and not is_gif and not is_tiny:
                         logger.debug(f"Serving Stash image for tag '{tag_name}': {len(data)} bytes, {content_type}")
                         from starlette.responses import Response
@@ -5812,7 +5801,7 @@ async def endpoint_persons(request):
                 "Id": f"performer-{p['id']}",
                 "ServerId": SERVER_ID,
                 "Type": "Person",
-                "ImageTags": {"Primary": get_image_tag()} if has_image else {},
+                "ImageTags": {"Primary": "img"} if has_image else {},
                 "BackdropImageTags": []
             }
             items.append(item)
@@ -5849,7 +5838,7 @@ async def endpoint_studios(request):
                 "Id": f"studio-{s['id']}",
                 "ServerId": SERVER_ID,
                 "Type": "Studio",
-                "ImageTags": {"Primary": get_image_tag()} if has_image else {},
+                "ImageTags": {"Primary": "img"} if has_image else {},
                 "BackdropImageTags": []
             }
             items.append(item)
@@ -5995,7 +5984,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - PROXY_START_TIME) if PROXY_START_TIME else 0
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v3.95",
+        "version": "v3.94",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "uptime": uptime_seconds,
@@ -6497,10 +6486,10 @@ async def ui_api_stats(request):
         }
     except Exception as e:
         logger.debug(f"Could not fetch Stash stats: {e}")
-    
+
     # Get proxy stats
     proxy_stats = get_proxy_stats()
-    
+
     return JSONResponse({
         "stash": stash_stats,
         "proxy": proxy_stats
@@ -6620,7 +6609,7 @@ if __name__ == "__main__":
     asyncio_logger = logging.getLogger("asyncio")
     asyncio_logger.setLevel(logging.CRITICAL)  # Only show critical asyncio errors
 
-    logger.info(f"--- Stash-Jellyfin Proxy v3.95 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.94 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
 
@@ -6631,7 +6620,7 @@ if __name__ == "__main__":
 
     PROXY_RUNNING = True
     PROXY_START_TIME = time.time()
-    
+
     # Load stats from file
     load_proxy_stats()
 
