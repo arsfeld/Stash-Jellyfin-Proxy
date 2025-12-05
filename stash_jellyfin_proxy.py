@@ -811,7 +811,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v3.94</span>
+                <span id="version">v3.95</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -1218,7 +1218,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v3.94';
+                document.getElementById('version').textContent = data.version || 'v3.95';
                 document.getElementById('proxy-uptime').textContent = data.uptime ? `Uptime: ${formatDuration(data.uptime)}` : '';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
@@ -5984,7 +5984,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - PROXY_START_TIME) if PROXY_START_TIME else 0
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v3.94",
+        "version": "v3.95",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "uptime": uptime_seconds,
@@ -6167,6 +6167,10 @@ async def ui_api_config(request):
                     # Check if value equals default
                     default_value = defaults.get(key, "")
                     is_default = (new_value == default_value)
+                    
+                    # If user cleared the field (empty) and there's a non-empty default,
+                    # treat this as wanting the default value
+                    is_cleared_for_default = (new_value == "" and default_value != "")
 
                     # Check if key is currently defined (uncommented) in config file
                     is_defined_in_file = key in existing_values
@@ -6174,10 +6178,10 @@ async def ui_api_config(request):
                     # Compare against running value
                     running_value = current_running.get(key, "")
 
-                    if is_default and is_defined_in_file:
-                        # User cleared the field - comment out the line to use default
+                    if (is_default or is_cleared_for_default) and is_defined_in_file:
+                        # User cleared the field or set to default - comment out the line to use default
                         comment_out.add(key)
-                    elif new_value != running_value:
+                    elif new_value != running_value and not is_cleared_for_default:
                         # Value changed to something non-default
                         updates[key] = new_value
 
@@ -6609,7 +6613,7 @@ if __name__ == "__main__":
     asyncio_logger = logging.getLogger("asyncio")
     asyncio_logger.setLevel(logging.CRITICAL)  # Only show critical asyncio errors
 
-    logger.info(f"--- Stash-Jellyfin Proxy v3.94 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v3.95 ---")
     logger.info(f"Binding: {PROXY_BIND}:{PROXY_PORT}")
     logger.info(f"Stash URL: {STASH_URL}")
 
