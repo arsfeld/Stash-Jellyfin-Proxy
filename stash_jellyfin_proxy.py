@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Stash-Jellyfin Proxy v5.01
+Stash-Jellyfin Proxy v5.02
 Enables Infuse and other Jellyfin clients to connect to Stash by emulating the Jellyfin API.
 
 # =============================================================================
@@ -34,6 +34,7 @@ import uuid
 import argparse
 import time
 import re
+from urllib.parse import parse_qs
 from typing import Optional, List, Dict, Any, Tuple
 from logging.handlers import SysLogHandler, RotatingFileHandler
 
@@ -134,6 +135,9 @@ LOG_FILE = "stash_jellyfin_proxy.log"
 LOG_LEVEL = "INFO"
 LOG_MAX_SIZE_MB = 10
 LOG_BACKUP_COUNT = 3
+
+# Image cache settings
+IMAGE_CACHE_MAX_SIZE = 100  # Max items to cache
 
 # IP Ban settings
 BANNED_IPS = set()  # Set of banned IP addresses
@@ -269,7 +273,7 @@ if _config:
     if "REQUIRE_AUTH_FOR_CONFIG" in _config:
         REQUIRE_AUTH_FOR_CONFIG = parse_bool(_config.get("REQUIRE_AUTH_FOR_CONFIG"), REQUIRE_AUTH_FOR_CONFIG)
     if "IMAGE_CACHE_MAX_SIZE" in _config:
-        IMAGE_CACHE_MAX_SIZE = int(_config.get("IMAGE_CACHE_MAX_SIZE", IMAGE_CACHE_MAX_SIZE))
+        IMAGE_CACHE_MAX_SIZE = int(_config.get("IMAGE_CACHE_MAX_SIZE", 100))
 
     # Performance settings
     if "STASH_TIMEOUT" in _config:
@@ -411,7 +415,6 @@ STASH_SESSION = None  # Will hold requests.Session with auth cookies
 
 # Image cache for resized studio/performer images (prevents repeated processing)
 IMAGE_CACHE = {}  # Key: (item_id, target_size), Value: (bytes, content_type)
-IMAGE_CACHE_MAX_SIZE = 100  # Max items to cache
 
 # Menu icons as simple SVG graphics (styled similar to Stash's icons)
 # These are served for root-scenes, root-studios, root-performers, root-groups
@@ -836,7 +839,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v5.01</span>
+                <span id="version">v5.02</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -1245,7 +1248,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v5.01';
+                document.getElementById('version').textContent = data.version || 'v5.02';
                 document.getElementById('proxy-uptime').textContent = data.uptime ? `Uptime: ${formatDuration(data.uptime)}` : '';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
@@ -1665,7 +1668,12 @@ def setup_logging():
     log.handlers = []
 
     # Console handler (always enabled)
-    console_handler = logging.StreamHandler(sys.stdout)
+    if sys.platform == "win32":
+        import io
+        console_stream = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+        console_handler = logging.StreamHandler(console_stream)
+    else:
+        console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(logging.Formatter(log_format))
     console_handler.setLevel(log_level)
     log.addHandler(console_handler)
@@ -2036,19 +2044,20 @@ def cancel_client_streams(client_key: str, new_scene_id: str = None) -> list:
 # All lowercase for case-insensitive comparison
 PUBLIC_ENDPOINTS = {
     "/",
-    "/favicon.ico",  # Browser requests this automatically
+    "/favicon.ico",
     "/system/info/public",
     "/system/info",
     "/system/ping",
-    "/users",  # User list for login screen
+    "/users",
+    "/users/public",
     "/users/authenticatebyname",
+    "/emby/users/authenticatebyname",
     "/branding/configuration",
 }
 
-# Endpoint prefixes that don't require auth (for discovery/public info)
-# All lowercase for case-insensitive comparison
 PUBLIC_PREFIXES = [
     "/system/info",
+    "/emby/system/info",
 ]
 
 # IP failure tracking: {ip: [(timestamp, path), ...]}
@@ -2200,8 +2209,16 @@ class AuthenticationMiddleware:
             # Simply return without sending any response - connection will timeout
             return
 
-        # Check if this is a public endpoint (case-insensitive)
+        # Strip /emby/ prefix for Emby-compatible clients (e.g., SenPlayer)
         path_lower = path.lower()
+        if path_lower.startswith("/emby/"):
+            stripped_path = path[5:]  # Remove "/emby" prefix, keep leading "/"
+            scope = dict(scope)
+            scope["path"] = stripped_path
+            path = stripped_path
+            path_lower = stripped_path.lower()
+
+        # Check if this is a public endpoint (case-insensitive)
         is_public = path_lower in PUBLIC_ENDPOINTS
         if not is_public:
             for prefix in PUBLIC_PREFIXES:
@@ -2233,7 +2250,6 @@ class AuthenticationMiddleware:
                 if value_str.startswith("Bearer "):
                     token = value_str[7:]
                 elif "Token=" in value_str:
-                    # Parse X-Emby-Authorization format: MediaBrowser Client="...", Token="..."
                     match = re.search(r'Token="([^"]+)"', value_str)
                     if match:
                         token = match.group(1)
@@ -2244,6 +2260,13 @@ class AuthenticationMiddleware:
                 if match:
                     token = match.group(1)
                 break
+
+        # Check query string for api_key parameter (Jellyfin 10.11+ SDK, some clients)
+        if not token:
+            query_string = scope.get("query_string", b"").decode()
+            if query_string:
+                qs = parse_qs(query_string)
+                token = (qs.get("api_key") or qs.get("ApiKey") or qs.get("apikey") or [None])[0]
 
         # Validate token
         if token and token == ACCESS_TOKEN:
@@ -2899,17 +2922,60 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
         item["Path"] = path
         item["LocationType"] = "FileSystem"
 
-        # Build MediaStreams for video and subtitles
-        media_streams = [
-            {
-                "Index": 0,
-                "Type": "Video",
-                "Codec": "h264",
+        # Extract file metadata for rich MediaStreams
+        file_data = files[0] if files else {}
+        video_codec = (file_data.get("video_codec") or "h264").lower()
+        audio_codec = (file_data.get("audio_codec") or "").lower()
+        vid_width = file_data.get("width") or 0
+        vid_height = file_data.get("height") or 0
+        frame_rate = file_data.get("frame_rate") or 0
+        bit_rate = file_data.get("bit_rate") or 0
+        file_size = file_data.get("size") or 0
+
+        # Determine container from file extension
+        container = "mp4"
+        if path:
+            ext = os.path.splitext(path)[1].lower().lstrip(".")
+            if ext in ("mkv", "avi", "wmv", "flv", "webm", "mov", "ts", "m4v", "mp4"):
+                container = ext
+
+        # Build video stream with real metadata
+        video_stream = {
+            "Index": 0,
+            "Type": "Video",
+            "Codec": video_codec,
+            "IsDefault": True,
+            "IsForced": False,
+            "IsExternal": False,
+        }
+        if vid_width and vid_height:
+            video_stream["Width"] = vid_width
+            video_stream["Height"] = vid_height
+            video_stream["AspectRatio"] = f"{vid_width}:{vid_height}"
+        if bit_rate:
+            video_stream["BitRate"] = bit_rate
+        if frame_rate:
+            video_stream["RealFrameRate"] = frame_rate
+            video_stream["AverageFrameRate"] = frame_rate
+
+        media_streams = [video_stream]
+
+        # Add audio stream if codec is available
+        audio_stream_idx = 1
+        if audio_codec:
+            audio_stream = {
+                "Index": audio_stream_idx,
+                "Type": "Audio",
+                "Codec": audio_codec,
                 "IsDefault": True,
                 "IsForced": False,
-                "IsExternal": False
+                "IsExternal": False,
+                "DisplayTitle": audio_codec.upper(),
+                "Channels": 2,
+                "ChannelLayout": "stereo",
             }
-        ]
+            media_streams.append(audio_stream)
+            audio_stream_idx += 1
 
         # Add subtitle streams from captions
         captions = scene.get("captions") or []
@@ -2917,14 +2983,11 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
             lang_code = caption.get("language_code", "und")
             caption_type = (caption.get("caption_type", "") or "").lower()
 
-            # Normalize caption_type to srt or vtt (default to vtt if unknown)
             if caption_type not in ("srt", "vtt"):
                 caption_type = "vtt"
 
-            # Map caption_type to codec
             codec = "srt" if caption_type == "srt" else "webvtt"
 
-            # Get human-readable language name
             lang_names = {
                 "en": "English", "de": "German", "es": "Spanish",
                 "fr": "French", "it": "Italian", "nl": "Dutch",
@@ -2934,14 +2997,14 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
             display_lang = lang_names.get(lang_code, lang_code.upper())
 
             media_streams.append({
-                "Index": idx + 1,
+                "Index": audio_stream_idx + idx,
                 "Type": "Subtitle",
                 "Codec": codec,
                 "Language": lang_code,
                 "DisplayLanguage": display_lang,
                 "DisplayTitle": f"{display_lang} ({caption_type.upper()})",
                 "Title": display_lang,
-                "IsDefault": idx == 0,  # First subtitle is default
+                "IsDefault": idx == 0,
                 "IsForced": False,
                 "IsExternal": True,
                 "IsTextSubtitleStream": True,
@@ -2951,18 +3014,27 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
             })
 
         item["HasSubtitles"] = len(captions) > 0
-        item["MediaSources"] = [{
+
+        media_source = {
             "Id": item_id,
             "Path": path,
             "Protocol": "Http",
             "Type": "Default",
-            "Container": "mp4",
+            "Container": container,
             "Name": title,
             "SupportsDirectPlay": True,
             "SupportsDirectStream": True,
             "SupportsTranscoding": False,
-            "MediaStreams": media_streams
-        }]
+            "MediaStreams": media_streams,
+        }
+        if bit_rate:
+            media_source["Bitrate"] = bit_rate
+        if file_size:
+            media_source["Size"] = int(file_size)
+        if duration:
+            media_source["RunTimeTicks"] = int(duration * 10000000)
+
+        item["MediaSources"] = [media_source]
 
     return item
 
@@ -3235,7 +3307,7 @@ async def endpoint_latest_items(request):
     logger.debug(f"Latest items request - ParentId: {parent_id}, Limit: {limit}")
 
     # Full scene fields for queries
-    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+    scene_fields = "id title code date details files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
 
     items = []
 
@@ -3632,7 +3704,7 @@ async def endpoint_items(request):
     total_count = 0
 
     # Full scene fields for queries (include performer image_path for People images, captions for subtitles)
-    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+    scene_fields = "id title code date details files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
 
     if ids:
         # Specific items requested
@@ -4485,7 +4557,7 @@ async def endpoint_item_details(request):
     item_id = request.path_params.get("item_id")
 
     # Full scene fields for queries (include performer image_path for People images, captions for subtitles)
-    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+    scene_fields = "id title code date details files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
 
     # Handle special folder IDs - return the folder ITSELF (not children)
 
@@ -4922,13 +4994,12 @@ async def endpoint_playback_info(request):
 
     numeric_id = item_id.replace("scene-", "")
 
-    # Query scene to get captions
     query = """
     query FindScene($id: ID!) {
         findScene(id: $id) {
             id
             title
-            files { path duration }
+            files { path basename duration size video_codec audio_codec width height frame_rate bit_rate }
             captions { language_code caption_type }
         }
     }
@@ -4950,22 +5021,60 @@ async def endpoint_playback_info(request):
 
     scene = scene_data
     files = scene.get("files", [])
-    path = files[0].get("path", "") if files else ""
+    file_data = files[0] if files else {}
+    path = file_data.get("path", "")
+    duration = file_data.get("duration", 0) or 0
     captions = scene.get("captions") or []
 
-    # Build MediaStreams
-    media_streams = [
-        {
-            "Index": 0,
-            "Type": "Video",
-            "Codec": "h264",
+    video_codec = (file_data.get("video_codec") or "h264").lower()
+    audio_codec = (file_data.get("audio_codec") or "").lower()
+    vid_width = file_data.get("width") or 0
+    vid_height = file_data.get("height") or 0
+    frame_rate = file_data.get("frame_rate") or 0
+    bit_rate = file_data.get("bit_rate") or 0
+    file_size = file_data.get("size") or 0
+
+    container = "mp4"
+    if path:
+        ext = os.path.splitext(path)[1].lower().lstrip(".")
+        if ext in ("mkv", "avi", "wmv", "flv", "webm", "mov", "ts", "m4v", "mp4"):
+            container = ext
+
+    video_stream = {
+        "Index": 0,
+        "Type": "Video",
+        "Codec": video_codec,
+        "IsDefault": True,
+        "IsForced": False,
+        "IsExternal": False,
+    }
+    if vid_width and vid_height:
+        video_stream["Width"] = vid_width
+        video_stream["Height"] = vid_height
+        video_stream["AspectRatio"] = f"{vid_width}:{vid_height}"
+    if bit_rate:
+        video_stream["BitRate"] = bit_rate
+    if frame_rate:
+        video_stream["RealFrameRate"] = frame_rate
+        video_stream["AverageFrameRate"] = frame_rate
+
+    media_streams = [video_stream]
+
+    audio_stream_idx = 1
+    if audio_codec:
+        media_streams.append({
+            "Index": audio_stream_idx,
+            "Type": "Audio",
+            "Codec": audio_codec,
             "IsDefault": True,
             "IsForced": False,
-            "IsExternal": False
-        }
-    ]
+            "IsExternal": False,
+            "DisplayTitle": audio_codec.upper(),
+            "Channels": 2,
+            "ChannelLayout": "stereo",
+        })
+        audio_stream_idx += 1
 
-    # Add subtitle streams
     for idx, caption in enumerate(captions):
         lang_code = caption.get("language_code", "und")
         caption_type = (caption.get("caption_type", "") or "").lower()
@@ -4984,7 +5093,7 @@ async def endpoint_playback_info(request):
         display_lang = lang_names.get(lang_code, lang_code.upper())
 
         media_streams.append({
-            "Index": idx + 1,
+            "Index": audio_stream_idx + idx,
             "Type": "Subtitle",
             "Codec": codec,
             "Language": lang_code,
@@ -5002,18 +5111,26 @@ async def endpoint_playback_info(request):
 
     logger.debug(f"PlaybackInfo for {item_id}: {len(captions)} subtitles")
 
+    media_source = {
+        "Id": item_id,
+        "Path": path,
+        "Protocol": "Http",
+        "Type": "Default",
+        "Container": container,
+        "SupportsDirectPlay": True,
+        "SupportsDirectStream": True,
+        "SupportsTranscoding": False,
+        "MediaStreams": media_streams,
+    }
+    if bit_rate:
+        media_source["Bitrate"] = bit_rate
+    if file_size:
+        media_source["Size"] = int(file_size)
+    if duration:
+        media_source["RunTimeTicks"] = int(duration * 10000000)
+
     return JSONResponse({
-        "MediaSources": [{
-            "Id": item_id,
-            "Path": path,
-            "Protocol": "Http",
-            "Type": "Default",
-            "Container": "mp4",
-            "SupportsDirectPlay": True,
-            "SupportsDirectStream": True,
-            "SupportsTranscoding": False,
-            "MediaStreams": media_streams
-        }],
+        "MediaSources": [media_source],
         "PlaySessionId": f"session-{item_id}"
     })
 
@@ -6032,7 +6149,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - PROXY_START_TIME) if PROXY_START_TIME else 0
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v5.01",
+        "version": "v5.02",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "uptime": uptime_seconds,
@@ -6686,7 +6803,7 @@ if __name__ == "__main__":
     asyncio_logger = logging.getLogger("asyncio")
     asyncio_logger.setLevel(logging.CRITICAL)  # Only show critical asyncio errors
 
-    logger.info(f"--- Stash-Jellyfin Proxy v5.01 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v5.02 ---")
 
     stash_ok = check_stash_connection()
     if not stash_ok:
@@ -6723,9 +6840,10 @@ if __name__ == "__main__":
 
     async def run_servers():
         """Run both proxy and UI servers with graceful shutdown."""
-        # Set up signal handlers
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            loop.add_signal_handler(sig, signal_handler)
+        # Set up signal handlers (add_signal_handler not supported on Windows)
+        if sys.platform != "win32":
+            for sig in (signal.SIGINT, signal.SIGTERM):
+                loop.add_signal_handler(sig, signal_handler)
 
         tasks = [serve(app, proxy_config, shutdown_trigger=shutdown_event.wait)]
 
