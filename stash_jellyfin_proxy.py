@@ -5269,10 +5269,10 @@ async def endpoint_subtitle(request):
     # Get the scene's numeric ID
     numeric_id = get_numeric_id(item_id)
 
-    # Query Stash for captions to get the correct filename
     query = """
     query FindScene($id: ID!) {
         findScene(id: $id) {
+            files { audio_codec }
             captions {
                 language_code
                 caption_type
@@ -5293,8 +5293,17 @@ async def endpoint_subtitle(request):
             logger.warning(f"No captions found for scene {numeric_id}")
             return JSONResponse({"error": "No subtitles"}, status_code=404)
 
-        # Get the caption by index (1-based from Jellyfin)
-        caption_idx = subtitle_index - 1
+        # Calculate stream offset: video (always index 0) + audio (index 1 if present)
+        # Infuse uses the MediaStreams Index value, not the DeliveryUrl
+        files = scene_data.get("files", [])
+        has_audio = bool(files and (files[0].get("audio_codec") or ""))
+        stream_offset = 2 if has_audio else 1  # video + audio, or just video
+
+        # Try stream-index-based mapping first (subtitle_index is the MediaStreams Index)
+        caption_idx = subtitle_index - stream_offset
+        # Fall back to 1-based caption index if stream offset doesn't work
+        if caption_idx < 0 or caption_idx >= len(captions):
+            caption_idx = subtitle_index - 1
         if caption_idx < 0 or caption_idx >= len(captions):
             logger.warning(f"Subtitle index {subtitle_index} out of range for scene {numeric_id}")
             return JSONResponse({"error": "Subtitle not found"}, status_code=404)
