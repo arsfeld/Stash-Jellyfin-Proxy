@@ -34,6 +34,9 @@ server/public
 # Release folder (separate copy, not needed in main repo)
 release/
 
+# Scripts
+push.sh
+
 # Runtime
 __pycache__/
 *.pyc
