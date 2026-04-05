@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Stash-Jellyfin Proxy v5.03
+Stash-Jellyfin Proxy v5.04
 Enables Infuse and other Jellyfin clients to connect to Stash by emulating the Jellyfin API.
 
 # =============================================================================
@@ -839,7 +839,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         <nav class="sidebar">
             <div class="logo">
                 <h1>Stash-Jellyfin Proxy</h1>
-                <span id="version">v5.03</span>
+                <span id="version">v5.04</span>
             </div>
             <a class="nav-item active" data-page="dashboard">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
@@ -1248,7 +1248,7 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                 document.getElementById('stash-status').textContent = data.stashConnected ? 'Connected' : 'Disconnected';
                 document.getElementById('stash-status').className = 'status-value ' + (data.stashConnected ? 'connected' : 'disconnected');
                 document.getElementById('stash-version').textContent = data.stashVersion || '-';
-                document.getElementById('version').textContent = data.version || 'v5.03';
+                document.getElementById('version').textContent = data.version || 'v5.04';
                 document.getElementById('proxy-uptime').textContent = data.uptime ? `Uptime: ${formatDuration(data.uptime)}` : '';
             } catch (e) {
                 console.error('Failed to fetch status:', e);
@@ -3853,8 +3853,9 @@ async def endpoint_items(request):
                 logger.debug(f"Filter find_filter: {find_filter}")
                 logger.debug(f"Filter object_filter: {object_filter}")
 
-                # Calculate page
+                # Calculate page and sort
                 page = (start_index // limit) + 1
+                folder_sort, folder_dir = get_stash_sort_params(request, context="folders")
 
                 # Build the query with the saved filter's criteria
                 # Each mode has its own filter type in Stash GraphQL
@@ -3898,15 +3899,15 @@ async def endpoint_items(request):
                     total_count = count_res.get("data", {}).get("findPerformers", {}).get("count", 0)
 
                     # Get paginated performers
-                    q = """query FindPerformers($performer_filter: PerformerFilterType, $page: Int!, $per_page: Int!) {
+                    q = """query FindPerformers($performer_filter: PerformerFilterType, $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
                         findPerformers(
                             performer_filter: $performer_filter,
-                            filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}
+                            filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}
                         ) {
                             performers { id name image_path scene_count }
                         }
                     }"""
-                    res = stash_query(q, {"performer_filter": graphql_filter, "page": page, "per_page": limit})
+                    res = stash_query(q, {"performer_filter": graphql_filter, "page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
                     performers = res.get("data", {}).get("findPerformers", {}).get("performers", [])
                     logger.debug(f"Saved filter returned {len(performers)} performers (page {page}, total {total_count})")
                     for p in performers:
@@ -3934,15 +3935,15 @@ async def endpoint_items(request):
                     total_count = count_res.get("data", {}).get("findStudios", {}).get("count", 0)
 
                     # Get paginated studios
-                    q = """query FindStudios($studio_filter: StudioFilterType, $page: Int!, $per_page: Int!) {
+                    q = """query FindStudios($studio_filter: StudioFilterType, $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
                         findStudios(
                             studio_filter: $studio_filter,
-                            filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}
+                            filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}
                         ) {
                             studios { id name image_path scene_count }
                         }
                     }"""
-                    res = stash_query(q, {"studio_filter": graphql_filter, "page": page, "per_page": limit})
+                    res = stash_query(q, {"studio_filter": graphql_filter, "page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
                     studios = res.get("data", {}).get("findStudios", {}).get("studios", [])
                     logger.debug(f"Saved filter returned {len(studios)} studios (page {page}, total {total_count})")
                     for s in studios:
@@ -3970,15 +3971,15 @@ async def endpoint_items(request):
                     total_count = count_res.get("data", {}).get("findGroups", {}).get("count", 0)
 
                     # Get paginated groups
-                    q = """query FindGroups($group_filter: GroupFilterType, $page: Int!, $per_page: Int!) {
+                    q = """query FindGroups($group_filter: GroupFilterType, $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
                         findGroups(
                             group_filter: $group_filter,
-                            filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}
+                            filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}
                         ) {
                             groups { id name scene_count }
                         }
                     }"""
-                    res = stash_query(q, {"group_filter": graphql_filter, "page": page, "per_page": limit})
+                    res = stash_query(q, {"group_filter": graphql_filter, "page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
                     groups = res.get("data", {}).get("findGroups", {}).get("groups", [])
                     logger.debug(f"Saved filter returned {len(groups)} groups (page {page}, total {total_count})")
                     for g in groups:
@@ -4011,16 +4012,16 @@ async def endpoint_items(request):
 
                     logger.debug(f"TAGS filter pagination: startIndex={start_index}, limit={limit}, stash_page={stash_page}, offset_in_page={offset_in_page}")
 
-                    q = """query FindTags($tag_filter: TagFilterType, $page: Int!, $per_page: Int!) {
+                    q = """query FindTags($tag_filter: TagFilterType, $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
                         findTags(
                             tag_filter: $tag_filter,
-                            filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}
+                            filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}
                         ) {
                             count
                             tags { id name scene_count image_path favorite }
                         }
                     }"""
-                    res = stash_query(q, {"tag_filter": graphql_filter, "page": stash_page, "per_page": STASH_PAGE_SIZE})
+                    res = stash_query(q, {"tag_filter": graphql_filter, "page": stash_page, "per_page": STASH_PAGE_SIZE, "sort": folder_sort, "direction": folder_dir})
                     data = res.get("data", {}).get("findTags", {})
                     total_count = data.get("count", 0)
                     all_tags = data.get("tags", [])
@@ -4031,7 +4032,7 @@ async def endpoint_items(request):
                     # If we need more items than remaining in this page, fetch next page too
                     while len(tags) < limit and (stash_page * STASH_PAGE_SIZE) < total_count:
                         stash_page += 1
-                        res = stash_query(q, {"tag_filter": graphql_filter, "page": stash_page, "per_page": STASH_PAGE_SIZE})
+                        res = stash_query(q, {"tag_filter": graphql_filter, "page": stash_page, "per_page": STASH_PAGE_SIZE, "sort": folder_sort, "direction": folder_dir})
                         next_tags = res.get("data", {}).get("findTags", {}).get("tags", [])
                         tags.extend(next_tags[:limit - len(tags)])
 
@@ -5912,7 +5913,7 @@ async def endpoint_genres(request):
 
     # Return Stash tags as genres
     try:
-        q = """query { findTags(filter: {per_page: 100, sort: "name", direction: ASC}) {
+        q = """query { findTags(filter: {per_page: -1, sort: "name", direction: ASC}) {
             tags { id name scene_count }
         }}"""
         res = stash_query(q)
@@ -6168,7 +6169,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - PROXY_START_TIME) if PROXY_START_TIME else 0
     return JSONResponse({
         "running": PROXY_RUNNING,
-        "version": "v5.03",
+        "version": "v5.04",
         "proxyBind": PROXY_BIND,
         "proxyPort": PROXY_PORT,
         "uptime": uptime_seconds,
@@ -6822,7 +6823,7 @@ if __name__ == "__main__":
     asyncio_logger = logging.getLogger("asyncio")
     asyncio_logger.setLevel(logging.CRITICAL)  # Only show critical asyncio errors
 
-    logger.info(f"--- Stash-Jellyfin Proxy v5.03 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v5.04 ---")
 
     stash_ok = check_stash_connection()
     if not stash_ok:

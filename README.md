@@ -1,6 +1,6 @@
 # Stash-Jellyfin Proxy
 
-**Version 5.03**
+**Version 5.04**
 
 A Python proxy server that enables Jellyfin-compatible media players (like Infuse) to connect to Stash by emulating the Jellyfin API.
 
@@ -107,6 +107,10 @@ Access the configuration dashboard at `http://your-server:8097`:
 - Dashboard may briefly pause during stream initialization
 
 ## Changelog
+
+### v5.04
+- **Sorting support for all listings**: Performers, studios, groups, tags, and saved filter results now respond to Infuse's sort selection (name, date added, rating, random). Previously hardcoded to alphabetical.
+- **Removed genre/tag cap**: Genre endpoint no longer limited to 100 tags; returns all tags with scenes.
 
 ### v5.03
 - **Fixed**: Scenes failing to load in Infuse ("Unexpected server response") caused by partial dates. Scenes with year-only dates (e.g., "2026") produced invalid ISO 8601 timestamps that Infuse couldn't parse. Now properly pads partial dates (year-only, year-month) to full format.
