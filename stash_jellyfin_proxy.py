@@ -4176,6 +4176,19 @@ async def endpoint_items(request):
             items.append(format_jellyfin_item(s, parent_id=parent_id))
 
     elif parent_id == "root-performers":
+        # Map Jellyfin sort to Stash performer sort fields
+        performer_sort_mapping = {
+            "SortName": "name", "Name": "name",
+            "DateCreated": "created_at", "PremiereDate": "created_at",
+            "Random": "random", "CommunityRating": "rating",
+        }
+        sort_by_raw = request.query_params.get("SortBy") or request.query_params.get("sortBy") or "SortName"
+        sort_by = sort_by_raw.split(",")[0].strip()
+        perf_sort = performer_sort_mapping.get(sort_by, "name")
+        sort_order = request.query_params.get("SortOrder") or request.query_params.get("sortOrder") or "Ascending"
+        perf_direction = "ASC" if sort_order == "Ascending" else "DESC"
+        logger.debug(f"Performer sort: {sort_by_raw} -> {perf_sort} {perf_direction}")
+
         # Get total count
         count_q = """query { findPerformers { count } }"""
         count_res = stash_query(count_q)
@@ -4200,12 +4213,12 @@ async def endpoint_items(request):
         page = (start_index // limit) + 1
         fetch_limit = limit - 1 if filters_added else limit
 
-        q = """query FindPerformers($page: Int!, $per_page: Int!) {
-            findPerformers(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) {
+        q = """query FindPerformers($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
+            findPerformers(filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}) {
                 performers { id name image_path scene_count }
             }
         }"""
-        res = stash_query(q, {"page": page, "per_page": fetch_limit})
+        res = stash_query(q, {"page": page, "per_page": fetch_limit, "sort": perf_sort, "direction": perf_direction})
         for p in res.get("data", {}).get("findPerformers", {}).get("performers", []):
             performer_item = {
                 "Name": p["name"],
@@ -5942,49 +5955,55 @@ async def endpoint_genres(request):
 
 async def endpoint_persons(request):
     """Return persons - maps to Stash performers."""
-    # This is an alternative endpoint for accessing performers
     start_index = max(0, int(request.query_params.get("startIndex") or request.query_params.get("StartIndex") or 0))
     limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or DEFAULT_PAGE_SIZE)
-    limit = max(1, min(limit, MAX_PAGE_SIZE))  # Enforce min=1, max=MAX_PAGE_SIZE
+    limit = max(1, min(limit, MAX_PAGE_SIZE))
 
-    # Check for searchTerm parameter (Infuse search functionality)
     search_term = request.query_params.get("searchTerm") or request.query_params.get("SearchTerm")
+
+    # Map sort params for performers
+    performer_sort_mapping = {
+        "SortName": "name", "Name": "name",
+        "DateCreated": "created_at", "PremiereDate": "created_at",
+        "Random": "random", "CommunityRating": "rating",
+    }
+    sort_by_raw = request.query_params.get("SortBy") or request.query_params.get("sortBy") or "SortName"
+    sort_by = sort_by_raw.split(",")[0].strip()
+    perf_sort = performer_sort_mapping.get(sort_by, "name")
+    sort_order = request.query_params.get("SortOrder") or request.query_params.get("sortOrder") or "Ascending"
+    perf_direction = "ASC" if sort_order == "Ascending" else "DESC"
 
     try:
         page = (start_index // limit) + 1
 
         if search_term:
-            # Search for performers matching the search term
             clean_search = search_term.strip('"\'')
             logger.debug(f"Persons search: '{clean_search}'")
 
-            # Count matching performers
             count_q = """query CountPerformers($q: String!) {
                 findPerformers(filter: {q: $q}) { count }
             }"""
             count_res = stash_query(count_q, {"q": clean_search})
             total_count = count_res.get("data", {}).get("findPerformers", {}).get("count", 0)
 
-            # Query performers with search term
-            q = """query FindPerformers($q: String!, $page: Int!, $per_page: Int!) {
-                findPerformers(filter: {q: $q, page: $page, per_page: $per_page, sort: "name", direction: ASC}) {
+            q = """query FindPerformers($q: String!, $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
+                findPerformers(filter: {q: $q, page: $page, per_page: $per_page, sort: $sort, direction: $direction}) {
                     performers { id name image_path scene_count }
                 }
             }"""
-            res = stash_query(q, {"q": clean_search, "page": page, "per_page": limit})
+            res = stash_query(q, {"q": clean_search, "page": page, "per_page": limit, "sort": perf_sort, "direction": perf_direction})
             logger.debug(f"Persons search '{clean_search}' returned {total_count} matches")
         else:
-            # No search term - return all performers
             count_q = """query { findPerformers { count } }"""
             count_res = stash_query(count_q)
             total_count = count_res.get("data", {}).get("findPerformers", {}).get("count", 0)
 
-            q = """query FindPerformers($page: Int!, $per_page: Int!) {
-                findPerformers(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) {
+            q = """query FindPerformers($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
+                findPerformers(filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}) {
                     performers { id name image_path scene_count }
                 }
             }"""
-            res = stash_query(q, {"page": page, "per_page": limit})
+            res = stash_query(q, {"page": page, "per_page": limit, "sort": perf_sort, "direction": perf_direction})
 
         performers = res.get("data", {}).get("findPerformers", {}).get("performers", [])
 
