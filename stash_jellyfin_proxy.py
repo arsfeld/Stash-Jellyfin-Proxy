@@ -4064,9 +4064,10 @@ async def endpoint_items(request):
             has_filters = len(saved_filters) > 0
 
         # On first page, add FILTERS folder at the top if there are saved filters
-        # We add it as an extra item (not affecting pagination of actual scenes)
+        filters_added = False
         if start_index == 0 and has_filters:
             items.append(format_filters_folder("root-scenes"))
+            filters_added = True
 
         # Total count includes Filters folder if present
         total_count = scene_count + 1 if has_filters else scene_count
@@ -4074,13 +4075,16 @@ async def endpoint_items(request):
         # Calculate page - Stash uses 1-indexed pages
         page = (start_index // limit) + 1
 
+        # Reduce per_page when filters folder takes a slot, so total stays within limit
+        fetch_limit = limit - 1 if filters_added else limit
+
         # Then get paginated scenes with sort from request
         q = f"""query FindScenes($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{
             findScenes(filter: {{page: $page, per_page: $per_page, sort: $sort, direction: $direction}}) {{
                 scenes {{ {scene_fields} }}
             }}
         }}"""
-        res = stash_query(q, {"page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
+        res = stash_query(q, {"page": page, "per_page": fetch_limit, "sort": sort_field, "direction": sort_direction})
         for s in res.get("data", {}).get("findScenes", {}).get("scenes", []):
             items.append(format_jellyfin_item(s, parent_id="root-scenes"))
 
@@ -4097,22 +4101,24 @@ async def endpoint_items(request):
             has_filters = len(saved_filters) > 0
 
         # On first page, add FILTERS folder at the top if there are saved filters
-        # We add it as an extra item (not affecting pagination of actual studios)
+        filters_added = False
         if start_index == 0 and has_filters:
             items.append(format_filters_folder("root-studios"))
+            filters_added = True
 
         # Total count includes Filters folder if present
         total_count = studio_count + 1 if has_filters else studio_count
 
         # Calculate page - Stash uses 1-indexed pages
         page = (start_index // limit) + 1
+        fetch_limit = limit - 1 if filters_added else limit
 
         q = """query FindStudios($page: Int!, $per_page: Int!) {
             findStudios(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) {
                 studios { id name image_path scene_count }
             }
         }"""
-        res = stash_query(q, {"page": page, "per_page": limit})
+        res = stash_query(q, {"page": page, "per_page": fetch_limit})
         for s in res.get("data", {}).get("findStudios", {}).get("studios", []):
             studio_item = {
                 "Name": s["name"],
@@ -4172,22 +4178,24 @@ async def endpoint_items(request):
             has_filters = len(saved_filters) > 0
 
         # On first page, add FILTERS folder at the top if there are saved filters
-        # We add it as an extra item (not affecting pagination of actual performers)
+        filters_added = False
         if start_index == 0 and has_filters:
             items.append(format_filters_folder("root-performers"))
+            filters_added = True
 
         # Total count includes Filters folder if present
         total_count = performer_count + 1 if has_filters else performer_count
 
         # Calculate page - Stash uses 1-indexed pages
         page = (start_index // limit) + 1
+        fetch_limit = limit - 1 if filters_added else limit
 
         q = """query FindPerformers($page: Int!, $per_page: Int!) {
             findPerformers(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) {
                 performers { id name image_path scene_count }
             }
         }"""
-        res = stash_query(q, {"page": page, "per_page": limit})
+        res = stash_query(q, {"page": page, "per_page": fetch_limit})
         for p in res.get("data", {}).get("findPerformers", {}).get("performers", []):
             performer_item = {
                 "Name": p["name"],
@@ -4250,10 +4258,10 @@ async def endpoint_items(request):
             has_filters = len(saved_filters) > 0
 
         # On first page, add FILTERS folder at the top if there are saved filters
-        # We add it as an extra item (not affecting pagination of actual groups)
-        prepend_filters = start_index == 0 and has_filters
-        if prepend_filters:
+        filters_added = False
+        if start_index == 0 and has_filters:
             items.append(format_filters_folder("root-groups"))
+            filters_added = True
 
         # Total count includes Filters folder if present
         total_count = group_count + 1 if has_filters else group_count
@@ -4265,7 +4273,7 @@ async def endpoint_items(request):
         # Calculate which Stash page(s) we need and the offset within that page
         stash_page = (start_index // FIXED_PAGE_SIZE) + 1
         offset_within_page = start_index % FIXED_PAGE_SIZE
-        items_needed = limit
+        items_needed = limit - 1 if filters_added else limit
 
         logger.debug(f"Groups pagination: startIndex={start_index}, limit={limit}, stash_page={stash_page}, offset_within_page={offset_within_page}")
 
