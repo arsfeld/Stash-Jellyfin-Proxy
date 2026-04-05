@@ -3403,36 +3403,37 @@ async def endpoint_display_preferences(request):
         "ShowSidebar": False
     })
 
-def get_stash_sort_params(request) -> Tuple[str, str]:
-    """Map Jellyfin SortBy/SortOrder to Stash sort/direction."""
-    # Get sort parameters from request
-    sort_by_raw = request.query_params.get("SortBy") or request.query_params.get("sortBy") or "PremiereDate"
-    sort_order = request.query_params.get("SortOrder") or request.query_params.get("sortOrder") or "Descending"
+def get_stash_sort_params(request, context="scenes") -> Tuple[str, str]:
+    """Map Jellyfin SortBy/SortOrder to Stash sort/direction.
+    context: 'scenes' for scene listings, 'folders' for performers/studios/groups/tags."""
+    sort_by_raw = request.query_params.get("SortBy") or request.query_params.get("sortBy") or ("PremiereDate" if context == "scenes" else "SortName")
+    sort_order = request.query_params.get("SortOrder") or request.query_params.get("sortOrder") or ("Descending" if context == "scenes" else "Ascending")
 
-    # Infuse sends comma-separated list like "DateCreated,SortName,ProductionYear"
-    # Take the first field as the primary sort
     sort_by = sort_by_raw.split(",")[0].strip()
 
-    # Map Jellyfin sort fields to Stash
-    # DateCreated = when item was added to library (maps to created_at in Stash)
-    # PremiereDate/ProductionYear = release date (maps to date in Stash)
-    sort_mapping = {
-        "SortName": "title",
-        "Name": "title",
-        "PremiereDate": "date",
-        "DateCreated": "created_at",  # Date added to library
-        "DatePlayed": "last_played_at",
-        "ProductionYear": "date",
-        "Random": "random",
-        "Runtime": "duration",
-        "CommunityRating": "rating",
-        "PlayCount": "play_count",
-    }
+    if context == "folders":
+        sort_mapping = {
+            "SortName": "name", "Name": "name",
+            "DateCreated": "created_at", "PremiereDate": "created_at",
+            "Random": "random", "CommunityRating": "rating",
+        }
+        default_sort = "name"
+    else:
+        sort_mapping = {
+            "SortName": "title", "Name": "title",
+            "PremiereDate": "date",
+            "DateCreated": "created_at",
+            "DatePlayed": "last_played_at",
+            "ProductionYear": "date",
+            "Random": "random", "Runtime": "duration",
+            "CommunityRating": "rating", "PlayCount": "play_count",
+        }
+        default_sort = "date"
 
-    stash_sort = sort_mapping.get(sort_by, "date")
+    stash_sort = sort_mapping.get(sort_by, default_sort)
     stash_direction = "ASC" if sort_order == "Ascending" else "DESC"
 
-    logger.debug(f"Sort mapping: {sort_by_raw} -> {sort_by} -> {stash_sort} {stash_direction}")
+    logger.debug(f"Sort mapping ({context}): {sort_by_raw} -> {sort_by} -> {stash_sort} {stash_direction}")
 
     return stash_sort, stash_direction
 
@@ -4099,36 +4100,33 @@ async def endpoint_items(request):
             items.append(format_jellyfin_item(s, parent_id="root-scenes"))
 
     elif parent_id == "root-studios":
-        # Get total count
+        folder_sort, folder_dir = get_stash_sort_params(request, context="folders")
+
         count_q = """query { findStudios { count } }"""
         count_res = stash_query(count_q)
         studio_count = count_res.get("data", {}).get("findStudios", {}).get("count", 0)
 
-        # Check if there are saved filters for studios (only if ENABLE_FILTERS is on)
         has_filters = False
         if ENABLE_FILTERS:
             saved_filters = stash_get_saved_filters("STUDIOS")
             has_filters = len(saved_filters) > 0
 
-        # On first page, add FILTERS folder at the top if there are saved filters
         filters_added = False
         if start_index == 0 and has_filters:
             items.append(format_filters_folder("root-studios"))
             filters_added = True
 
-        # Total count includes Filters folder if present
         total_count = studio_count + 1 if has_filters else studio_count
 
-        # Calculate page - Stash uses 1-indexed pages
         page = (start_index // limit) + 1
         fetch_limit = limit - 1 if filters_added else limit
 
-        q = """query FindStudios($page: Int!, $per_page: Int!) {
-            findStudios(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) {
+        q = """query FindStudios($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
+            findStudios(filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}) {
                 studios { id name image_path scene_count }
             }
         }"""
-        res = stash_query(q, {"page": page, "per_page": fetch_limit})
+        res = stash_query(q, {"page": page, "per_page": fetch_limit, "sort": folder_sort, "direction": folder_dir})
         for s in res.get("data", {}).get("findStudios", {}).get("studios", []):
             studio_item = {
                 "Name": s["name"],
@@ -4176,18 +4174,7 @@ async def endpoint_items(request):
             items.append(format_jellyfin_item(s, parent_id=parent_id))
 
     elif parent_id == "root-performers":
-        # Map Jellyfin sort to Stash performer sort fields
-        performer_sort_mapping = {
-            "SortName": "name", "Name": "name",
-            "DateCreated": "created_at", "PremiereDate": "created_at",
-            "Random": "random", "CommunityRating": "rating",
-        }
-        sort_by_raw = request.query_params.get("SortBy") or request.query_params.get("sortBy") or "SortName"
-        sort_by = sort_by_raw.split(",")[0].strip()
-        perf_sort = performer_sort_mapping.get(sort_by, "name")
-        sort_order = request.query_params.get("SortOrder") or request.query_params.get("sortOrder") or "Ascending"
-        perf_direction = "ASC" if sort_order == "Ascending" else "DESC"
-        logger.debug(f"Performer sort: {sort_by_raw} -> {perf_sort} {perf_direction}")
+        folder_sort, folder_dir = get_stash_sort_params(request, context="folders")
 
         # Get total count
         count_q = """query { findPerformers { count } }"""
@@ -4218,7 +4205,7 @@ async def endpoint_items(request):
                 performers { id name image_path scene_count }
             }
         }"""
-        res = stash_query(q, {"page": page, "per_page": fetch_limit, "sort": perf_sort, "direction": perf_direction})
+        res = stash_query(q, {"page": page, "per_page": fetch_limit, "sort": folder_sort, "direction": folder_dir})
         for p in res.get("data", {}).get("findPerformers", {}).get("performers", []):
             performer_item = {
                 "Name": p["name"],
@@ -4269,55 +4256,47 @@ async def endpoint_items(request):
             items.append(format_jellyfin_item(s, parent_id=parent_id))
 
     elif parent_id == "root-groups":
-        # Get total count - Stash uses "movies" for groups
+        folder_sort, folder_dir = get_stash_sort_params(request, context="folders")
+
         count_q = """query { findMovies { count } }"""
         count_res = stash_query(count_q)
         group_count = count_res.get("data", {}).get("findMovies", {}).get("count", 0)
 
-        # Check if there are saved filters for groups (only if ENABLE_FILTERS is on)
         has_filters = False
         if ENABLE_FILTERS:
             saved_filters = stash_get_saved_filters("GROUPS")
             has_filters = len(saved_filters) > 0
 
-        # On first page, add FILTERS folder at the top if there are saved filters
         filters_added = False
         if start_index == 0 and has_filters:
             items.append(format_filters_folder("root-groups"))
             filters_added = True
 
-        # Total count includes Filters folder if present
         total_count = group_count + 1 if has_filters else group_count
 
-        # Use a fixed page size (50) for consistent pagination
-        # This avoids misalignment when the last page has a smaller limit
         FIXED_PAGE_SIZE = 50
 
-        # Calculate which Stash page(s) we need and the offset within that page
         stash_page = (start_index // FIXED_PAGE_SIZE) + 1
         offset_within_page = start_index % FIXED_PAGE_SIZE
         items_needed = limit - 1 if filters_added else limit
 
         logger.debug(f"Groups pagination: startIndex={start_index}, limit={limit}, stash_page={stash_page}, offset_within_page={offset_within_page}")
 
-        # Query for movies - fetch using fixed page size
-        q = """query FindMovies($page: Int!, $per_page: Int!) {
-            findMovies(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) {
+        q = """query FindMovies($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
+            findMovies(filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}) {
                 movies { id name scene_count }
             }
         }"""
 
-        # Fetch pages until we have enough items
         fetched_movies = []
         current_page = stash_page
         while len(fetched_movies) < offset_within_page + items_needed:
-            res = stash_query(q, {"page": current_page, "per_page": FIXED_PAGE_SIZE})
+            res = stash_query(q, {"page": current_page, "per_page": FIXED_PAGE_SIZE, "sort": folder_sort, "direction": folder_dir})
             page_movies = res.get("data", {}).get("findMovies", {}).get("movies", [])
             if not page_movies:
-                break  # No more data
+                break
             fetched_movies.extend(page_movies)
             current_page += 1
-            # Safety: don't fetch more than 2 pages
             if current_page > stash_page + 1:
                 break
 
@@ -4432,15 +4411,15 @@ async def endpoint_items(request):
         total_count = items_count
 
     elif parent_id == "tags-favorites":
-        # Show favorite tags as browsable folders
-        q = """query FindTags($page: Int!, $per_page: Int!) {
-            findTags(tag_filter: {favorite: true}, filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) {
+        folder_sort, folder_dir = get_stash_sort_params(request, context="folders")
+        q = """query FindTags($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
+            findTags(tag_filter: {favorite: true}, filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}) {
                 count
                 tags { id name scene_count image_path }
             }
         }"""
         page = (start_index // limit) + 1
-        res = stash_query(q, {"page": page, "per_page": limit})
+        res = stash_query(q, {"page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
         data = res.get("data", {}).get("findTags", {})
         total_count = data.get("count", 0)
         for t in data.get("tags", []):
@@ -4456,20 +4435,19 @@ async def endpoint_items(request):
                 "ParentId": parent_id,
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": True, "Played": False, "Key": f"tagitem-{t['id']}"}
             }
-            # Always set ImageTags so Infuse requests an image - we serve text icon if no Stash image
             tag_item["ImageTags"] = {"Primary": "img"}
             items.append(tag_item)
 
     elif parent_id == "tags-all":
-        # Show all tags as browsable folders (with paging)
-        q = """query FindTags($page: Int!, $per_page: Int!) {
-            findTags(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) {
+        folder_sort, folder_dir = get_stash_sort_params(request, context="folders")
+        q = """query FindTags($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
+            findTags(filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}) {
                 count
                 tags { id name scene_count image_path favorite }
             }
         }"""
         page = (start_index // limit) + 1
-        res = stash_query(q, {"page": page, "per_page": limit})
+        res = stash_query(q, {"page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
         data = res.get("data", {}).get("findTags", {})
         total_count = data.get("count", 0)
         for t in data.get("tags", []):
@@ -5960,18 +5938,7 @@ async def endpoint_persons(request):
     limit = max(1, min(limit, MAX_PAGE_SIZE))
 
     search_term = request.query_params.get("searchTerm") or request.query_params.get("SearchTerm")
-
-    # Map sort params for performers
-    performer_sort_mapping = {
-        "SortName": "name", "Name": "name",
-        "DateCreated": "created_at", "PremiereDate": "created_at",
-        "Random": "random", "CommunityRating": "rating",
-    }
-    sort_by_raw = request.query_params.get("SortBy") or request.query_params.get("sortBy") or "SortName"
-    sort_by = sort_by_raw.split(",")[0].strip()
-    perf_sort = performer_sort_mapping.get(sort_by, "name")
-    sort_order = request.query_params.get("SortOrder") or request.query_params.get("sortOrder") or "Ascending"
-    perf_direction = "ASC" if sort_order == "Ascending" else "DESC"
+    folder_sort, folder_dir = get_stash_sort_params(request, context="folders")
 
     try:
         page = (start_index // limit) + 1
@@ -5991,7 +5958,7 @@ async def endpoint_persons(request):
                     performers { id name image_path scene_count }
                 }
             }"""
-            res = stash_query(q, {"q": clean_search, "page": page, "per_page": limit, "sort": perf_sort, "direction": perf_direction})
+            res = stash_query(q, {"q": clean_search, "page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
             logger.debug(f"Persons search '{clean_search}' returned {total_count} matches")
         else:
             count_q = """query { findPerformers { count } }"""
@@ -6003,7 +5970,7 @@ async def endpoint_persons(request):
                     performers { id name image_path scene_count }
                 }
             }"""
-            res = stash_query(q, {"page": page, "per_page": limit, "sort": perf_sort, "direction": perf_direction})
+            res = stash_query(q, {"page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
 
         performers = res.get("data", {}).get("findPerformers", {}).get("performers", [])
 
@@ -6030,18 +5997,20 @@ async def endpoint_studios(request):
     limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or DEFAULT_PAGE_SIZE)
     limit = max(1, min(limit, MAX_PAGE_SIZE))  # Enforce min=1, max=MAX_PAGE_SIZE
 
+    folder_sort, folder_dir = get_stash_sort_params(request, context="folders")
+
     try:
         count_q = """query { findStudios { count } }"""
         count_res = stash_query(count_q)
         total_count = count_res.get("data", {}).get("findStudios", {}).get("count", 0)
 
         page = (start_index // limit) + 1
-        q = """query FindStudios($page: Int!, $per_page: Int!) {
-            findStudios(filter: {page: $page, per_page: $per_page, sort: "name", direction: ASC}) {
+        q = """query FindStudios($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
+            findStudios(filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}) {
                 studios { id name image_path scene_count }
             }
         }"""
-        res = stash_query(q, {"page": page, "per_page": limit})
+        res = stash_query(q, {"page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
         studios = res.get("data", {}).get("findStudios", {}).get("studios", [])
 
         items = []
