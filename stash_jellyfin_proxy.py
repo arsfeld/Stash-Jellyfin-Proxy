@@ -2900,17 +2900,7 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
 
     # Add performers as "People" (Jellyfin format) with image support
     # Use person- prefix for People to match Jellyfin's expected format
-    if performers:
-        people_list = []
-        for p in performers:
-            if p.get("name"):
-                person = {
-                    "Name": p.get("name"),
-                    "Type": "Actor",
-                    "Id": f"person-{p.get('id')}",
-                }
-                people_list.append(person)
-        item["People"] = people_list
+    item["People"] = []
 
     if path:
         item["Path"] = path
