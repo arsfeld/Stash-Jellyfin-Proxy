@@ -4564,18 +4564,13 @@ async def endpoint_items(request):
         logger.debug(f"More items available: next page would start at {start_index + len(items)}")
 
     # DEBUG: Strip scene items to find which field causes Infuse parsing issue
-    # Phase 2: minimal + MediaSources
+    # Phase 3: everything EXCEPT People
     if parent_id == "root-scenes":
-        keep_keys = {
-            "Name", "SortName", "Id", "ServerId", "Type", "IsFolder",
-            "MediaType", "ParentId", "ImageTags", "BackdropImageTags",
-            "RunTimeTicks", "UserData", "MediaSources", "Path",
-            "LocationType", "HasSubtitles",
-        }
+        strip_keys = {"People"}
         minimal_items = []
         for item in items:
             if item.get("Type") == "Movie":
-                minimal = {k: v for k, v in item.items() if k in keep_keys}
+                minimal = {k: v for k, v in item.items() if k not in strip_keys}
                 minimal_items.append(minimal)
             else:
                 minimal_items.append(item)
