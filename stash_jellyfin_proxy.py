@@ -3693,6 +3693,10 @@ async def endpoint_items(request):
     # Check for searchTerm parameter (Infuse search functionality)
     search_term = request.query_params.get("searchTerm") or request.query_params.get("SearchTerm")
 
+    # Check includeItemTypes - if client restricts to specific types, don't inject folders
+    include_item_types = request.query_params.get("includeItemTypes") or request.query_params.get("IncludeItemTypes") or ""
+    restrict_to_movies = "Movie" in include_item_types and "Folder" not in include_item_types
+
     # Debug: Log ALL query params to understand what Infuse is sending
     all_params = dict(request.query_params)
     logger.debug(f"Items endpoint - ALL PARAMS: {all_params}")
@@ -4064,13 +4068,15 @@ async def endpoint_items(request):
             has_filters = len(saved_filters) > 0
 
         # On first page, add FILTERS folder at the top if there are saved filters
+        # But skip if client restricts to Movie type only (e.g. Infuse includeItemTypes=Movie)
         filters_added = False
-        if start_index == 0 and has_filters:
+        if start_index == 0 and has_filters and not restrict_to_movies:
             items.append(format_filters_folder("root-scenes"))
             filters_added = True
 
         # Total count includes Filters folder if present
-        total_count = scene_count + 1 if has_filters else scene_count
+        show_filters_in_count = has_filters and not restrict_to_movies
+        total_count = scene_count + 1 if show_filters_in_count else scene_count
 
         # Calculate page - Stash uses 1-indexed pages
         page = (start_index // limit) + 1
