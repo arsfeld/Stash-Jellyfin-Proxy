@@ -2920,18 +2920,60 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
         item["Path"] = path
         item["LocationType"] = "FileSystem"
 
-        # Build MediaStreams - use minimal format proven to work with Infuse
-        media_streams = [
-            {
-                "Index": 0,
-                "Type": "Video",
-                "Codec": "h264",
+        # Extract file metadata for rich MediaStreams
+        file_data = files[0] if files else {}
+        video_codec = (file_data.get("video_codec") or "h264").lower()
+        audio_codec = (file_data.get("audio_codec") or "").lower()
+        vid_width = file_data.get("width") or 0
+        vid_height = file_data.get("height") or 0
+        frame_rate = file_data.get("frame_rate") or 0
+        bit_rate = file_data.get("bit_rate") or 0
+        file_size = file_data.get("size") or 0
+
+        # Determine container from file extension
+        container = "mp4"
+        if path:
+            ext = os.path.splitext(path)[1].lower().lstrip(".")
+            if ext in ("mkv", "avi", "wmv", "flv", "webm", "mov", "ts", "m4v", "mp4"):
+                container = ext
+
+        # Build video stream with real metadata
+        video_stream = {
+            "Index": 0,
+            "Type": "Video",
+            "Codec": video_codec,
+            "IsDefault": True,
+            "IsForced": False,
+            "IsExternal": False,
+        }
+        if vid_width and vid_height:
+            video_stream["Width"] = vid_width
+            video_stream["Height"] = vid_height
+            video_stream["AspectRatio"] = f"{vid_width}:{vid_height}"
+        if bit_rate:
+            video_stream["BitRate"] = bit_rate
+        if frame_rate:
+            video_stream["RealFrameRate"] = frame_rate
+            video_stream["AverageFrameRate"] = frame_rate
+
+        media_streams = [video_stream]
+
+        # Add audio stream if codec is available
+        audio_stream_idx = 1
+        if audio_codec:
+            audio_stream = {
+                "Index": audio_stream_idx,
+                "Type": "Audio",
+                "Codec": audio_codec,
                 "IsDefault": True,
                 "IsForced": False,
-                "IsExternal": False
+                "IsExternal": False,
+                "DisplayTitle": audio_codec.upper(),
+                "Channels": 2,
+                "ChannelLayout": "stereo",
             }
-        ]
-        audio_stream_idx = 1
+            media_streams.append(audio_stream)
+            audio_stream_idx += 1
 
         # Add subtitle streams from captions
         captions = scene.get("captions") or []
@@ -2953,7 +2995,7 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
             display_lang = lang_names.get(lang_code, lang_code.upper())
 
             media_streams.append({
-                "Index": idx + 1,
+                "Index": audio_stream_idx + idx,
                 "Type": "Subtitle",
                 "Codec": codec,
                 "Language": lang_code,
@@ -2971,18 +3013,26 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
 
         item["HasSubtitles"] = len(captions) > 0
 
-        item["MediaSources"] = [{
+        media_source = {
             "Id": item_id,
             "Path": path,
             "Protocol": "Http",
             "Type": "Default",
-            "Container": "mp4",
+            "Container": container,
             "Name": title,
             "SupportsDirectPlay": True,
             "SupportsDirectStream": True,
             "SupportsTranscoding": False,
-            "MediaStreams": media_streams
-        }]
+            "MediaStreams": media_streams,
+        }
+        if bit_rate:
+            media_source["Bitrate"] = bit_rate
+        if file_size:
+            media_source["Size"] = int(file_size)
+        if duration:
+            media_source["RunTimeTicks"] = int(duration * 10000000)
+
+        item["MediaSources"] = [media_source]
 
     return item
 
@@ -3255,7 +3305,7 @@ async def endpoint_latest_items(request):
     logger.debug(f"Latest items request - ParentId: {parent_id}, Limit: {limit}")
 
     # Full scene fields for queries
-    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+    scene_fields = "id title code date details files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
 
     items = []
 
@@ -3656,7 +3706,7 @@ async def endpoint_items(request):
     total_count = 0
 
     # Full scene fields for queries (include performer image_path for People images, captions for subtitles)
-    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+    scene_fields = "id title code date details files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
 
     if ids:
         # Specific items requested
@@ -4539,7 +4589,7 @@ async def endpoint_item_details(request):
     item_id = request.path_params.get("item_id")
 
     # Full scene fields for queries (include performer image_path for People images, captions for subtitles)
-    scene_fields = "id title code date details files { path duration } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+    scene_fields = "id title code date details files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
 
     # Handle special folder IDs - return the folder ITSELF (not children)
 
@@ -5277,8 +5327,17 @@ async def endpoint_subtitle(request):
             logger.warning(f"No captions found for scene {numeric_id}")
             return JSONResponse({"error": "No subtitles"}, status_code=404)
 
-        # Subtitle index is 1-based (matches Index in MediaStreams: video=0, subs start at 1)
-        caption_idx = subtitle_index - 1
+        # Calculate stream offset: video (always index 0) + audio (index 1 if present)
+        # Infuse uses the MediaStreams Index value, not the DeliveryUrl
+        files = scene_data.get("files", [])
+        has_audio = bool(files and (files[0].get("audio_codec") or ""))
+        stream_offset = 2 if has_audio else 1  # video + audio, or just video
+
+        # Try stream-index-based mapping first (subtitle_index is the MediaStreams Index)
+        caption_idx = subtitle_index - stream_offset
+        # Fall back to 1-based caption index if stream offset doesn't work
+        if caption_idx < 0 or caption_idx >= len(captions):
+            caption_idx = subtitle_index - 1
         if caption_idx < 0 or caption_idx >= len(captions):
             logger.warning(f"Subtitle index {subtitle_index} out of range for scene {numeric_id}")
             return JSONResponse({"error": "Subtitle not found"}, status_code=404)
