@@ -2899,8 +2899,20 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
         item["Genres"] = item["Tags"][:5]  # Infuse may show genres
 
     # Add performers as "People" (Jellyfin format) with image support
-    # Use person- prefix for People to match Jellyfin's expected format
-    item["People"] = []
+    if performers:
+        people_list = []
+        for p in performers:
+            if p.get("name"):
+                person = {
+                    "Name": p.get("name"),
+                    "Type": "Actor",
+                    "Id": f"person-{p.get('id')}",
+                }
+                if p.get("image_path"):
+                    person["PrimaryImageTag"] = "img"
+                    person["ImageTags"] = {"Primary": "img"}
+                people_list.append(person)
+        item["People"] = people_list
 
     if path:
         item["Path"] = path
@@ -4548,6 +4560,19 @@ async def endpoint_items(request):
     logger.debug(f"Items response: returning {len(items)} items, TotalRecordCount={total_count}, StartIndex={start_index}")
     if len(items) > 0 and total_count > start_index + len(items):
         logger.debug(f"More items available: next page would start at {start_index + len(items)}")
+
+    # DEBUG: Strip fields to isolate Infuse issue
+    # Phase 4: Keep People, strip Tags/Genres/Overview/dates
+    if parent_id == "root-scenes":
+        strip_keys = {"Tags", "Genres", "Overview", "ProductionYear", "PremiereDate", "DateCreated"}
+        minimal_items = []
+        for item in items:
+            if item.get("Type") == "Movie":
+                minimal = {k: v for k, v in item.items() if k not in strip_keys}
+                minimal_items.append(minimal)
+            else:
+                minimal_items.append(item)
+        items = minimal_items
 
     # Validate JSON serialization and dump full debug response
     response_data = {"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index}
