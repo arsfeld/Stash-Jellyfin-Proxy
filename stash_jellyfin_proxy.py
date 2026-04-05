@@ -2907,12 +2907,8 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
                 person = {
                     "Name": p.get("name"),
                     "Type": "Actor",
-                    "Role": "",
                     "Id": f"person-{p.get('id')}",
                 }
-                if p.get("image_path"):
-                    person["PrimaryImageTag"] = "img"
-                    person["ImageTags"] = {"Primary": "img"}
                 people_list.append(person)
         item["People"] = people_list
 
