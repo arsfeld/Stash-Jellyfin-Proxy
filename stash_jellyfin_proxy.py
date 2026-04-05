@@ -4587,7 +4587,10 @@ async def endpoint_items(request):
             except (TypeError, ValueError) as ie:
                 logger.error(f"  Bad item at index {i} (id={item.get('Id','?')}): {ie}")
 
-    return JSONResponse(response_data)
+    # Use raw Response to control exact output (bypass JSONResponse serialization)
+    import json as _json
+    response_body = _json.dumps(response_data, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+    return Response(content=response_body, media_type="application/json; charset=utf-8")
 
 async def endpoint_item_details(request):
     item_id = request.path_params.get("item_id")
