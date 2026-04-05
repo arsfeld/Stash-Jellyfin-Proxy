@@ -4567,12 +4567,18 @@ async def endpoint_items(request):
     response_data = {"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index}
     try:
         import json
-        json_str = json.dumps(response_data)
+        json_str = json.dumps(response_data, ensure_ascii=False, allow_nan=False)
         if parent_id in ("root-scenes",) and items and logger.isEnabledFor(logging.DEBUG):
-            debug_path = os.path.join(os.path.dirname(LOG_FILE) if LOG_FILE else "/config", "debug_items_response.json")
-            with open(debug_path, "w") as f:
-                json.dump(response_data, f, indent=2)
-            logger.debug(f"Wrote full items response ({len(json_str)} bytes, {len(items)} items) to {debug_path}")
+            for debug_dir in ["/config", os.path.dirname(LOG_FILE) if LOG_FILE else None, "/tmp"]:
+                if debug_dir:
+                    try:
+                        dp = os.path.join(debug_dir, "debug_items_response.json")
+                        with open(dp, "w") as f:
+                            f.write(json_str)
+                        logger.debug(f"Wrote full items response ({len(json_str)} bytes, {len(items)} items) to {dp}")
+                        break
+                    except Exception as we:
+                        logger.debug(f"Could not write debug to {dp}: {we}")
     except (TypeError, ValueError) as e:
         logger.error(f"JSON serialization error in items response: {e}")
         for i, item in enumerate(items):
