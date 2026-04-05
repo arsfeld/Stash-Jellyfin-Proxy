@@ -4562,9 +4562,9 @@ async def endpoint_items(request):
         logger.debug(f"More items available: next page would start at {start_index + len(items)}")
 
     # DEBUG: Strip fields to isolate Infuse issue
-    # Phase 5: Strip only Tags and Genres
+    # Phase 6: Strip only Overview and date fields
     if parent_id == "root-scenes":
-        strip_keys = {"Tags", "Genres"}
+        strip_keys = {"Overview", "ProductionYear", "PremiereDate", "DateCreated"}
         minimal_items = []
         for item in items:
             if item.get("Type") == "Movie":
