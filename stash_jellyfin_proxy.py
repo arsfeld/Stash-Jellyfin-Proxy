@@ -4557,15 +4557,18 @@ async def endpoint_items(request):
     if len(items) > 0 and total_count > start_index + len(items):
         logger.debug(f"More items available: next page would start at {start_index + len(items)}")
 
-    # Validate JSON serialization and log first scene item for debugging
+    # Validate JSON serialization and dump debug file
     response_data = {"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index}
     try:
         import json
         json_str = json.dumps(response_data)
-        if parent_id in ("root-scenes",) and items:
+        if parent_id in ("root-scenes",) and items and logger.isEnabledFor(logging.DEBUG):
             scene_items = [i for i in items if i.get("Type") == "Movie"]
             if scene_items:
-                logger.debug(f"Sample scene JSON: {json.dumps(scene_items[0])}")
+                debug_path = os.path.join(os.path.dirname(LOG_FILE) if LOG_FILE else "/config", "debug_scene.json")
+                with open(debug_path, "w") as f:
+                    json.dump(scene_items[0], f, indent=2)
+                logger.debug(f"Wrote sample scene JSON to {debug_path}")
     except (TypeError, ValueError) as e:
         logger.error(f"JSON serialization error in items response: {e}")
         for i, item in enumerate(items):
