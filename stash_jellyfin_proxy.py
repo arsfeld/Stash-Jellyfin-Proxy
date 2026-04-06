@@ -6277,6 +6277,15 @@ async def endpoint_user_item_unfavorite(request):
     """Remove favorite status - stub."""
     return JSONResponse({"IsFavorite": False})
 
+async def endpoint_items_filters(request):
+    """Return empty filter options - stub for Swiftfin filter UI."""
+    return JSONResponse({
+        "Genres": [],
+        "Tags": [],
+        "OfficialRatings": [],
+        "Years": [],
+    })
+
 async def endpoint_local_trailers(request):
     """Return empty list for local trailers - Stash doesn't support trailers."""
     return JSONResponse([])
@@ -6609,12 +6618,16 @@ routes = [
     Route("/Users/{user_id}/Items/{item_id}", endpoint_item_details),
     Route("/Items", endpoint_items),
     Route("/Items/Counts", endpoint_items_counts),
+    Route("/Items/Latest", endpoint_latest_items),
+    Route("/Items/Filters", endpoint_items_filters),
     Route("/Items/{item_id}/Download", endpoint_download),
     Route("/Items/{item_id}/PlaybackInfo", endpoint_playback_info, methods=["GET", "POST"]),
     Route("/Items/{item_id}/Similar", endpoint_similar),
     Route("/Items/{item_id}/Intros", endpoint_intros),
     Route("/Items/{item_id}/SpecialFeatures", endpoint_special_features),
+    Route("/Items/{item_id}/LocalTrailers", endpoint_local_trailers),
     Route("/Users/{user_id}/Items/{item_id}/SpecialFeatures", endpoint_special_features),
+    Route("/Users/{user_id}/Items/{item_id}/LocalTrailers", endpoint_local_trailers),
     Route("/Videos/{item_id}/stream", endpoint_stream),
     Route("/Videos/{item_id}/stream.{ext}", endpoint_stream),
     Route("/videos/{item_id}/stream", endpoint_stream),
@@ -6627,6 +6640,7 @@ routes = [
     Route("/Videos/{item_id}/{item_id2}/Subtitles/{subtitle_index}/0/Stream.vtt", endpoint_subtitle),
     Route("/Videos/{item_id}/{item_id2}/Subtitles/{subtitle_index}/Stream.srt", endpoint_subtitle),
     Route("/Videos/{item_id}/{item_id2}/Subtitles/{subtitle_index}/Stream.vtt", endpoint_subtitle),
+    Route("/Items/{item_id}", endpoint_item_details),
     Route("/Items/{item_id}/Images/Primary", endpoint_image),
     Route("/Items/{item_id}/Images/Thumb", endpoint_image),
     Route("/Items/{item_id}/Images/Backdrop", endpoint_image),
