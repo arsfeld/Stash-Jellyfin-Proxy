@@ -3088,7 +3088,9 @@ async def endpoint_system_info(request):
         "ServerName": SERVER_NAME,
         "Version": "10.8.13",
         "Id": SERVER_ID,
+        "ProductName": "Jellyfin Server",
         "OperatingSystem": "Linux",
+        "StartupWizardCompleted": True,
         "SupportsLibraryMonitor": False,
         "WebSocketPortNumber": PROXY_PORT,
         "CompletedInstallations": [{"Guid": SERVER_ID, "Name": SERVER_NAME}],
@@ -3104,7 +3106,8 @@ async def endpoint_public_info(request):
         "Version": "10.8.13",
         "Id": SERVER_ID,
         "ProductName": "Jellyfin Server",
-        "OperatingSystem": "Linux"
+        "OperatingSystem": "Linux",
+        "StartupWizardCompleted": True
     })
 
 def parse_emby_auth_header(request):
@@ -3237,16 +3240,20 @@ async def endpoint_authenticate_by_name(request):
 
 async def endpoint_users(request):
     return JSONResponse([{
-        "Name": "Stash User",
+        "Name": SJS_USER or "Stash User",
+        "ServerId": SERVER_ID,
         "Id": USER_ID,
         "HasPassword": True,
+        "HasConfiguredPassword": True,
+        "HasConfiguredEasyPassword": False,
+        "EnableAutoLogin": False,
         "Policy": {"IsAdministrator": True, "EnableContentDeletion": False, "EnableContentDownloading": True}
     }])
 
 async def endpoint_user_by_id(request):
-    # Return user profile
     return JSONResponse({
-        "Name": "Stash User",
+        "Name": SJS_USER or "Stash User",
+        "ServerId": SERVER_ID,
         "Id": USER_ID,
         "HasPassword": True,
         "HasConfiguredPassword": True,
@@ -6422,6 +6429,8 @@ async def endpoint_users_public(request):
         "ServerId": SERVER_ID,
         "HasPassword": bool(SJS_PASSWORD),
         "HasConfiguredPassword": bool(SJS_PASSWORD),
+        "HasConfiguredEasyPassword": False,
+        "EnableAutoLogin": False,
     }])
 
 async def endpoint_media_segments(request):
