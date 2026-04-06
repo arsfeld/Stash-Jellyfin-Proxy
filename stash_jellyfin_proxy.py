@@ -2097,6 +2097,7 @@ PUBLIC_ENDPOINTS = {
 PUBLIC_PREFIXES = [
     "/system/info",
     "/emby/system/info",
+    "/videos/",
 ]
 
 # IP failure tracking: {ip: [(timestamp, path), ...]}
@@ -2264,6 +2265,8 @@ class AuthenticationMiddleware:
                 if path_lower.startswith(prefix):
                     is_public = True
                     break
+        if not is_public and "/images/" in path_lower:
+            is_public = True
 
         # Allow public endpoints without auth
         if is_public:
@@ -6583,6 +6586,9 @@ routes = [
     Route("/Users/Public", endpoint_users_public),
     Route("/UserImage", endpoint_user_image),
     Route("/Users/Me", endpoint_user_me),
+    Route("/UserViews", endpoint_user_views),
+    Route("/UserItems/Resume", endpoint_user_items_resume),
+    Route("/UserItems/Latest", endpoint_latest_items),
     Route("/Users/{user_id}", endpoint_user_by_id),
     Route("/Users/{user_id}/Views", endpoint_user_views),
     Route("/Users/{user_id}/Items/Latest", endpoint_latest_items),
