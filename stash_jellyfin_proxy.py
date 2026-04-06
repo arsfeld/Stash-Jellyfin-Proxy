@@ -3262,7 +3262,15 @@ async def endpoint_authenticate_by_name(request):
             "AccessToken": ACCESS_TOKEN,
             "ServerId": SERVER_ID
         }
-        logger.debug(f"Auth response: {json.dumps(auth_response)}")
+        auth_json = json.dumps(auth_response, indent=2)
+        logger.debug(f"Auth response ({len(auth_json)} bytes): {auth_json[:200]}...")
+        try:
+            debug_path = os.path.join(os.path.dirname(CONFIG_FILE) if CONFIG_FILE else "/config", "auth_debug.json")
+            with open(debug_path, "w") as f:
+                f.write(auth_json)
+            logger.debug(f"Full auth response written to {debug_path}")
+        except Exception as e:
+            logger.debug(f"Could not write auth debug file: {e}")
         return JSONResponse(auth_response)
     else:
         record_auth_attempt(success=False)
