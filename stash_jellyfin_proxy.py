@@ -189,10 +189,20 @@ def normalize_path(path, default="/graphql"):
         p = p.rstrip('/')
     return p
 
+def normalize_server_id(server_id):
+    """Ensure SERVER_ID is in standard UUID format (8-4-4-4-12 with dashes).
+    Converts old dashless 32-char hex IDs to proper UUID format."""
+    clean = server_id.strip().replace("-", "")
+    if len(clean) == 32:
+        try:
+            return str(uuid.UUID(clean))
+        except ValueError:
+            pass
+    return server_id
+
 def generate_server_id():
-    """Generate a random 32-character server ID (like UUID without dashes)."""
-    import uuid
-    return uuid.uuid4().hex
+    """Generate a server ID in standard UUID format (8-4-4-4-12)."""
+    return str(uuid.uuid4())
 
 def save_server_id_to_config(config_file, server_id):
     """Save SERVER_ID to config file, updating existing entry or adding new one."""
@@ -398,7 +408,7 @@ if TAG_GROUPS:
 if LATEST_GROUPS:
     print(f"  Latest groups: {', '.join(LATEST_GROUPS)}")
 
-# Auto-generate SERVER_ID if not set
+# Auto-generate SERVER_ID if not set, or normalize old dashless format
 if not SERVER_ID:
     SERVER_ID = generate_server_id()
     print(f"  Generated new Server ID: {SERVER_ID}")
@@ -409,6 +419,16 @@ if not SERVER_ID:
     except Exception as e:
         print(f"  Warning: Could not save Server ID to config: {e}")
         print("  Server ID will be regenerated on next restart unless saved manually.")
+else:
+    normalized = normalize_server_id(SERVER_ID)
+    if normalized != SERVER_ID:
+        print(f"  Upgraded Server ID to UUID format: {normalized}")
+        SERVER_ID = normalized
+        try:
+            save_server_id_to_config(CONFIG_FILE, SERVER_ID)
+            print(f"  Saved updated Server ID to {CONFIG_FILE}")
+        except Exception as e:
+            print(f"  Warning: Could not save updated Server ID to config: {e}")
 
 # Stable user UUID derived from server ID + username (required by strict Jellyfin SDK clients)
 import uuid as _uuid_mod
