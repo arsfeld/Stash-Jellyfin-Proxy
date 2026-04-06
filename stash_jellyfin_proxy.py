@@ -5364,6 +5364,73 @@ async def endpoint_stream(request):
         logger.error(f"Stream proxy error: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
+async def endpoint_download(request):
+    """Handle download requests - proxy the video file from Stash with Content-Disposition."""
+    from starlette.responses import StreamingResponse
+
+    item_id = request.path_params.get("item_id")
+    numeric_id = get_numeric_id(item_id)
+    stash_stream_url = f"{STASH_URL}/scene/{numeric_id}/stream"
+
+    logger.info(f"Download requested for {item_id}")
+
+    try:
+        # Get scene title for filename
+        q = """query FindScene($id: ID!) {
+            findScene(id: $id) { title files { path } }
+        }"""
+        res = stash_query(q, {"id": numeric_id})
+        scene = res.get("data", {}).get("findScene", {})
+        title = scene.get("title") or ""
+        files = scene.get("files") or []
+        if files:
+            import os as _os
+            original_filename = _os.path.basename(files[0].get("path", ""))
+        else:
+            original_filename = f"{title or item_id}.mp4"
+
+        session = get_stash_session()
+        response = session.get(stash_stream_url, timeout=30, stream=True, allow_redirects=True)
+
+        content_type = response.headers.get('Content-Type', 'video/mp4')
+
+        if 'text/html' in content_type:
+            logger.error(f"Got HTML response instead of video for download {stash_stream_url}")
+            return JSONResponse({"error": "Authentication failed"}, status_code=401)
+
+        response.raise_for_status()
+
+        headers = {}
+        if "Content-Length" in response.headers:
+            headers["Content-Length"] = response.headers["Content-Length"]
+        headers["Content-Disposition"] = f'attachment; filename="{original_filename}"'
+
+        async def stream_generator():
+            try:
+                for chunk in response.iter_content(chunk_size=262144):
+                    if chunk:
+                        yield chunk
+            except GeneratorExit:
+                pass
+            except Exception:
+                pass
+            finally:
+                response.close()
+
+        return StreamingResponse(
+            stream_generator(),
+            media_type=content_type,
+            headers=headers,
+            status_code=200
+        )
+
+    except requests.exceptions.Timeout:
+        logger.error(f"Download timeout connecting to Stash: {stash_stream_url}")
+        return JSONResponse({"error": "Stash timeout"}, status_code=504)
+    except Exception as e:
+        logger.error(f"Download proxy error: {e}")
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 async def endpoint_subtitle(request):
     """Proxy subtitle/caption file from Stash."""
     item_id = request.path_params.get("item_id")
@@ -6356,6 +6423,7 @@ routes = [
     Route("/Users/{user_id}/Items/{item_id}", endpoint_item_details),
     Route("/Items", endpoint_items),
     Route("/Items/Counts", endpoint_items_counts),
+    Route("/Items/{item_id}/Download", endpoint_download),
     Route("/Items/{item_id}/PlaybackInfo", endpoint_playback_info, methods=["GET", "POST"]),
     Route("/Items/{item_id}/Similar", endpoint_similar),
     Route("/Items/{item_id}/Intros", endpoint_intros),
