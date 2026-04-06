@@ -2351,28 +2351,43 @@ class CaseInsensitivePathMiddleware:
 
     @classmethod
     def build_path_map(cls, route_list):
-        """Build lowercase->original mapping from route paths (static segments only)."""
+        """Build lowercase->original mapping from route paths.
+        
+        For parameterized routes like /Videos/{item_id}/stream, we store
+        a segment-level mapping so we can fix casing of static segments
+        while preserving dynamic ones.
+        """
         cls._path_map = {}
+        cls._segment_map = {}
         for r in route_list:
             p = getattr(r, "path", "")
-            if p and "{" not in p:
+            if not p:
+                continue
+            if "{" not in p:
                 cls._path_map[p.lower()] = p
+            else:
+                for seg in p.split("/"):
+                    if seg and "{" not in seg:
+                        cls._segment_map[seg.lower()] = seg
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
             path = scope.get("path", "")
             path_lower = path.lower()
-            if path_lower != path or (self._path_map and path_lower in self._path_map):
-                if self._path_map and path_lower in self._path_map:
-                    scope = dict(scope, path=self._path_map[path_lower])
-                else:
-                    segments = path.split("/")
-                    normalized = "/".join(
-                        seg.capitalize() if seg and seg.isalpha() and seg.islower() else seg
-                        for seg in segments
-                    )
-                    if normalized != path:
-                        scope = dict(scope, path=normalized)
+            if self._path_map and path_lower in self._path_map:
+                scope = dict(scope, path=self._path_map[path_lower])
+            elif path_lower != path:
+                segments = path.split("/")
+                normalized = []
+                for seg in segments:
+                    seg_lower = seg.lower()
+                    if seg_lower in self._segment_map:
+                        normalized.append(self._segment_map[seg_lower])
+                    else:
+                        normalized.append(seg)
+                new_path = "/".join(normalized)
+                if new_path != path:
+                    scope = dict(scope, path=new_path)
         await self.app(scope, receive, send)
 
 class RequestLoggingMiddleware:
@@ -3562,8 +3577,10 @@ async def endpoint_latest_items(request):
 
     items = []
 
-    # Check if this library is in LATEST_GROUPS
+    # Check if this library is in LATEST_GROUPS (if LATEST_GROUPS is empty, show all)
     def is_in_latest_groups(parent_id):
+        if not LATEST_GROUPS:
+            return True
         if parent_id == "root-scenes":
             return "Scenes" in LATEST_GROUPS
         elif parent_id and parent_id.startswith("tag-"):
@@ -3571,7 +3588,7 @@ async def endpoint_latest_items(request):
             for t in TAG_GROUPS:
                 if t.lower().replace(' ', '-') == tag_slug:
                     return t in LATEST_GROUPS
-        return False
+        return not LATEST_GROUPS
 
     if not is_in_latest_groups(parent_id):
         logger.debug(f"Skipping latest for {parent_id} (not in LATEST_GROUPS)")
@@ -3590,10 +3607,7 @@ async def endpoint_latest_items(request):
             items.append(format_jellyfin_item(s, parent_id="root-scenes"))
 
     elif parent_id and parent_id.startswith("tag-"):
-        # Return latest scenes with this specific tag
-        tag_slug = parent_id[4:]  # Remove "tag-" prefix
-
-        # Find the matching tag name from TAG_GROUPS config
+        tag_slug = parent_id[4:]
         tag_name = None
         for t in TAG_GROUPS:
             if t.lower().replace(' ', '-') == tag_slug:
@@ -3601,7 +3615,6 @@ async def endpoint_latest_items(request):
                 break
 
         if tag_name:
-            # Find the tag ID
             tag_query = """query FindTags($filter: FindFilterType!) {
                 findTags(filter: $filter) {
                     tags { id name }
@@ -3609,8 +3622,6 @@ async def endpoint_latest_items(request):
             }"""
             tag_res = stash_query(tag_query, {"filter": {"q": tag_name}})
             tags = tag_res.get("data", {}).get("findTags", {}).get("tags", [])
-
-            # Find exact match
             tag_id = None
             for t in tags:
                 if t["name"].lower() == tag_name.lower():
@@ -3618,7 +3629,6 @@ async def endpoint_latest_items(request):
                     break
 
             if tag_id:
-                # Query scenes with this tag, sorted by created_at
                 q = f"""query FindScenes($tid: [ID!], $page: Int!, $per_page: Int!) {{
                     findScenes(
                         scene_filter: {{tags: {{value: $tid, modifier: INCLUDES}}}},
@@ -3632,6 +3642,54 @@ async def endpoint_latest_items(request):
                 logger.debug(f"Tag '{tag_name}' latest: {len(scenes)} scenes")
                 for s in scenes:
                     items.append(format_jellyfin_item(s, parent_id=parent_id))
+
+    elif parent_id == "root-performers":
+        q = """query { findPerformers(filter: {page: 1, per_page: %d, sort: "created_at", direction: DESC}) { performers { id name image_path scene_count } } }""" % limit
+        res = stash_query(q)
+        for p in res.get("data", {}).get("findPerformers", {}).get("performers", []):
+            items.append({
+                "Name": p.get("name", ""),
+                "Id": f"person-{p['id']}",
+                "Type": "BoxSet",
+                "CollectionType": "movies",
+                "ImageTags": {"Primary": "img"} if p.get("image_path") else {},
+            })
+
+    elif parent_id == "root-studios":
+        q = """query { findStudios(filter: {page: 1, per_page: %d, sort: "created_at", direction: DESC}) { studios { id name image_path } } }""" % limit
+        res = stash_query(q)
+        for s in res.get("data", {}).get("findStudios", {}).get("studios", []):
+            items.append({
+                "Name": s.get("name", ""),
+                "Id": f"studio-{s['id']}",
+                "Type": "BoxSet",
+                "CollectionType": "movies",
+                "ImageTags": {"Primary": "img"} if s.get("image_path") else {},
+            })
+
+    elif parent_id == "root-groups":
+        q = """query { findGroups(filter: {page: 1, per_page: %d, sort: "created_at", direction: DESC}) { groups { id name front_image_path } } }""" % limit
+        res = stash_query(q)
+        for g in res.get("data", {}).get("findGroups", {}).get("groups", []):
+            items.append({
+                "Name": g.get("name", ""),
+                "Id": f"group-{g['id']}",
+                "Type": "BoxSet",
+                "CollectionType": "movies",
+                "ImageTags": {"Primary": "img"} if g.get("front_image_path") else {},
+            })
+
+    elif parent_id == "root-tags":
+        q = """query { findTags(filter: {page: 1, per_page: %d, sort: "created_at", direction: DESC}) { tags { id name image_path } } }""" % limit
+        res = stash_query(q)
+        for t in res.get("data", {}).get("findTags", {}).get("tags", []):
+            items.append({
+                "Name": t.get("name", ""),
+                "Id": f"tag-{t['id']}",
+                "Type": "BoxSet",
+                "CollectionType": "movies",
+                "ImageTags": {"Primary": "img"} if t.get("image_path") else {},
+            })
 
     logger.debug(f"Returning {len(items)} latest items for {parent_id}")
     return JSONResponse(items)
@@ -6286,6 +6344,13 @@ async def endpoint_items_filters(request):
         "Years": [],
     })
 
+async def endpoint_bitrate_test(request):
+    """Return random bytes for bitrate testing - Swiftfin uses this before playback."""
+    size = int(request.query_params.get("size", 1000000))
+    size = min(size, 10000000)
+    import os
+    return Response(content=os.urandom(size), media_type="application/octet-stream")
+
 async def endpoint_local_trailers(request):
     """Return empty list for local trailers - Stash doesn't support trailers."""
     return JSONResponse([])
@@ -6628,8 +6693,11 @@ routes = [
     Route("/Items/{item_id}/LocalTrailers", endpoint_local_trailers),
     Route("/Users/{user_id}/Items/{item_id}/SpecialFeatures", endpoint_special_features),
     Route("/Users/{user_id}/Items/{item_id}/LocalTrailers", endpoint_local_trailers),
+    Route("/Playback/BitrateTest", endpoint_bitrate_test),
     Route("/Videos/{item_id}/stream", endpoint_stream),
+    Route("/Videos/{item_id}/Stream", endpoint_stream),
     Route("/Videos/{item_id}/stream.{ext}", endpoint_stream),
+    Route("/Videos/{item_id}/Stream.{ext}", endpoint_stream),
     Route("/videos/{item_id}/stream", endpoint_stream),
     Route("/videos/{item_id}/stream.{ext}", endpoint_stream),
     Route("/Videos/{item_id}/Subtitles/{subtitle_index}/Stream.srt", endpoint_subtitle),
