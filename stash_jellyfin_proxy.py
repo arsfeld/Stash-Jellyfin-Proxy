@@ -1196,7 +1196,15 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                             <option value="ERROR">ERROR</option>
                         </select>
                         <input type="text" id="log-search" class="form-input" placeholder="Search logs..." style="width: 300px;">
+                        <select id="log-line-count" class="log-filter" title="Lines to fetch">
+                            <option value="50">50 lines</option>
+                            <option value="100" selected>100 lines</option>
+                            <option value="250">250 lines</option>
+                            <option value="500">500 lines</option>
+                            <option value="1000">1000 lines</option>
+                        </select>
                         <span id="log-count" class="log-count">0 entries</span>
+                        <button id="copy-logs" class="btn btn-secondary">Copy</button>
                         <button id="download-logs" class="btn btn-secondary">Download</button>
                     </div>
                     <div id="full-logs" class="log-viewer" style="max-height: 600px;"></div>
@@ -1336,7 +1344,8 @@ WEB_UI_HTML = '''<!DOCTYPE html>
 
         async function fetchLogs() {
             try {
-                const res = await fetch('/api/logs?limit=100');
+                const limit = document.getElementById('log-line-count').value || 100;
+                const res = await fetch(`/api/logs?limit=${limit}`);
                 const data = await res.json();
                 state.logs = data.entries || [];
                 renderLogs();
@@ -1613,6 +1622,32 @@ WEB_UI_HTML = '''<!DOCTYPE html>
         // Log filters
         document.getElementById('log-level-filter').addEventListener('change', renderLogs);
         document.getElementById('log-search').addEventListener('input', renderLogs);
+        document.getElementById('log-line-count').addEventListener('change', fetchLogs);
+
+        // Copy visible logs to clipboard
+        document.getElementById('copy-logs').addEventListener('click', () => {
+            const levelFilter = document.getElementById('log-level-filter').value;
+            const searchFilter = document.getElementById('log-search').value.toLowerCase();
+            let filtered = state.logs;
+            if (levelFilter) filtered = filtered.filter(l => l.level === levelFilter);
+            if (searchFilter) filtered = filtered.filter(l => l.message.toLowerCase().includes(searchFilter));
+            const text = filtered.map(l => `${l.timestamp} [${l.level}] ${l.message}`).join('\\n');
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copy-logs');
+                btn.textContent = 'Copied!';
+                setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                const btn = document.getElementById('copy-logs');
+                btn.textContent = 'Copied!';
+                setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+            });
+        });
 
         // Download logs
         document.getElementById('download-logs').addEventListener('click', async () => {
