@@ -3125,6 +3125,7 @@ async def endpoint_authenticate_by_name(request):
                     "EnableUserPreferenceAccess": True,
                     "EnableRemoteAccess": True,
                     "EnableContentDeletion": False,
+                    "EnableContentDownloading": True,
                     "EnablePlaybackRemuxing": True,
                     "ForceRemoteSourceTranscoding": False,
                     "EnableMediaPlayback": True,
@@ -3184,7 +3185,7 @@ async def endpoint_users(request):
         "Name": "Stash User",
         "Id": USER_ID,
         "HasPassword": True,
-        "Policy": {"IsAdministrator": True, "EnableContentDeletion": False}
+        "Policy": {"IsAdministrator": True, "EnableContentDeletion": False, "EnableContentDownloading": True}
     }])
 
 async def endpoint_user_by_id(request):
@@ -3203,6 +3204,7 @@ async def endpoint_user_by_id(request):
             "EnableUserPreferenceAccess": True,
             "EnableRemoteAccess": True,
             "EnableContentDeletion": False,
+            "EnableContentDownloading": True,
             "EnablePlaybackRemuxing": True,
             "ForceRemoteSourceTranscoding": False,
             "EnableMediaPlayback": True,
