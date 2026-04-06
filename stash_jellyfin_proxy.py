@@ -204,43 +204,42 @@ def generate_server_id():
     """Generate a server ID in standard UUID format (8-4-4-4-12)."""
     return str(uuid.uuid4())
 
-def save_server_id_to_config(config_file, server_id):
-    """Save SERVER_ID to config file, updating existing entry or adding new one."""
+def save_config_value(config_file, key, value, comment=None):
+    """Save a key=value to config file, updating existing entry or adding new one."""
     if not os.path.isfile(config_file):
-        # Create minimal config file with just SERVER_ID
         with open(config_file, 'w') as f:
-            f.write(f'# Auto-generated config\nSERVER_ID = {server_id}\n')
+            if comment:
+                f.write(f'# {comment}\n')
+            f.write(f'{key} = {value}\n')
         return True
 
-    # Read existing config
     with open(config_file, 'r') as f:
         lines = f.readlines()
 
-    # Try to find and update SERVER_ID line
     updated = False
     new_lines = []
     for line in lines:
         stripped = line.strip()
-        # Match both commented and uncommented SERVER_ID lines
-        if stripped.startswith('#') and 'SERVER_ID' in stripped and '=' in stripped:
-            # Commented SERVER_ID - uncomment and set value
-            new_lines.append(f'SERVER_ID = {server_id}\n')
+        if stripped.startswith('#') and key in stripped and '=' in stripped:
+            new_lines.append(f'{key} = {value}\n')
             updated = True
-        elif stripped.startswith('SERVER_ID') and '=' in stripped:
-            # Existing SERVER_ID - update value
-            new_lines.append(f'SERVER_ID = {server_id}\n')
+        elif stripped.startswith(key) and '=' in stripped:
+            new_lines.append(f'{key} = {value}\n')
             updated = True
         else:
             new_lines.append(line)
 
-    # If no SERVER_ID line found, append it
     if not updated:
-        new_lines.append(f'\n# Server identification (auto-generated)\nSERVER_ID = {server_id}\n')
+        prefix = f'\n# {comment}\n' if comment else '\n'
+        new_lines.append(f'{prefix}{key} = {value}\n')
 
-    # Write back
     with open(config_file, 'w') as f:
         f.writelines(new_lines)
     return True
+
+def save_server_id_to_config(config_file, server_id):
+    """Save SERVER_ID to config file."""
+    return save_config_value(config_file, "SERVER_ID", server_id, "Server identification (auto-generated)")
 
 _config, _config_defined_keys = load_config(CONFIG_FILE)
 if _config:
@@ -429,6 +428,17 @@ else:
             print(f"  Saved updated Server ID to {CONFIG_FILE}")
         except Exception as e:
             print(f"  Warning: Could not save updated Server ID to config: {e}")
+
+# Load or generate ACCESS_TOKEN (persistent across restarts so clients keep working)
+ACCESS_TOKEN = _config.get("ACCESS_TOKEN", "") if _config else ""
+if not ACCESS_TOKEN:
+    ACCESS_TOKEN = str(uuid.uuid4())
+    print(f"  Generated new Access Token")
+    try:
+        save_config_value(CONFIG_FILE, "ACCESS_TOKEN", ACCESS_TOKEN, "Persistent access token for client sessions (auto-generated)")
+        print(f"  Saved Access Token to {CONFIG_FILE}")
+    except Exception as e:
+        print(f"  Warning: Could not save Access Token to config: {e}")
 
 # Stable user UUID derived from server ID + username (required by strict Jellyfin SDK clients)
 import uuid as _uuid_mod
@@ -2895,8 +2905,7 @@ def format_saved_filter_item(saved_filter: Dict[str, Any], parent_id: str) -> Di
     }
 
 # --- Jellyfin Models & Helpers ---
-# Note: SERVER_ID is now configured at the top of the file and loaded from config
-ACCESS_TOKEN = str(uuid.uuid4())
+# Note: SERVER_ID and ACCESS_TOKEN are configured/persisted at startup
 
 def make_guid(numeric_id: str) -> str:
     """Convert a numeric ID to a GUID-like format that Jellyfin clients expect."""
