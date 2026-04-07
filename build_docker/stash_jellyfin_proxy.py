@@ -2923,6 +2923,7 @@ def format_filters_folder(parent_id: str) -> Dict[str, Any]:
         "RecursiveItemCount": filter_count,
         "ParentId": parent_id,
         "ImageTags": {"Primary": "img"},
+        "ImageBlurHashes": {"Primary": {"img": "000000"}},
         "PrimaryImageAspectRatio": 0.6667,
         "BackdropImageTags": [],
         "UserData": {
@@ -2952,6 +2953,7 @@ def format_saved_filter_item(saved_filter: Dict[str, Any], parent_id: str) -> Di
         "CollectionType": "movies",
         "ParentId": parent_id,
         "ImageTags": {"Primary": "img"},
+        "ImageBlurHashes": {"Primary": {"img": "000000"}},
         "PrimaryImageAspectRatio": 0.6667,
         "BackdropImageTags": [],
         "UserData": {
@@ -3062,6 +3064,7 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
                 if p.get("image_path"):
                     person["PrimaryImageTag"] = "img"
                     person["ImageTags"] = {"Primary": "img"}
+                    person["ImageBlurHashes"] = {"Primary": {"img": "000000"}}
                 people_list.append(person)
         item["People"] = people_list
 
@@ -3716,6 +3719,7 @@ async def endpoint_latest_items(request):
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"performer-{p['id']}"}
             }
             item["ImageTags"] = {"Primary": "img"} if p.get("image_path") else {}
+            item["ImageBlurHashes"] = {"Primary": {"img": "000000"}} if p.get("image_path") else {}
             items.append(item)
 
     elif parent_id == "root-studios":
@@ -3739,6 +3743,7 @@ async def endpoint_latest_items(request):
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"studio-{s['id']}"}
             }
             item["ImageTags"] = {"Primary": "img"} if s.get("image_path") else {}
+            item["ImageBlurHashes"] = {"Primary": {"img": "000000"}} if s.get("image_path") else {}
             items.append(item)
 
     elif parent_id == "root-groups":
@@ -3758,6 +3763,7 @@ async def endpoint_latest_items(request):
                 "CollectionType": "movies",
                 "ChildCount": m.get("scene_count", 0),
                 "ImageTags": {"Primary": "img"},
+                "ImageBlurHashes": {"Primary": {"img": "000000"}},
                 "PrimaryImageAspectRatio": 0.6667,
                 "BackdropImageTags": [],
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"group-{m['id']}"}
@@ -4329,6 +4335,7 @@ async def endpoint_items(request):
                             "ParentId": parent_id,
                             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"performer-{p['id']}"},
                             "ImageTags": {"Primary": "img"},
+                            "ImageBlurHashes": {"Primary": {"img": "000000"}},
                             "PrimaryImageAspectRatio": 0.6667,
                             "BackdropImageTags": []
                         }
@@ -4367,6 +4374,7 @@ async def endpoint_items(request):
                             "ParentId": parent_id,
                             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"studio-{s['id']}"},
                             "ImageTags": {"Primary": "img"},
+                            "ImageBlurHashes": {"Primary": {"img": "000000"}},
                             "PrimaryImageAspectRatio": 0.6667,
                             "BackdropImageTags": []
                         }
@@ -4405,6 +4413,7 @@ async def endpoint_items(request):
                             "ParentId": parent_id,
                             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"group-{g['id']}"},
                             "ImageTags": {"Primary": "img"},
+                            "ImageBlurHashes": {"Primary": {"img": "000000"}},
                             "PrimaryImageAspectRatio": 0.6667,
                             "BackdropImageTags": []
                         }
@@ -4465,6 +4474,7 @@ async def endpoint_items(request):
                             "ParentId": parent_id,
                             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": t.get("favorite", False), "Played": False, "Key": f"tagitem-{t['id']}"},
                             "ImageTags": {"Primary": "img"},
+                            "ImageBlurHashes": {"Primary": {"img": "000000"}},
                             "PrimaryImageAspectRatio": 0.6667,
                             "BackdropImageTags": []
                         }
@@ -4563,6 +4573,7 @@ async def endpoint_items(request):
             }
             if s.get("image_path"):
                 studio_item["ImageTags"] = {"Primary": "img"}
+                studio_item["ImageBlurHashes"] = {"Primary": {"img": "000000"}}
             else:
                 studio_item["ImageTags"] = {}
             items.append(studio_item)
@@ -4643,6 +4654,7 @@ async def endpoint_items(request):
             }
             if p.get("image_path"):
                 performer_item["ImageTags"] = {"Primary": "img"}
+                performer_item["ImageBlurHashes"] = {"Primary": {"img": "000000"}}
             else:
                 performer_item["ImageTags"] = {}
             items.append(performer_item)
@@ -4746,7 +4758,8 @@ async def endpoint_items(request):
                 "PrimaryImageAspectRatio": 0.6667,
                 "BackdropImageTags": [],
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"group-{m['id']}"},
-                "ImageTags": {"Primary": "img"}
+                "ImageTags": {"Primary": "img"},
+                "ImageBlurHashes": {"Primary": {"img": "000000"}},
             }
             items.append(group_item)
 
@@ -4792,6 +4805,7 @@ async def endpoint_items(request):
             "CollectionType": "movies",
             "ParentId": parent_id,
             "ImageTags": {"Primary": "img"},
+            "ImageBlurHashes": {"Primary": {"img": "000000"}},
             "PrimaryImageAspectRatio": 0.6667,
             "BackdropImageTags": [],
             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "tags-favorites"}
@@ -4810,6 +4824,7 @@ async def endpoint_items(request):
                 "CollectionType": "movies",
                 "ParentId": parent_id,
                 "ImageTags": {"Primary": "img"},
+                "ImageBlurHashes": {"Primary": {"img": "000000"}},
                 "PrimaryImageAspectRatio": 0.6667,
                 "BackdropImageTags": [],
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "tags-all"}
@@ -4832,6 +4847,7 @@ async def endpoint_items(request):
                 "CollectionType": "movies",
                 "ParentId": parent_id,
                 "ImageTags": {"Primary": "img"},
+                "ImageBlurHashes": {"Primary": {"img": "000000"}},
                 "PrimaryImageAspectRatio": 0.6667,
                 "BackdropImageTags": [],
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": item_id}
@@ -4868,6 +4884,7 @@ async def endpoint_items(request):
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": True, "Played": False, "Key": f"tagitem-{t['id']}"}
             }
             tag_item["ImageTags"] = {"Primary": "img"}
+            tag_item["ImageBlurHashes"] = {"Primary": {"img": "000000"}}
             items.append(tag_item)
 
     elif parent_id == "tags-all":
@@ -4898,6 +4915,7 @@ async def endpoint_items(request):
                 "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": t.get("favorite", False), "Played": False, "Key": f"tagitem-{t['id']}"}
             }
             tag_item["ImageTags"] = {"Primary": "img"}
+            tag_item["ImageBlurHashes"] = {"Primary": {"img": "000000"}}
             items.append(tag_item)
 
     elif parent_id and parent_id.startswith("tagitem-"):
@@ -5043,6 +5061,7 @@ async def endpoint_item_details(request):
             "CollectionType": "movies",
             "IsFolder": True,
             "ImageTags": {"Primary": "img"},
+            "ImageBlurHashes": {"Primary": {"img": "000000"}},
             "PrimaryImageAspectRatio": 0.6667,
             "BackdropImageTags": [],
             "ChildCount": filter_count,
@@ -5077,6 +5096,7 @@ async def endpoint_item_details(request):
                     "CollectionType": "movies",
                     "IsFolder": True,
                     "ImageTags": {"Primary": "img"},
+                    "ImageBlurHashes": {"Primary": {"img": "000000"}},
                     "PrimaryImageAspectRatio": 0.6667,
                     "BackdropImageTags": [],
                     "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": item_id}
@@ -5144,6 +5164,7 @@ async def endpoint_item_details(request):
             "CollectionType": "movies",
             "IsFolder": True,
             "ImageTags": {"Primary": "img"},
+            "ImageBlurHashes": {"Primary": {"img": "000000"}},
             "PrimaryImageAspectRatio": 0.6667,
             "BackdropImageTags": [],
             "ChildCount": scene_count,
@@ -5202,6 +5223,7 @@ async def endpoint_item_details(request):
             "CollectionType": "movies",
             "IsFolder": True,
             "ImageTags": {"Primary": "img"},
+            "ImageBlurHashes": {"Primary": {"img": "000000"}},
             "PrimaryImageAspectRatio": 0.6667,
             "BackdropImageTags": [],
             "ChildCount": scene_count,
@@ -5250,6 +5272,7 @@ async def endpoint_item_details(request):
             "CollectionType": "movies",
             "IsFolder": True,
             "ImageTags": {"Primary": "img"},
+            "ImageBlurHashes": {"Primary": {"img": "000000"}},
             "PrimaryImageAspectRatio": 0.6667,
             "BackdropImageTags": [],
             "ChildCount": scene_count,
@@ -5296,6 +5319,7 @@ async def endpoint_item_details(request):
             "CollectionType": "movies",
             "IsFolder": True,
             "ImageTags": {"Primary": "img"},
+            "ImageBlurHashes": {"Primary": {"img": "000000"}},
             "PrimaryImageAspectRatio": 0.6667,
             "BackdropImageTags": [],
             "ChildCount": total_count,
@@ -5318,6 +5342,7 @@ async def endpoint_item_details(request):
             "CollectionType": "movies",
             "IsFolder": True,
             "ImageTags": {"Primary": "img"},
+            "ImageBlurHashes": {"Primary": {"img": "000000"}},
             "PrimaryImageAspectRatio": 0.6667,
             "BackdropImageTags": [],
             "ChildCount": total_count,
@@ -5349,6 +5374,7 @@ async def endpoint_item_details(request):
             "CollectionType": "movies",
             "IsFolder": True,
             "ImageTags": {"Primary": "img"},
+            "ImageBlurHashes": {"Primary": {"img": "000000"}},
             "PrimaryImageAspectRatio": 0.6667,
             "BackdropImageTags": [],
             "ChildCount": scene_count,
@@ -6579,7 +6605,7 @@ async def endpoint_genres(request):
                     seen[t["id"]] = t["name"]
             items = [
                 {"Name": name, "Id": f"genre-{tid}", "ServerId": SERVER_ID,
-                 "Type": "Genre", "ImageTags": {"Primary": "img"}, "BackdropImageTags": []}
+                 "Type": "Genre", "ImageTags": {"Primary": "img"}, "ImageBlurHashes": {"Primary": {"img": "000000"}}, "BackdropImageTags": []}
                 for tid, name in sorted(seen.items(), key=lambda x: x[1])
             ]
         else:
@@ -6591,7 +6617,7 @@ async def endpoint_genres(request):
             tags = res.get("data", {}).get("findTags", {}).get("tags", [])
             items = [
                 {"Name": t["name"], "Id": f"genre-{t['id']}", "ServerId": SERVER_ID,
-                 "Type": "Genre", "ImageTags": {"Primary": "img"}, "BackdropImageTags": []}
+                 "Type": "Genre", "ImageTags": {"Primary": "img"}, "ImageBlurHashes": {"Primary": {"img": "000000"}}, "BackdropImageTags": []}
                 for t in tags if t.get("scene_count", 0) > 0
             ]
 
@@ -6652,6 +6678,7 @@ async def endpoint_persons(request):
                 "ServerId": SERVER_ID,
                 "Type": "Person",
                 "ImageTags": {"Primary": "img"},
+                "ImageBlurHashes": {"Primary": {"img": "000000"}},
                 "BackdropImageTags": []
             }
             items.append(item)
@@ -6689,6 +6716,7 @@ async def endpoint_studios(request):
                 {"Name": s["name"], "Id": f"studio-{s['id']}", "ServerId": SERVER_ID,
                  "Type": "Studio",
                  "ImageTags": {"Primary": "img"},
+                 "ImageBlurHashes": {"Primary": {"img": "000000"}},
                  "BackdropImageTags": []}
                 for s in sorted(seen.values(), key=lambda x: x["name"])
             ]
@@ -6710,6 +6738,7 @@ async def endpoint_studios(request):
                 {"Name": s["name"], "Id": f"studio-{s['id']}", "ServerId": SERVER_ID,
                  "Type": "Studio",
                  "ImageTags": {"Primary": "img"},
+                 "ImageBlurHashes": {"Primary": {"img": "000000"}},
                  "BackdropImageTags": []}
                 for s in studios
             ]
