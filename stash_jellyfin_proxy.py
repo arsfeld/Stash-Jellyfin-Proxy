@@ -3234,7 +3234,7 @@ def parse_emby_auth_header(request):
 
 async def endpoint_authenticate_by_name(request):
     if request.method == "GET":
-        return JSONResponse({})
+        return Response(status_code=405, headers={"Allow": "POST"})
 
     try:
         data = await request.json()
@@ -6939,6 +6939,7 @@ routes = [
     Route("/MediaSegments/{item_id}", endpoint_media_segments),
     Route("/api/danmu/{item_id}/raw", endpoint_danmu),
     WebSocketRoute("/socket", endpoint_websocket),
+    WebSocketRoute("/{path:path}", endpoint_websocket),
     Route("/{path:path}", catch_all),
 ]
 
