@@ -6939,7 +6939,6 @@ routes = [
     Route("/MediaSegments/{item_id}", endpoint_media_segments),
     Route("/api/danmu/{item_id}/raw", endpoint_danmu),
     WebSocketRoute("/socket", endpoint_websocket),
-    WebSocketRoute("/{path:path}", endpoint_websocket),
     Route("/{path:path}", catch_all),
 ]
 
