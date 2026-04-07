@@ -3679,67 +3679,42 @@ async def endpoint_latest_items(request):
                 for s in scenes:
                     items.append(format_jellyfin_item(s, parent_id=parent_id))
 
-    elif parent_id == "root-performers":
-        q = """query { findPerformers(filter: {page: 1, per_page: %d, sort: "created_at", direction: DESC}) { performers { id name image_path scene_count } } }""" % limit
-        res = stash_query(q)
-        for p in res.get("data", {}).get("findPerformers", {}).get("performers", []):
-            items.append({
-                "Name": p.get("name", ""),
-                "Id": f"person-{p['id']}",
-                "Type": "BoxSet",
-                "CollectionType": "movies",
-                "ImageTags": {"Primary": "img"} if p.get("image_path") else {},
-            })
-
-    elif parent_id == "root-studios":
-        q = """query { findStudios(filter: {page: 1, per_page: %d, sort: "created_at", direction: DESC}) { studios { id name image_path } } }""" % limit
-        res = stash_query(q)
-        for s in res.get("data", {}).get("findStudios", {}).get("studios", []):
-            items.append({
-                "Name": s.get("name", ""),
-                "Id": f"studio-{s['id']}",
-                "Type": "BoxSet",
-                "CollectionType": "movies",
-                "ImageTags": {"Primary": "img"} if s.get("image_path") else {},
-            })
-
-    elif parent_id == "root-groups":
-        q = """query { findGroups(filter: {page: 1, per_page: %d, sort: "created_at", direction: DESC}) { groups { id name front_image_path } } }""" % limit
-        res = stash_query(q)
-        for g in res.get("data", {}).get("findGroups", {}).get("groups", []):
-            items.append({
-                "Name": g.get("name", ""),
-                "Id": f"group-{g['id']}",
-                "Type": "BoxSet",
-                "CollectionType": "movies",
-                "ImageTags": {"Primary": "img"} if g.get("front_image_path") else {},
-            })
-
-    elif parent_id == "root-tags":
-        q = """query { findTags(filter: {page: 1, per_page: %d, sort: "created_at", direction: DESC}) { tags { id name image_path } } }""" % limit
-        res = stash_query(q)
-        for t in res.get("data", {}).get("findTags", {}).get("tags", []):
-            items.append({
-                "Name": t.get("name", ""),
-                "Id": f"tag-{t['id']}",
-                "Type": "BoxSet",
-                "CollectionType": "movies",
-                "ImageTags": {"Primary": "img"} if t.get("image_path") else {},
-            })
+    elif parent_id in ("root-performers", "root-studios", "root-groups", "root-tags"):
+        q = f"""query FindScenes($page: Int!, $per_page: Int!) {{
+            findScenes(filter: {{page: $page, per_page: $per_page, sort: "created_at", direction: DESC}}) {{
+                scenes {{ {scene_fields} }}
+            }}
+        }}"""
+        res = stash_query(q, {"page": 1, "per_page": limit})
+        scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+        for s in scenes:
+            items.append(format_jellyfin_item(s, parent_id=parent_id))
 
     logger.debug(f"Returning {len(items)} latest items for {parent_id}")
     return JSONResponse(items)
 
 async def endpoint_display_preferences(request):
-    # Infuse requests display/user preferences
+    prefs_id = request.path_params.get("prefs_id", "usersettings")
+
+    if request.method == "POST":
+        return JSONResponse({"Id": prefs_id})
+
     return JSONResponse({
-        "Id": "usersettings",
+        "Id": prefs_id,
         "SortBy": "SortName",
         "SortOrder": "Ascending",
         "RememberIndexing": False,
         "PrimaryImageHeight": 250,
         "PrimaryImageWidth": 250,
-        "CustomPrefs": {},
+        "CustomPrefs": {
+            "homesection0": "smalllibrarytiles",
+            "homesection1": "resume",
+            "homesection2": "nextup",
+            "homesection3": "latestmedia",
+            "homesection4": "none",
+            "homesection5": "none",
+            "homesection6": "none",
+        },
         "ScrollDirection": "Horizontal",
         "ShowBackdrop": True,
         "RememberSorting": False,
@@ -6732,7 +6707,7 @@ routes = [
     Route("/Users/{user_id}/PlayingItems/{item_id}", endpoint_user_played_items, methods=["POST", "DELETE"]),
     Route("/Users/{user_id}/UnplayedItems/{item_id}", endpoint_user_unplayed_items, methods=["POST", "DELETE"]),
     Route("/Library/VirtualFolders", endpoint_virtual_folders),
-    Route("/DisplayPreferences/{prefs_id}", endpoint_display_preferences),
+    Route("/DisplayPreferences/{prefs_id}", endpoint_display_preferences, methods=["GET", "POST"]),
     Route("/Shows/NextUp", endpoint_shows_nextup),
     Route("/Users/{user_id}/Items", endpoint_items),
     Route("/Users/{user_id}/Items/{item_id}", endpoint_item_details),
