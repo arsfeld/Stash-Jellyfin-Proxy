@@ -31,6 +31,7 @@ import logging
 import asyncio
 import signal
 import uuid
+import hashlib
 import argparse
 import time
 import re
@@ -3461,81 +3462,62 @@ async def endpoint_user_me(request):
     })
 
 async def endpoint_user_views(request):
-    items = [
-        {
-            "Name": "Scenes",
-            "Id": "root-scenes",
+    def make_library(name, lib_id):
+        return {
+            "Name": name,
+            "Id": lib_id,
             "ServerId": SERVER_ID,
+            "Etag": hashlib.md5(lib_id.encode()).hexdigest()[:16],
+            "DateCreated": "2024-01-01T00:00:00.0000000Z",
+            "CanDelete": False,
+            "CanDownload": False,
+            "SortName": name,
+            "ExternalUrls": [],
+            "Path": f"/{lib_id}",
+            "EnableMediaSourceDisplay": False,
+            "Taglines": [],
+            "Genres": [],
+            "PlayAccess": "Full",
+            "RemoteTrailers": [],
+            "ProviderIds": {},
             "Type": "CollectionFolder",
             "CollectionType": "movies",
             "IsFolder": True,
+            "PrimaryImageAspectRatio": 1.0,
+            "DisplayPreferencesId": hashlib.md5(lib_id.encode()).hexdigest()[:32],
+            "Tags": [],
             "ImageTags": {"Primary": "icon"},
             "BackdropImageTags": [],
-            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-scenes"}
-        },
-        {
-            "Name": "Studios",
-            "Id": "root-studios",
-            "ServerId": SERVER_ID,
-            "Type": "CollectionFolder",
-            "CollectionType": "movies",
-            "IsFolder": True,
-            "ImageTags": {"Primary": "icon"},
-            "BackdropImageTags": [],
-            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-studios"}
-        },
-        {
-            "Name": "Performers",
-            "Id": "root-performers",
-            "ServerId": SERVER_ID,
-            "Type": "CollectionFolder",
-            "CollectionType": "movies",
-            "IsFolder": True,
-            "ImageTags": {"Primary": "icon"},
-            "BackdropImageTags": [],
-            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-performers"}
-        },
-        {
-            "Name": "Groups",
-            "Id": "root-groups",
-            "ServerId": SERVER_ID,
-            "Type": "CollectionFolder",
-            "CollectionType": "movies",
-            "IsFolder": True,
-            "ImageTags": {"Primary": "icon"},
-            "BackdropImageTags": [],
-            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-groups"}
+            "ScreenshotImageTags": [],
+            "ImageBlurHashes": {},
+            "LocationType": "FileSystem",
+            "LockedFields": [],
+            "LockData": False,
+            "ChildCount": 100,
+            "SpecialFeatureCount": 0,
+            "UserData": {
+                "PlaybackPositionTicks": 0,
+                "PlayCount": 0,
+                "IsFavorite": False,
+                "Played": False,
+                "Key": lib_id,
+                "UnplayedItemCount": 100
+            }
         }
+
+    items = [
+        make_library("Scenes", "root-scenes"),
+        make_library("Studios", "root-studios"),
+        make_library("Performers", "root-performers"),
+        make_library("Groups", "root-groups"),
     ]
 
-    # Add Tags folder if enabled
     if ENABLE_TAG_FILTERS:
-        items.append({
-            "Name": "Tags",
-            "Id": "root-tags",
-            "ServerId": SERVER_ID,
-            "Type": "CollectionFolder",
-            "CollectionType": "movies",
-            "IsFolder": True,
-            "ImageTags": {"Primary": "icon"},
-            "BackdropImageTags": [],
-            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "root-tags"}
-        })
+        items.append(make_library("Tags", "root-tags"))
 
-    # Add tag group folders (sorted alphabetically)
     for tag_name in sorted(TAG_GROUPS, key=str.lower):
         tag_id = f"tag-{tag_name.lower().replace(' ', '-')}"
-        items.append({
-            "Name": tag_name,
-            "Id": tag_id,
-            "ServerId": SERVER_ID,
-            "Type": "CollectionFolder",
-            "CollectionType": "movies",
-            "IsFolder": True,
-            "ImageTags": {"Primary": "icon"},
-            "BackdropImageTags": [],
-            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": tag_id}
-        })
+        items.append(make_library(tag_name, tag_id))
 
     return JSONResponse({
         "Items": items,
@@ -3597,8 +3579,25 @@ async def endpoint_virtual_folders(request):
     return JSONResponse(folders)
 
 async def endpoint_shows_nextup(request):
-    # Infuse requests next up episodes - return empty
-    return JSONResponse({"Items": [], "TotalRecordCount": 0})
+    """Return suggested/random scenes as 'Next Up' to populate Swiftfin home page."""
+    limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 20)
+
+    scene_fields = "id title code date details files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+
+    q = f"""query FindScenes($page: Int!, $per_page: Int!) {{
+        findScenes(filter: {{page: $page, per_page: $per_page, sort: "random", direction: DESC}}) {{
+            findScenes: scenes {{ {scene_fields} }}
+        }}
+    }}"""
+    try:
+        res = stash_query(q, {"page": 1, "per_page": limit})
+        scenes = res.get("data", {}).get("findScenes", {}).get("findScenes", [])
+        items = [format_jellyfin_item(s) for s in scenes]
+        logger.debug(f"NextUp returning {len(items)} random suggestions")
+        return JSONResponse({"Items": items, "TotalRecordCount": len(items)})
+    except Exception as e:
+        logger.warning(f"NextUp query failed: {e}")
+        return JSONResponse({"Items": [], "TotalRecordCount": 0})
 
 async def endpoint_latest_items(request):
     """Return recently added items for the Infuse home page, personalized by library."""
