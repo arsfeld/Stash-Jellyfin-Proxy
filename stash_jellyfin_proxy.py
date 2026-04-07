@@ -4017,13 +4017,18 @@ async def endpoint_items(request):
     # Check for searchTerm parameter (Infuse search functionality)
     search_term = request.query_params.get("searchTerm") or request.query_params.get("SearchTerm")
 
-    # Check includeItemTypes - if client restricts to specific types, don't inject folders
-    include_item_types = request.query_params.get("includeItemTypes") or request.query_params.get("IncludeItemTypes") or ""
-    restrict_to_movies = "Movie" in include_item_types and "Folder" not in include_item_types
+    # Check includeItemTypes - handle both repeated params (includeItemTypes=Movie&includeItemTypes=Series)
+    # and comma-separated values (includeItemTypes=Movie,Series)
+    raw_type_list = [v for k, v in request.query_params.multi_items() if k.lower() == "includeitemtypes"]
+    include_type_list = []
+    for val in raw_type_list:
+        include_type_list.extend([t.strip() for t in val.split(",") if t.strip()])
+    include_types_lower = [t.lower() for t in include_type_list]
+    has_movie_type = not include_type_list or "movie" in include_types_lower or "video" in include_types_lower
+    restrict_to_movies = has_movie_type and "folder" not in include_types_lower and len(include_type_list) > 0
 
-    # Debug: Log ALL query params to understand what Infuse is sending
-    all_params = dict(request.query_params)
-    logger.debug(f"Items endpoint - ALL PARAMS: {all_params}")
+    # Debug: Log ALL query params (show multi-values properly)
+    logger.debug(f"Items endpoint - ALL PARAMS: {dict(request.query_params)}, includeItemTypes={include_type_list}")
     logger.debug(f"Items endpoint - ParentId: {parent_id}, Ids: {ids}, PersonIds: {person_ids}, SearchTerm: {search_term}, StartIndex: {start_index}, Limit: {limit}, Sort: {sort_field} {sort_direction}")
 
     items = []
@@ -4081,35 +4086,38 @@ async def endpoint_items(request):
             items.append(format_jellyfin_item(s, parent_id=f"person-{performer_id}"))
 
     elif search_term:
-        # Handle search from Infuse - query Stash with the search term
-        # Strip any quotes that Infuse might add around the search term
+        # Handle search from Infuse/Swiftfin - query Stash with the search term
+        # Strip any quotes that client might add around the search term
         clean_search = search_term.strip('"\'')
 
-        logger.info(f"🔍 Search: '{clean_search}'")
+        logger.info(f"Search: '{clean_search}' (types={include_type_list})")
 
-        # Get count of matching scenes
-        count_q = """query CountScenes($q: String!) {
-            findScenes(filter: {q: $q}) { count }
-        }"""
-        count_res = stash_query(count_q, {"q": clean_search})
-        total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
+        # Only search for scenes if Movie/Video type is requested (or no type filter)
+        # Skip for Series-only or Episode-only requests since Stash only has movie-type content
+        if not has_movie_type:
+            logger.debug(f"Search skipped - requested types {include_type_list} don't include Movie/Video")
+        else:
+            # Get count of matching scenes
+            count_q = """query CountScenes($q: String!) {
+                findScenes(filter: {q: $q}) { count }
+            }"""
+            count_res = stash_query(count_q, {"q": clean_search})
+            total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
 
-        # Calculate page
-        page = (start_index // limit) + 1
+            # Calculate page
+            page = (start_index // limit) + 1
 
-        # Query Stash with the search term
-        # Note: Stash's q parameter already provides relevance-based filtering
-        # We use date DESC as the secondary sort for consistent ordering
-        q = f"""query FindScenes($q: String!, $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{
-            findScenes(filter: {{q: $q, page: $page, per_page: $per_page, sort: $sort, direction: $direction}}) {{
-                scenes {{ {scene_fields} }}
-            }}
-        }}"""
-        res = stash_query(q, {"q": clean_search, "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
-        scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-        logger.debug(f"Search '{clean_search}' returned {len(scenes)} scenes (page {page}, total {total_count})")
-        for s in scenes:
-            items.append(format_jellyfin_item(s))
+            # Query Stash with the search term
+            q = f"""query FindScenes($q: String!, $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{
+                findScenes(filter: {{q: $q, page: $page, per_page: $per_page, sort: $sort, direction: $direction}}) {{
+                    scenes {{ {scene_fields} }}
+                }}
+            }}"""
+            res = stash_query(q, {"q": clean_search, "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
+            scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+            logger.debug(f"Search '{clean_search}' returned {len(scenes)} scenes (page {page}, total {total_count})")
+            for s in scenes:
+                items.append(format_jellyfin_item(s))
 
     elif parent_id and parent_id.startswith("filters-"):
         # List saved filters for a specific mode (filters-scenes, filters-performers, etc.)
@@ -4874,10 +4882,12 @@ async def endpoint_items(request):
             logger.warning(f"Tag slug '{tag_slug}' not found in TAG_GROUPS config")
 
     elif not parent_id and not ids and not person_ids and not search_term:
-        # Global query with no parent - used by clients like SenPlayer for home screen hero/backdrop.
-        # Return scenes from the global library.
-        include_types = include_item_types.lower()
-        if not include_types or "movie" in include_types or "video" in include_types or "series" in include_types:
+        # Global query with no parent - used by clients for home screen, search filters, etc.
+        # Only return scenes when Movie or Video type is requested (or no filter specified).
+        # Do NOT return scenes for Series/Episode-only requests (Stash only has movies).
+        if not has_movie_type:
+            logger.debug(f"Global query skipped - requested types {include_type_list} don't include Movie/Video")
+        else:
             count_q = "query { findScenes { count } }"
             count_res = stash_query(count_q)
             total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
