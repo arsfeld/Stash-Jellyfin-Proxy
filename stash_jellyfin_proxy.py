@@ -3032,7 +3032,8 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
     date = scene.get("date")
     files = scene.get("files", [])
     path = files[0].get("path") if files else ""
-    duration = files[0].get("duration", 0) if files else 0
+    raw_duration = files[0].get("duration") if files else None
+    duration = float(raw_duration or 0) if files else 0
 
     # Title fallback: title -> code -> filename (without extension) -> Scene #
     title = scene.get("title") or scene.get("code")
@@ -3219,11 +3220,14 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
 
         media_source = {
             "Id": item_id,
+            "Name": title,
             "Path": path,
             "Protocol": "Http",
             "Type": "Default",
             "Container": container,
-            "Name": title,
+            "RunTimeTicks": int(duration * 10000000) if duration else 0,
+            "Size": int(file_size) if file_size else 0,
+            "Bitrate": bit_rate if bit_rate else 0,
             "SupportsDirectPlay": True,
             "SupportsDirectStream": True,
             "SupportsTranscoding": False,
@@ -3231,12 +3235,6 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
             "DefaultAudioStreamIndex": 1,
             "DefaultSubtitleStreamIndex": -1,
         }
-        if bit_rate:
-            media_source["Bitrate"] = bit_rate
-        if file_size:
-            media_source["Size"] = int(file_size)
-        if duration:
-            media_source["RunTimeTicks"] = int(duration * 10000000)
 
         item["MediaSources"] = [media_source]
 
@@ -5519,6 +5517,17 @@ async def endpoint_sessions(request):
             try:
                 duration_ticks = body.get("RunTimeTicks") or body.get("NowPlayingItem", {}).get("RunTimeTicks", 0)
                 duration_seconds = duration_ticks / 10000000.0 if duration_ticks else 0
+
+                if duration_seconds <= 0:
+                    try:
+                        dq = f"""query FindScene($id: ID!) {{ findScene(id: $id) {{ files {{ duration }} }} }}"""
+                        dres = stash_query(dq, {"id": numeric_id})
+                        dfiles = dres.get("data", {}).get("findScene", {}).get("files", [])
+                        duration_seconds = float(dfiles[0].get("duration") or 0) if dfiles else 0
+                        logger.debug(f"Looked up duration from Stash for {item_id}: {duration_seconds:.0f}s")
+                    except Exception:
+                        pass
+
                 played_percentage = (position_seconds / duration_seconds * 100) if duration_seconds > 0 else 0
 
                 if played_percentage > 90:
@@ -5595,7 +5604,7 @@ async def endpoint_playback_info(request):
     files = scene.get("files", [])
     file_data = files[0] if files else {}
     path = file_data.get("path", "")
-    duration = file_data.get("duration", 0) or 0
+    duration = float(file_data.get("duration") or 0)
     captions = scene.get("captions") or []
 
     video_codec = (file_data.get("video_codec") or "h264").lower()
@@ -5689,12 +5698,18 @@ async def endpoint_playback_info(request):
 
     logger.debug(f"PlaybackInfo for {item_id}: {len(captions)} subtitles")
 
+    runtime_ticks = int(duration * 10000000) if duration else 0
+
     media_source = {
         "Id": item_id,
+        "Name": scene.get("title") or os.path.basename(path),
         "Path": path,
         "Protocol": "Http",
         "Type": "Default",
         "Container": container,
+        "RunTimeTicks": runtime_ticks,
+        "Size": int(file_size) if file_size else 0,
+        "Bitrate": bit_rate if bit_rate else 0,
         "SupportsDirectPlay": True,
         "SupportsDirectStream": True,
         "SupportsTranscoding": False,
@@ -5702,12 +5717,6 @@ async def endpoint_playback_info(request):
         "DefaultAudioStreamIndex": 1,
         "DefaultSubtitleStreamIndex": -1,
     }
-    if bit_rate:
-        media_source["Bitrate"] = bit_rate
-    if file_size:
-        media_source["Size"] = int(file_size)
-    if duration:
-        media_source["RunTimeTicks"] = int(duration * 10000000)
 
     return JSONResponse({
         "MediaSources": [media_source],
