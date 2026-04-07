@@ -102,6 +102,9 @@ SJS_PASSWORD = ""
 # Tag groups - comma-separated list of tag names to show as top-level folders
 TAG_GROUPS = []  # e.g., ["Favorites", "VR", "4K"]
 
+# Favorite tag - Stash tag name used for favorites (toggled from Infuse/Swiftfin)
+FAVORITE_TAG = ""  # e.g., "Favorite"
+
 # Latest groups - controls which libraries show "Latest" on home page
 # Empty = show all libraries, or list specific ones: "Scenes, VR, Favorites"
 LATEST_GROUPS = []
@@ -257,6 +260,8 @@ if _config:
     tag_groups_str = _config.get("TAG_GROUPS", "")
     if tag_groups_str:
         TAG_GROUPS = [t.strip() for t in tag_groups_str.split(",") if t.strip()]
+    # Favorite tag
+    FAVORITE_TAG = _config.get("FAVORITE_TAG", FAVORITE_TAG).strip()
     # Parse LATEST_GROUPS as comma-separated list
     latest_groups_str = _config.get("LATEST_GROUPS", "")
     if latest_groups_str:
@@ -406,6 +411,8 @@ if SERVER_ID:
     print(f"  Server ID: {SERVER_ID}")
 if TAG_GROUPS:
     print(f"  Tag groups: {', '.join(TAG_GROUPS)}")
+if FAVORITE_TAG:
+    print(f"  Favorite tag: {FAVORITE_TAG}")
 if LATEST_GROUPS:
     print(f"  Latest groups: {', '.join(LATEST_GROUPS)}")
 
@@ -1060,6 +1067,11 @@ WEB_UI_HTML = '''<!DOCTYPE html>
                             <label class="form-label">Tag Groups</label>
                             <input type="text" class="form-input" name="TAG_GROUPS" placeholder="e.g. Favorites, VR, 4K">
                             <div class="form-hint">Comma-separated Stash tag names to create as library folders in Infuse</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Favorite Tag</label>
+                            <input type="text" class="form-input" name="FAVORITE_TAG" placeholder="e.g. Favorite">
+                            <div class="form-hint">Stash tag name used when toggling favorites from Infuse/Swiftfin (leave empty to disable)</div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Latest Groups</label>
@@ -2982,6 +2994,38 @@ def extract_numeric_id(guid_id: str) -> str:
         return numeric if numeric else "0"
     return guid_id
 
+_favorite_tag_id_cache = None
+
+def _get_or_create_tag(tag_name: str) -> str:
+    """Get a tag ID by name, creating it if it doesn't exist. Caches the result."""
+    global _favorite_tag_id_cache
+    if _favorite_tag_id_cache:
+        return _favorite_tag_id_cache
+    try:
+        q = """query FindTags($name: String!) { findTags(tag_filter: {name: {value: $name, modifier: EQUALS}}) { tags { id name } } }"""
+        res = stash_query(q, {"name": tag_name})
+        tags = res.get("data", {}).get("findTags", {}).get("tags", [])
+        if tags:
+            _favorite_tag_id_cache = tags[0]["id"]
+            return _favorite_tag_id_cache
+        q = """mutation TagCreate($input: TagCreateInput!) { tagCreate(input: $input) { id name } }"""
+        res = stash_query(q, {"input": {"name": tag_name}})
+        tag = res.get("data", {}).get("tagCreate")
+        if tag:
+            _favorite_tag_id_cache = tag["id"]
+            logger.info(f"Created favorite tag '{tag_name}' with ID {_favorite_tag_id_cache}")
+            return _favorite_tag_id_cache
+    except Exception as e:
+        logger.error(f"Error getting/creating tag '{tag_name}': {e}")
+    return None
+
+def _is_scene_favorite(scene: Dict[str, Any]) -> bool:
+    """Check if a scene has the configured favorite tag."""
+    if not FAVORITE_TAG:
+        return False
+    tag_names = [t.get("name", "") for t in scene.get("tags", [])]
+    return FAVORITE_TAG in tag_names
+
 def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") -> Dict[str, Any]:
     raw_id = str(scene.get("id"))
     item_id = f"scene-{raw_id}"  # Simple ID format like studios use
@@ -2989,7 +3033,6 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
     files = scene.get("files", [])
     path = files[0].get("path") if files else ""
     duration = files[0].get("duration", 0) if files else 0
-    logger.debug(f"Scene {raw_id} stash status: organized={scene.get('organized')}, play_count={scene.get('play_count')}, resume_time={scene.get('resume_time')}")
 
     # Title fallback: title -> code -> filename (without extension) -> Scene #
     title = scene.get("title") or scene.get("code")
@@ -3604,7 +3647,7 @@ async def endpoint_shows_nextup(request):
     """Return suggested/random scenes as 'Next Up' to populate Swiftfin home page."""
     limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 20)
 
-    scene_fields = "id title code date details play_count resume_time organized last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+    scene_fields = "id title code date details play_count resume_time last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
 
     q = f"""query FindScenes($page: Int!, $per_page: Int!) {{
         findScenes(filter: {{page: $page, per_page: $per_page, sort: "random", direction: DESC}}) {{
@@ -3630,7 +3673,7 @@ async def endpoint_latest_items(request):
     logger.debug(f"Latest items request - ParentId: {parent_id}, Limit: {limit}")
 
     # Full scene fields for queries
-    scene_fields = "id title code date details play_count resume_time organized last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+    scene_fields = "id title code date details play_count resume_time last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
 
     items = []
 
@@ -4122,7 +4165,7 @@ async def endpoint_items(request):
     total_count = 0
 
     # Full scene fields for queries (include performer image_path for People images, captions for subtitles)
-    scene_fields = "id title code date details play_count resume_time organized last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+    scene_fields = "id title code date details play_count resume_time last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
 
     if ids:
         # Specific items requested
@@ -5041,7 +5084,7 @@ async def endpoint_item_details(request):
     item_id = request.path_params.get("item_id")
 
     # Full scene fields for queries (include performer image_path for People images, captions for subtitles)
-    scene_fields = "id title code date details play_count resume_time organized last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+    scene_fields = "id title code date details play_count resume_time last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
 
     # Handle special folder IDs - return the folder ITSELF (not children)
 
@@ -6475,7 +6518,7 @@ async def endpoint_image(request):
 
 async def endpoint_user_items_resume(request):
     """Return in-progress items - scenes with resume_time > 0 in Stash."""
-    scene_fields = "id title code date details play_count resume_time organized last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+    scene_fields = "id title code date details play_count resume_time last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
     try:
         q = f"""query FindScenes {{
             findScenes(
@@ -6534,16 +6577,21 @@ async def endpoint_items_counts(request):
         return JSONResponse({"ItemCount": 0})
 
 async def endpoint_user_favorites(request):
-    """Return favorite items - scenes marked as organized in Stash."""
-    scene_fields = "id title code date details play_count resume_time organized last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
+    """Return favorite items - scenes with the configured FAVORITE_TAG in Stash."""
+    if not FAVORITE_TAG:
+        return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+    scene_fields = "id title code date details play_count resume_time last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
     try:
-        q = f"""query FindScenes {{
-            findScenes(scene_filter: {{organized: true}}, filter: {{per_page: 100, sort: "updated_at", direction: DESC}}) {{
+        tag_id = _get_or_create_tag(FAVORITE_TAG)
+        if not tag_id:
+            return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
+        q = f"""query FindScenes($tag_ids: [ID!]) {{
+            findScenes(scene_filter: {{tags: {{value: $tag_ids, modifier: INCLUDES}}}}, filter: {{per_page: 100, sort: "updated_at", direction: DESC}}) {{
                 count
                 scenes {{ {scene_fields} }}
             }}
         }}"""
-        res = stash_query(q)
+        res = stash_query(q, {"tag_ids": [tag_id]})
         scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
         count = res.get("data", {}).get("findScenes", {}).get("count", 0)
         items = [format_jellyfin_item(s) for s in scenes]
@@ -6553,33 +6601,46 @@ async def endpoint_user_favorites(request):
         return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
 async def endpoint_user_item_favorite(request):
-    """Mark item as favorite by setting organized=true in Stash."""
+    """Mark item as favorite by adding the configured FAVORITE_TAG in Stash."""
     item_id = request.path_params.get("item_id", "")
+    if not FAVORITE_TAG:
+        logger.debug(f"Favorite toggled but FAVORITE_TAG not configured - ignoring")
+        return JSONResponse({"IsFavorite": True})
     if item_id.startswith("scene-"):
         numeric_id = item_id.replace("scene-", "")
         try:
-            q = """mutation SceneUpdate($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id organized } }"""
-            result = stash_query(q, {"input": {"id": numeric_id, "organized": True}})
-            if result and result.get("data", {}).get("sceneUpdate"):
-                logger.info(f"★ Favorited: {item_id}")
-            else:
-                logger.warning(f"Failed to favorite {item_id}: {result}")
+            tag_id = _get_or_create_tag(FAVORITE_TAG)
+            if tag_id:
+                scene_res = stash_query("""query FindScene($id: ID!) { findScene(id: $id) { id tags { id } } }""", {"id": numeric_id})
+                scene = scene_res.get("data", {}).get("findScene") if scene_res else None
+                if scene:
+                    existing_tag_ids = [t["id"] for t in scene.get("tags", [])]
+                    if tag_id not in existing_tag_ids:
+                        existing_tag_ids.append(tag_id)
+                    q = """mutation SceneUpdate($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id } }"""
+                    stash_query(q, {"input": {"id": numeric_id, "tag_ids": existing_tag_ids}})
+                    logger.info(f"★ Favorited: {item_id} (added tag '{FAVORITE_TAG}')")
         except Exception as e:
             logger.error(f"Error favoriting {item_id}: {e}")
     return JSONResponse({"IsFavorite": True})
 
 async def endpoint_user_item_unfavorite(request):
-    """Remove favorite by setting organized=false in Stash."""
+    """Remove favorite by removing the configured FAVORITE_TAG in Stash."""
     item_id = request.path_params.get("item_id", "")
+    if not FAVORITE_TAG:
+        return JSONResponse({"IsFavorite": False})
     if item_id.startswith("scene-"):
         numeric_id = item_id.replace("scene-", "")
         try:
-            q = """mutation SceneUpdate($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id organized } }"""
-            result = stash_query(q, {"input": {"id": numeric_id, "organized": False}})
-            if result and result.get("data", {}).get("sceneUpdate"):
-                logger.info(f"☆ Unfavorited: {item_id}")
-            else:
-                logger.warning(f"Failed to unfavorite {item_id}: {result}")
+            tag_id = _get_or_create_tag(FAVORITE_TAG)
+            if tag_id:
+                scene_res = stash_query("""query FindScene($id: ID!) { findScene(id: $id) { id tags { id } } }""", {"id": numeric_id})
+                scene = scene_res.get("data", {}).get("findScene") if scene_res else None
+                if scene:
+                    existing_tag_ids = [t["id"] for t in scene.get("tags", []) if t["id"] != tag_id]
+                    q = """mutation SceneUpdate($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id } }"""
+                    stash_query(q, {"input": {"id": numeric_id, "tag_ids": existing_tag_ids}})
+                    logger.info(f"☆ Unfavorited: {item_id} (removed tag '{FAVORITE_TAG}')")
         except Exception as e:
             logger.error(f"Error unfavoriting {item_id}: {e}")
     return JSONResponse({"IsFavorite": False})
@@ -7177,7 +7238,7 @@ async def ui_api_status(request):
 async def ui_api_config(request):
     """Get or set configuration."""
     # Declare globals at top of function (required before any reference)
-    global TAG_GROUPS, LATEST_GROUPS, SERVER_NAME, STASH_TIMEOUT, STASH_RETRIES
+    global TAG_GROUPS, FAVORITE_TAG, _favorite_tag_id_cache, LATEST_GROUPS, SERVER_NAME, STASH_TIMEOUT, STASH_RETRIES
     global STASH_GRAPHQL_PATH, STASH_VERIFY_TLS, ENABLE_FILTERS, ENABLE_IMAGE_RESIZE
     global ENABLE_TAG_FILTERS, ENABLE_ALL_TAGS
     global IMAGE_CACHE_MAX_SIZE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, REQUIRE_AUTH_FOR_CONFIG
@@ -7198,6 +7259,7 @@ async def ui_api_config(request):
                 "SERVER_ID": SERVER_ID,
                 "SERVER_NAME": SERVER_NAME,
                 "TAG_GROUPS": TAG_GROUPS,
+                "FAVORITE_TAG": FAVORITE_TAG,
                 "LATEST_GROUPS": LATEST_GROUPS,
                 "STASH_TIMEOUT": STASH_TIMEOUT,
                 "STASH_RETRIES": STASH_RETRIES,
@@ -7228,7 +7290,7 @@ async def ui_api_config(request):
                 "STASH_URL", "STASH_API_KEY", "STASH_GRAPHQL_PATH", "STASH_VERIFY_TLS",
                 "PROXY_BIND", "PROXY_PORT", "UI_PORT",
                 "SJS_USER", "SJS_PASSWORD", "SERVER_ID", "SERVER_NAME",
-                "TAG_GROUPS", "LATEST_GROUPS", "STASH_TIMEOUT", "STASH_RETRIES",
+                "TAG_GROUPS", "FAVORITE_TAG", "LATEST_GROUPS", "STASH_TIMEOUT", "STASH_RETRIES",
                 "ENABLE_FILTERS", "ENABLE_IMAGE_RESIZE", "ENABLE_TAG_FILTERS", "ENABLE_ALL_TAGS", "REQUIRE_AUTH_FOR_CONFIG", "IMAGE_CACHE_MAX_SIZE",
                 "DEFAULT_PAGE_SIZE", "MAX_PAGE_SIZE",
                 "LOG_LEVEL", "LOG_DIR", "LOG_FILE", "LOG_MAX_SIZE_MB", "LOG_BACKUP_COUNT",
@@ -7273,6 +7335,7 @@ async def ui_api_config(request):
                 "SERVER_ID": SERVER_ID,
                 "SERVER_NAME": SERVER_NAME,
                 "TAG_GROUPS": ", ".join(TAG_GROUPS) if TAG_GROUPS else "",
+                "FAVORITE_TAG": FAVORITE_TAG,
                 "LATEST_GROUPS": ", ".join(LATEST_GROUPS) if LATEST_GROUPS else "",
                 "STASH_TIMEOUT": str(STASH_TIMEOUT),
                 "STASH_RETRIES": str(STASH_RETRIES),
@@ -7308,6 +7371,7 @@ async def ui_api_config(request):
                 "SERVER_ID": "",
                 "SERVER_NAME": "Stash Media Server",
                 "TAG_GROUPS": "",
+                "FAVORITE_TAG": "",
                 "LATEST_GROUPS": "",
                 "STASH_TIMEOUT": "30",
                 "STASH_RETRIES": "3",
@@ -7445,6 +7509,10 @@ async def ui_api_config(request):
                 if key == "TAG_GROUPS":
                     TAG_GROUPS = [t.strip() for t in new_val.split(",") if t.strip()]
                     applied_immediately.append(key)
+                elif key == "FAVORITE_TAG":
+                    FAVORITE_TAG = new_val.strip()
+                    _favorite_tag_id_cache = None
+                    applied_immediately.append(key)
                 elif key == "LATEST_GROUPS":
                     LATEST_GROUPS = [t.strip() for t in new_val.split(",") if t.strip()]
                     applied_immediately.append(key)
@@ -7513,6 +7581,10 @@ async def ui_api_config(request):
                 default_val = defaults.get(key, "")
                 if key == "TAG_GROUPS":
                     TAG_GROUPS = []
+                    applied_immediately.append(key)
+                elif key == "FAVORITE_TAG":
+                    FAVORITE_TAG = ""
+                    _favorite_tag_id_cache = None
                     applied_immediately.append(key)
                 elif key == "LATEST_GROUPS":
                     LATEST_GROUPS = []
