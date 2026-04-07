@@ -9,8 +9,8 @@ A single-file Python proxy server that enables Jellyfin-compatible media players
 | Client | Platform | Status |
 |--------|----------|--------|
 | **Infuse** | iOS, tvOS, macOS | Fully supported |
-| **Swiftfin** | iOS, tvOS | Fully supported |
-| **SenPlayer** | iOS | Supported |
+| **Swiftfin** | iOS, tvOS | Partial support |
+| **SenPlayer** | iOS | Fully supported |
 | Other Jellyfin clients | Various | Should work (untested) |
 
 ## Features
