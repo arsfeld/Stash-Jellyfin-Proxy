@@ -4462,14 +4462,19 @@ async def endpoint_items(request):
             has_filters = len(saved_filters) > 0
 
         # On first page, add FILTERS folder at the top if there are saved filters
-        # But skip if client restricts to Movie type only (e.g. Infuse includeItemTypes=Movie)
+        # Detect client: Infuse supports folder browsing, others may not
+        client_info = parse_emby_auth_header(request)
+        client_name = client_info.get("Client", "").lower()
+        client_supports_folders = "infuse" in client_name or "senplayer" in client_name
+        show_filters = has_filters and (client_supports_folders or not restrict_to_movies)
+
         filters_added = False
-        if start_index == 0 and has_filters and not restrict_to_movies:
+        if start_index == 0 and show_filters:
             items.append(format_filters_folder("root-scenes"))
             filters_added = True
 
         # Total count includes Filters folder if present
-        show_filters_in_count = has_filters and not restrict_to_movies
+        show_filters_in_count = show_filters
         total_count = scene_count + 1 if show_filters_in_count else scene_count
 
         # Calculate page - Stash uses 1-indexed pages
