@@ -3746,7 +3746,7 @@ async def endpoint_latest_items(request):
     elif parent_id == "root-performers":
         q = """query FindPerformers($page: Int!, $per_page: Int!) {
             findPerformers(filter: {page: $page, per_page: $per_page, sort: "created_at", direction: DESC}) {
-                performers { id name image_path scene_count }
+                performers { id name image_path scene_count favorite }
             }
         }"""
         res = stash_query(q, {"page": 1, "per_page": limit})
@@ -3761,7 +3761,7 @@ async def endpoint_latest_items(request):
                 "ChildCount": p.get("scene_count", 0),
                 "PrimaryImageAspectRatio": 0.6667,
                 "BackdropImageTags": [],
-                "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"performer-{p['id']}"}
+                "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": bool(p.get("favorite")), "Played": False, "Key": f"performer-{p['id']}"}
             }
             item["ImageTags"] = {"Primary": "img"} if p.get("image_path") else {}
             item["ImageBlurHashes"] = {"Primary": {"img": "000000"}} if p.get("image_path") else {}
@@ -4361,7 +4361,7 @@ async def endpoint_items(request):
                             performer_filter: $performer_filter,
                             filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}
                         ) {
-                            performers { id name image_path scene_count }
+                            performers { id name image_path scene_count favorite }
                         }
                     }"""
                     res = stash_query(q, {"performer_filter": graphql_filter, "page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
@@ -4378,7 +4378,7 @@ async def endpoint_items(request):
                             "ChildCount": p.get("scene_count", 0),
                             "RecursiveItemCount": p.get("scene_count", 0),
                             "ParentId": parent_id,
-                            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"performer-{p['id']}"},
+                            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": bool(p.get("favorite")), "Played": False, "Key": f"performer-{p['id']}"},
                             "ImageTags": {"Primary": "img"},
                             "ImageBlurHashes": {"Primary": {"img": "000000"}},
                             "PrimaryImageAspectRatio": 0.6667,
@@ -4679,7 +4679,7 @@ async def endpoint_items(request):
 
         q = """query FindPerformers($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
             findPerformers(filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}) {
-                performers { id name image_path scene_count }
+                performers { id name image_path scene_count favorite }
             }
         }"""
         res = stash_query(q, {"page": page, "per_page": fetch_limit, "sort": folder_sort, "direction": folder_dir})
@@ -4695,7 +4695,7 @@ async def endpoint_items(request):
                 "RecursiveItemCount": p.get("scene_count", 0),
                 "PrimaryImageAspectRatio": 0.6667,
                 "BackdropImageTags": [],
-                "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": f"performer-{p['id']}"}
+                "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": bool(p.get("favorite")), "Played": False, "Key": f"performer-{p['id']}"}
             }
             if p.get("image_path"):
                 performer_item["ImageTags"] = {"Primary": "img"}
@@ -5247,7 +5247,7 @@ async def endpoint_item_details(request):
             performer_id = item_id.replace("performer-", "")
         else:
             performer_id = item_id.replace("person-", "")
-        q = """query FindPerformer($id: ID!) { findPerformer(id: $id) { id name image_path scene_count } }"""
+        q = """query FindPerformer($id: ID!) { findPerformer(id: $id) { id name image_path scene_count favorite } }"""
         res = stash_query(q, {"id": performer_id})
         performer = res.get("data", {}).get("findPerformer")
 
@@ -5267,13 +5267,13 @@ async def endpoint_item_details(request):
             "Type": "BoxSet",
             "CollectionType": "movies",
             "IsFolder": True,
-            "ImageTags": {"Primary": "img"},
-            "ImageBlurHashes": {"Primary": {"img": "000000"}},
+            "ImageTags": {"Primary": "img"} if has_image else {},
+            "ImageBlurHashes": {"Primary": {"img": "000000"}} if has_image else {},
             "PrimaryImageAspectRatio": 0.6667,
             "BackdropImageTags": [],
             "ChildCount": scene_count,
             "RecursiveItemCount": scene_count,
-            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": item_id}
+            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": bool(performer.get("favorite")), "Played": False, "Key": item_id}
         })
 
     elif item_id == "root-groups":
@@ -6601,12 +6601,12 @@ async def endpoint_user_favorites(request):
         return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
 async def endpoint_user_item_favorite(request):
-    """Mark item as favorite by adding the configured FAVORITE_TAG in Stash."""
+    """Mark item as favorite in Stash. Scenes use FAVORITE_TAG, performers use native favorite field."""
     item_id = request.path_params.get("item_id", "")
-    if not FAVORITE_TAG:
-        logger.debug(f"Favorite toggled but FAVORITE_TAG not configured - ignoring")
-        return JSONResponse({"IsFavorite": True})
     if item_id.startswith("scene-"):
+        if not FAVORITE_TAG:
+            logger.debug(f"Favorite toggled but FAVORITE_TAG not configured - ignoring")
+            return JSONResponse({"IsFavorite": True})
         numeric_id = item_id.replace("scene-", "")
         try:
             tag_id = _get_or_create_tag(FAVORITE_TAG)
@@ -6619,17 +6619,38 @@ async def endpoint_user_item_favorite(request):
                         existing_tag_ids.append(tag_id)
                     q = """mutation SceneUpdate($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id } }"""
                     stash_query(q, {"input": {"id": numeric_id, "tag_ids": existing_tag_ids}})
-                    logger.info(f"★ Favorited: {item_id} (added tag '{FAVORITE_TAG}')")
+                    logger.info(f"★ Favorited scene: {item_id} (added tag '{FAVORITE_TAG}')")
         except Exception as e:
             logger.error(f"Error favoriting {item_id}: {e}")
+    elif item_id.startswith("performer-") or item_id.startswith("person-"):
+        if item_id.startswith("person-performer-"):
+            performer_id = item_id.replace("person-performer-", "")
+        elif item_id.startswith("performer-"):
+            performer_id = item_id.replace("performer-", "")
+        else:
+            performer_id = item_id.replace("person-", "")
+        try:
+            q = """mutation PerformerUpdate($input: PerformerUpdateInput!) { performerUpdate(input: $input) { id favorite } }"""
+            stash_query(q, {"input": {"id": performer_id, "favorite": True}})
+            logger.info(f"★ Favorited performer: {item_id}")
+        except Exception as e:
+            logger.error(f"Error favoriting performer {item_id}: {e}")
+    elif item_id.startswith("studio-"):
+        studio_id = item_id.replace("studio-", "")
+        try:
+            q = """mutation StudioUpdate($input: StudioUpdateInput!) { studioUpdate(input: $input) { id favorite } }"""
+            stash_query(q, {"input": {"id": studio_id, "favorite": True}})
+            logger.info(f"★ Favorited studio: {item_id}")
+        except Exception as e:
+            logger.error(f"Error favoriting studio {item_id}: {e}")
     return JSONResponse({"IsFavorite": True})
 
 async def endpoint_user_item_unfavorite(request):
-    """Remove favorite by removing the configured FAVORITE_TAG in Stash."""
+    """Remove favorite in Stash. Scenes use FAVORITE_TAG, performers use native favorite field."""
     item_id = request.path_params.get("item_id", "")
-    if not FAVORITE_TAG:
-        return JSONResponse({"IsFavorite": False})
     if item_id.startswith("scene-"):
+        if not FAVORITE_TAG:
+            return JSONResponse({"IsFavorite": False})
         numeric_id = item_id.replace("scene-", "")
         try:
             tag_id = _get_or_create_tag(FAVORITE_TAG)
@@ -6640,9 +6661,30 @@ async def endpoint_user_item_unfavorite(request):
                     existing_tag_ids = [t["id"] for t in scene.get("tags", []) if t["id"] != tag_id]
                     q = """mutation SceneUpdate($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id } }"""
                     stash_query(q, {"input": {"id": numeric_id, "tag_ids": existing_tag_ids}})
-                    logger.info(f"☆ Unfavorited: {item_id} (removed tag '{FAVORITE_TAG}')")
+                    logger.info(f"☆ Unfavorited scene: {item_id} (removed tag '{FAVORITE_TAG}')")
         except Exception as e:
             logger.error(f"Error unfavoriting {item_id}: {e}")
+    elif item_id.startswith("performer-") or item_id.startswith("person-"):
+        if item_id.startswith("person-performer-"):
+            performer_id = item_id.replace("person-performer-", "")
+        elif item_id.startswith("performer-"):
+            performer_id = item_id.replace("performer-", "")
+        else:
+            performer_id = item_id.replace("person-", "")
+        try:
+            q = """mutation PerformerUpdate($input: PerformerUpdateInput!) { performerUpdate(input: $input) { id favorite } }"""
+            stash_query(q, {"input": {"id": performer_id, "favorite": False}})
+            logger.info(f"☆ Unfavorited performer: {item_id}")
+        except Exception as e:
+            logger.error(f"Error unfavoriting performer {item_id}: {e}")
+    elif item_id.startswith("studio-"):
+        studio_id = item_id.replace("studio-", "")
+        try:
+            q = """mutation StudioUpdate($input: StudioUpdateInput!) { studioUpdate(input: $input) { id favorite } }"""
+            stash_query(q, {"input": {"id": studio_id, "favorite": False}})
+            logger.info(f"☆ Unfavorited studio: {item_id}")
+        except Exception as e:
+            logger.error(f"Error unfavoriting studio {item_id}: {e}")
     return JSONResponse({"IsFavorite": False})
 
 async def endpoint_items_filters(request):
