@@ -45,7 +45,8 @@ try:
     from hypercorn.asyncio import serve
     from starlette.applications import Starlette
     from starlette.responses import JSONResponse, Response, RedirectResponse
-    from starlette.routing import Route
+    from starlette.routing import Route, WebSocketRoute
+    from starlette.websockets import WebSocket
     from starlette.middleware import Middleware
     from starlette.middleware.base import BaseHTTPMiddleware
     from starlette.middleware.cors import CORSMiddleware
@@ -6823,6 +6824,30 @@ async def catch_all(request):
     # Return empty success to prevent errors
     return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
+async def endpoint_websocket(websocket: WebSocket):
+    """Jellyfin WebSocket endpoint for clients like Infuse-Direct that require it.
+
+    Accepts the connection and runs a keepalive loop matching Jellyfin's protocol.
+    Without this, newer Infuse versions hang for ~3s after login then retry indefinitely.
+    """
+    await websocket.accept()
+    logger.debug(f"WebSocket connected from {websocket.client}")
+    try:
+        # Send initial ForceKeepAlive so the client knows the interval (30s)
+        await websocket.send_json({"MessageType": "ForceKeepAlive", "Data": 30})
+        while True:
+            try:
+                msg = await asyncio.wait_for(websocket.receive_json(), timeout=60.0)
+                msg_type = msg.get("MessageType", "")
+                if msg_type == "KeepAlive":
+                    await websocket.send_json({"MessageType": "KeepAlive"})
+                # All other message types are acknowledged silently
+            except asyncio.TimeoutError:
+                # Send keepalive to prevent client disconnect
+                await websocket.send_json({"MessageType": "KeepAlive"})
+    except Exception as e:
+        logger.debug(f"WebSocket disconnected: {e}")
+
 # --- App Construction ---
 routes = [
     Route("/", endpoint_root),
@@ -6910,6 +6935,7 @@ routes = [
     Route("/Items/{item_id}/InstantMix", endpoint_instant_mix),
     Route("/MediaSegments/{item_id}", endpoint_media_segments),
     Route("/api/danmu/{item_id}/raw", endpoint_danmu),
+    WebSocketRoute("/socket", endpoint_websocket),
     Route("/{path:path}", catch_all),
 ]
 
