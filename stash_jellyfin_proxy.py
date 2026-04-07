@@ -2989,6 +2989,7 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
     files = scene.get("files", [])
     path = files[0].get("path") if files else ""
     duration = files[0].get("duration", 0) if files else 0
+    logger.debug(f"Scene {raw_id} stash status: organized={scene.get('organized')}, play_count={scene.get('play_count')}, resume_time={scene.get('resume_time')}")
 
     # Title fallback: title -> code -> filename (without extension) -> Scene #
     title = scene.get("title") or scene.get("code")
@@ -3020,7 +3021,7 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
         "UserData": {
             "PlaybackPositionTicks": int(scene.get("resume_time", 0) * 10000000),
             "PlayCount": scene.get("play_count") or 0,
-            "IsFavorite": scene.get("organized", False),
+            "IsFavorite": _is_scene_favorite(scene),
             "Played": (scene.get("play_count") or 0) > 0,
             "LastPlayedDate": scene.get("last_played_at", ""),
             "Key": item_id
