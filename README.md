@@ -11,6 +11,8 @@ A single-file Python proxy server that enables Jellyfin-compatible media players
 | **Infuse** | iOS, tvOS, macOS | Fully supported |
 | **Swiftfin** | iOS, tvOS | Partial support |
 | **SenPlayer** | iOS | Fully supported |
+| **Jellyfin Android** | Android | Partial support |
+| **Findroid** | Android | Partial support |
 | Other Jellyfin clients | Various | Should work (untested) |
 
 ## Features
@@ -147,11 +149,12 @@ Access the configuration dashboard at `http://your-server:8097`:
 ## Changelog
 
 ### v6.00
-- **Multi-client support**: Full compatibility with Infuse, Swiftfin, and SenPlayer
+- **Multi-client support**: Full compatibility with Infuse, SenPlayer; partial support for Swiftfin, Jellyfin Android, and Findroid
 - **Swiftfin compatibility fixes**: Added alternate `/UserFavoriteItems/` routes used by Swiftfin for favorite toggling; fixed `ImageBlurHashes` on all BoxSet folder items so Swiftfin loads images for Performers, Studios, Groups, Tags, and Filters
 - **Play/resume/watched sync**: Playback state fully synced with Stash — `play_count`, `resume_time`, and `last_played_at` are read from Stash and written back on stop. Scenes watched >90% are auto-marked played with resume cleared; otherwise resume position is saved
 - **Favorites redesign**: Replaced broken `organized`-based approach with tag-based favorites for scenes (`FAVORITE_TAG` config); performers use Stash's native `favorite` field; studios use `studioUpdate` mutation; all favorites toggle correctly from any supported client
 - **Duration fix**: `RunTimeTicks` now always included in `MediaSources` responses; fixed Swiftfin showing "0m" on play button. Stopped handler looks up actual duration from Stash when client sends 0
+- **Android client support**: Rewrote case-insensitive path middleware to correctly handle parameterized routes with any casing; added `/ClientLog/Document` endpoint required by Jellyfin Android during startup
 - **Rich media metadata**: Codec, resolution, bitrate, frame rate, and channel layout included in `MediaStreams` for accurate client display
 
 ### v5.04

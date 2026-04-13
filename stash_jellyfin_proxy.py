@@ -2391,52 +2391,78 @@ class AuthenticationMiddleware:
 
 
 class CaseInsensitivePathMiddleware:
-    """Normalize request paths to match route casing (Jellyfin clients vary in casing)."""
+    """Normalize request paths to match route casing (Jellyfin clients vary in casing).
 
-    _path_map = None
+    Builds a list of route templates (e.g. /Users/{user_id}/Items/{item_id}).
+    For each incoming request, tries to match against every template by comparing
+    static segments case-insensitively while treating parameterized segments as wildcards.
+    On match, reconstructs the path using the route's original casing for static segments
+    and the request's original values for dynamic segments.
+
+    This handles all parameterized routes correctly regardless of how the client
+    cases them (Jellyfin Android, Swiftfin, Infuse all differ).
+    """
+
+    _static_map = None
+    _templates = None
 
     def __init__(self, app):
         self.app = app
 
     @classmethod
     def build_path_map(cls, route_list):
-        """Build lowercase->original mapping from route paths.
-        
-        For parameterized routes like /Videos/{item_id}/stream, we store
-        a segment-level mapping so we can fix casing of static segments
-        while preserving dynamic ones.
-        """
-        cls._path_map = {}
-        cls._segment_map = {}
+        cls._static_map = {}
+        cls._templates = []
         for r in route_list:
             p = getattr(r, "path", "")
             if not p:
                 continue
             if "{" not in p:
-                cls._path_map[p.lower()] = p
+                cls._static_map[p.lower()] = p
             else:
-                for seg in p.split("/"):
-                    if seg and "{" not in seg:
-                        cls._segment_map[seg.lower()] = seg
+                segments = p.split("/")
+                template = []
+                for seg in segments:
+                    if seg and seg.startswith("{"):
+                        template.append(None)
+                    else:
+                        template.append(seg)
+                cls._templates.append((template, p))
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
             path = scope.get("path", "")
             path_lower = path.lower()
-            if self._path_map and path_lower in self._path_map:
-                scope = dict(scope, path=self._path_map[path_lower])
+
+            if path_lower in self._static_map:
+                scope = dict(scope, path=self._static_map[path_lower])
             elif path_lower != path:
-                segments = path.split("/")
-                normalized = []
-                for seg in segments:
-                    seg_lower = seg.lower()
-                    if seg_lower in self._segment_map:
-                        normalized.append(self._segment_map[seg_lower])
-                    else:
-                        normalized.append(seg)
-                new_path = "/".join(normalized)
-                if new_path != path:
-                    scope = dict(scope, path=new_path)
+                req_segments = path.split("/")
+                req_count = len(req_segments)
+                matched = False
+                for template, original in self._templates:
+                    if len(template) != req_count:
+                        continue
+                    ok = True
+                    for i, t_seg in enumerate(template):
+                        if t_seg is None:
+                            continue
+                        if t_seg.lower() != req_segments[i].lower():
+                            ok = False
+                            break
+                    if ok:
+                        rebuilt = []
+                        for i, t_seg in enumerate(template):
+                            if t_seg is None:
+                                rebuilt.append(req_segments[i])
+                            else:
+                                rebuilt.append(t_seg)
+                        scope = dict(scope, path="/".join(rebuilt))
+                        matched = True
+                        break
+                if not matched:
+                    scope = dict(scope, path=path)
+
         await self.app(scope, receive, send)
 
 class RequestLoggingMiddleware:
@@ -7129,10 +7155,13 @@ async def endpoint_danmu(request):
     """Stub for SenPlayer's danmaku (bullet comments) endpoint - return empty."""
     return JSONResponse([])
 
+async def endpoint_client_log(request):
+    """Accept client diagnostic log posts (Jellyfin Android sends these during startup)."""
+    return Response(status_code=204)
+
 async def catch_all(request):
     """Catch any unhandled routes and log them for debugging."""
     logger.warning(f"UNHANDLED ENDPOINT: {request.method} {request.url.path} - Query: {dict(request.query_params)}")
-    # Return empty success to prevent errors
     return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
 async def endpoint_websocket(websocket: WebSocket):
@@ -7237,6 +7266,7 @@ routes = [
     Route("/Sessions/Playing/Stopped", endpoint_sessions, methods=["POST"]),
     Route("/Sessions/Capabilities", endpoint_sessions_capabilities, methods=["POST"]),
     Route("/Sessions/Capabilities/Full", endpoint_sessions_capabilities, methods=["POST"]),
+    Route("/ClientLog/Document", endpoint_client_log, methods=["POST"]),
     Route("/Collections", endpoint_collections),
     Route("/Playlists", endpoint_playlists),
     Route("/Genres", endpoint_genres),
