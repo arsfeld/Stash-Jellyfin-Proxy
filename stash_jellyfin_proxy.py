@@ -4127,6 +4127,10 @@ async def endpoint_items(request):
     # Check for searchTerm parameter (Infuse search functionality)
     search_term = request.query_params.get("searchTerm") or request.query_params.get("SearchTerm")
 
+    # Check for Filters parameter (e.g. Filters=IsFavorite used by SenPlayer/Swiftfin Favorites tab)
+    filters_param = request.query_params.get("Filters") or request.query_params.get("filters") or ""
+    filter_favorites = "isfavorite" in filters_param.lower()
+
     # Check includeItemTypes - handle both repeated params (includeItemTypes=Movie&includeItemTypes=Series)
     # and comma-separated values (includeItemTypes=Movie,Series)
     raw_type_list = [v for k, v in request.query_params.multi_items() if k.lower() == "includeitemtypes"]
@@ -5035,6 +5039,34 @@ async def endpoint_items(request):
         # Do NOT return scenes for Series/Episode-only requests (Stash only has movies).
         if not has_movie_type:
             logger.debug(f"Global query skipped - requested types {include_type_list} don't include Movie/Video")
+        elif filter_favorites and FAVORITE_TAG:
+            # Favorites filter: only return scenes tagged with the configured FAVORITE_TAG
+            fav_tag_id = _get_or_create_tag(FAVORITE_TAG)
+            if fav_tag_id:
+                count_q = """query CountFavScenes($tid: [ID!]) {
+                    findScenes(scene_filter: {tags: {value: $tid, modifier: INCLUDES}}) { count }
+                }"""
+                count_res = stash_query(count_q, {"tid": [fav_tag_id]})
+                total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
+                page = (start_index // limit) + 1
+                q = f"""query FindFavScenes($tid: [ID!], $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{
+                    findScenes(
+                        scene_filter: {{tags: {{value: $tid, modifier: INCLUDES}}}},
+                        filter: {{page: $page, per_page: $per_page, sort: $sort, direction: $direction}}
+                    ) {{
+                        scenes {{ {scene_fields} }}
+                    }}
+                }}"""
+                res = stash_query(q, {"tid": [fav_tag_id], "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
+                scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+                logger.debug(f"Favorites query returned {len(scenes)} scenes (page {page}, total {total_count})")
+                for s in scenes:
+                    items.append(format_jellyfin_item(s))
+            else:
+                logger.warning(f"IsFavorite filter requested but could not resolve FAVORITE_TAG '{FAVORITE_TAG}'")
+        elif filter_favorites and not FAVORITE_TAG:
+            logger.debug("IsFavorite filter requested but FAVORITE_TAG not configured - returning empty")
+            total_count = 0
         else:
             count_q = "query { findScenes { count } }"
             count_res = stash_query(count_q)
