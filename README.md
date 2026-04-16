@@ -1,6 +1,6 @@
 # Stash-Jellyfin Proxy
 
-**Version 6.01**
+**Version 6.02**
 
 A single-file Python proxy server that enables Jellyfin-compatible media players to connect to [Stash](https://stashapp.cc/) by emulating the Jellyfin API.
 
@@ -148,6 +148,14 @@ Access the configuration dashboard at `http://your-server:8097`:
 - Scene and group favorites require `FAVORITE_TAG` to be configured
 
 ## Changelog
+
+### v6.02
+- **Home-screen banner for SenPlayer**: SenPlayer fetches a `SortBy=...Random...` + `IncludeItemTypes=Movie` query to populate the server's rotating banner. The proxy now detects that signature and returns randomized **scenes** (with screenshots) instead of the default newest Groups, so the banner has real visual variety. Two selectable modes, both exposed in the Web UI under a new **Home-Screen Banner** card:
+  - `recent` — random sample from the newest `BANNER_POOL_SIZE` scenes (default 200)
+  - `tag` — random sample from scenes matching any of the comma-separated `BANNER_TAGS`; falls back to `recent` if tags don't resolve
+- **Unique per-scene ImageTags and Etag**: `format_jellyfin_item` now writes a distinct `ImageTags.Primary` (`p<id>`) and `BackdropImageTags` (`b<id>`) per scene, plus an `Etag` derived from `play_count` + `resume_time` + `last_played_at`. Clients that key their image cache by `(ItemId, ImageTag)` no longer dedup across items, and the Etag changes when a user's playback state changes so clients re-fetch on state updates.
+- **Favorite toggle response fix**: `POST`/`DELETE` to `/Users/{userId}/FavoriteItems/{id}` (and the `UserFavoriteItems` aliases) now return a full `UserItemDataDto` (including `Key` and `ItemId`) instead of just `{"IsFavorite": bool}`. Infuse, SenPlayer, and Swiftfin use those fields to reconcile local cache state — the truncated response was causing the heart to snap back until the user navigated away.
+- **DateLastContentAdded sort mapping**: SenPlayer opens Studios, Performers, and Groups with `SortBy=DateLastContentAdded,DateCreated,SortName` + `SortOrder=Descending`. That key wasn't in either sort map, so both contexts fell through to the default field while still honoring `Descending` — giving reverse-alphabetical listings. Mapped to `created_at` for both folders and scenes, so "most recent first" now behaves as intended.
 
 ### v6.01
 - **Group favorites**: Groups now use the same `FAVORITE_TAG` technique as scenes. Toggling a group's favorite in any client adds/removes the configured tag via `movieUpdate`. All group queries fetch `tags { name }` so `IsFavorite` is accurate in browse listings, latest items, and item detail responses. The global `Movie+IsFavorite` filter query uses `movie_filter: {tags: {value: $tid, modifier: INCLUDES}}` instead of returning an empty result.
