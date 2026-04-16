@@ -3695,35 +3695,55 @@ async def endpoint_virtual_folders(request):
     return JSONResponse(folders)
 
 async def endpoint_shows_nextup(request):
-    """Return suggested/random scenes as 'Next Up' to populate Swiftfin/SenPlayer home page.
+    """Return 'Next Up' items for home page.
 
-    Returns empty for pure Jellyfin clients (Infuse) because they poll this endpoint
-    every 20-80s and the randomized list thrashes their image loader, leaving the home
-    page spinner unable to clear. Emby-style clients (SenPlayer, Swiftfin) hit
-    /emby/Shows/NextUp and still get 20 random scenes.
+    /Shows/NextUp is an Episode-only endpoint in the Jellyfin spec. Infuse's Next Up
+    row assumes Episode-shaped items with a parent Series and locks up waiting on
+    series-inherited artwork when given Movie-type items. We therefore reshape the
+    response for pure Jellyfin clients: each scene becomes an Episode of a synthetic
+    'Recent Scenes' series with the scene's position in the list as its IndexNumber.
+
+    Emby-style clients (SenPlayer, Swiftfin) hit /emby/Shows/NextUp and keep the
+    original random-Movie behavior — those clients don't have the Episode assumption.
     """
-    if not request.scope.get("emby_client"):
-        logger.debug("NextUp: Jellyfin-style client, returning empty to avoid Infuse image thrash")
-        return JSONResponse({"Items": [], "TotalRecordCount": 0})
-
     limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 20)
+    is_jellyfin_client = not request.scope.get("emby_client")
 
     scene_fields = "id title code date details play_count resume_time last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
 
+    # Jellyfin: newest-first (deterministic across polls so Infuse doesn't thrash).
+    # Emby:    random (matches prior Swiftfin/SenPlayer behavior).
+    sort_expr = "created_at" if is_jellyfin_client else "random"
     q = f"""query FindScenes($page: Int!, $per_page: Int!) {{
-        findScenes(filter: {{page: $page, per_page: $per_page, sort: "random", direction: DESC}}) {{
+        findScenes(filter: {{page: $page, per_page: $per_page, sort: "{sort_expr}", direction: DESC}}) {{
             findScenes: scenes {{ {scene_fields} }}
         }}
     }}"""
     try:
         res = stash_query(q, {"page": 1, "per_page": limit})
         scenes = res.get("data", {}).get("findScenes", {}).get("findScenes", [])
-        items = [format_jellyfin_item(s) for s in scenes]
-        logger.debug(f"NextUp returning {len(items)} random suggestions")
-        return JSONResponse({"Items": items, "TotalRecordCount": len(items)})
     except Exception as e:
         logger.warning(f"NextUp query failed: {e}")
         return JSONResponse({"Items": [], "TotalRecordCount": 0})
+
+    items = [format_jellyfin_item(s) for s in scenes]
+
+    if is_jellyfin_client:
+        series_id = "root-scenes"
+        series_name = "Recent Scenes"
+        for idx, item in enumerate(items, start=1):
+            item["Type"] = "Episode"
+            item["SeriesId"] = series_id
+            item["SeriesName"] = series_name
+            item["SeriesPrimaryImageTag"] = "icon"
+            item["ParentId"] = series_id
+            item["ParentIndexNumber"] = 1
+            item["IndexNumber"] = idx
+        logger.debug(f"NextUp (Jellyfin): {len(items)} episodes of '{series_name}'")
+    else:
+        logger.debug(f"NextUp (Emby): {len(items)} random suggestions")
+
+    return JSONResponse({"Items": items, "TotalRecordCount": len(items)})
 
 async def endpoint_latest_items(request):
     """Return recently added items for the Infuse home page, personalized by library."""
