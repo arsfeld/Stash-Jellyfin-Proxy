@@ -92,6 +92,14 @@ except ImportError:
     PILLOW_AVAILABLE = False
     print("Note: Pillow not installed. Studio images will not be resized. Install with: pip install Pillow")
 
+# Optional setproctitle so `ps` / `top` / `pgrep` show "stash-jellyfin-proxy"
+# instead of a bare "python". Not required — skip silently if unavailable.
+try:
+    import setproctitle
+    setproctitle.setproctitle("stash-jellyfin-proxy")
+except ImportError:
+    pass
+
 # Fallback placeholder PNG (400x600 dark blue) - base64 decoded at runtime if needed
 # This is used when Pillow is not available or font generation fails
 PLACEHOLDER_PNG = None
