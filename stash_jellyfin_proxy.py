@@ -2421,21 +2421,20 @@ class AuthenticationMiddleware:
             await self.app(scope, receive, send)
             return
 
-        # Extract token from headers
+        # Extract token from headers. Scan ALL headers before giving up —
+        # clients (Fladder, official Jellyfin web) often send X-Emby-Authorization
+        # with only Client/Device/DeviceId (no Token=) alongside X-MediaBrowser-Token
+        # or X-Emby-Token in a separate header. Breaking on the first match would
+        # reject the request even though a valid token is present.
         token = None
         for key, value in scope.get("headers", []):
             key_lower = key.decode().lower()
             value_str = value.decode()
 
-            # Check X-Emby-Token header (Jellyfin clients)
             if key_lower == "x-emby-token":
                 token = value_str
-                break
-            # Check X-MediaBrowser-Token header (older clients)
             elif key_lower == "x-mediabrowser-token":
                 token = value_str
-                break
-            # Check Authorization header (Bearer token or MediaBrowser/Emby token)
             elif key_lower == "authorization":
                 if value_str.startswith("Bearer "):
                     token = value_str[7:]
@@ -2445,14 +2444,14 @@ class AuthenticationMiddleware:
                         match = re.search(r'Token=([^,\s]+)', value_str)
                     if match:
                         token = match.group(1)
-                break
-            # Check X-Emby-Authorization header
             elif key_lower == "x-emby-authorization":
                 match = re.search(r'Token="([^"]+)"', value_str)
                 if not match:
                     match = re.search(r'Token=([^,\s]+)', value_str)
                 if match:
                     token = match.group(1)
+
+            if token:
                 break
 
         # Check query string for api_key parameter (Jellyfin 10.11+ SDK, some clients)
@@ -6776,13 +6775,27 @@ async def endpoint_image(request):
         return Response(content=PLACEHOLDER_PNG, media_type='image/png', headers=cache_headers)
 
 async def endpoint_user_items_resume(request):
-    """Return in-progress items - scenes with resume_time > 0 in Stash."""
+    """Return in-progress items — scenes with a resume position that are not
+    effectively complete. Stash keeps `resume_time` set after full playback, so
+    a raw `resume_time > 0` filter yields all historically-watched scenes. We
+    exclude items past RESUME_COMPLETE_THRESHOLD of their duration and honor
+    the client's Limit param so a home-screen "Continue Watching" row shows a
+    sensible count."""
+    RESUME_COMPLETE_THRESHOLD = 0.90  # >=90% watched is "finished", not resume
+    try:
+        limit = int(request.query_params.get("Limit", "24"))
+    except (TypeError, ValueError):
+        limit = 24
+    limit = max(1, min(limit, 100))
+    # Over-fetch so client-side filtering still yields up to `limit` items.
+    fetch = min(limit * 3, 100)
+
     scene_fields = "id title code date details play_count resume_time last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
     try:
         q = f"""query FindScenes {{
             findScenes(
                 scene_filter: {{resume_time: {{value: 0, modifier: GREATER_THAN}}}},
-                filter: {{per_page: 20, sort: "last_played_at", direction: DESC}}
+                filter: {{per_page: {fetch}, sort: "last_played_at", direction: DESC}}
             ) {{
                 count
                 scenes {{ {scene_fields} }}
@@ -6790,9 +6803,20 @@ async def endpoint_user_items_resume(request):
         }}"""
         res = stash_query(q)
         scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-        count = res.get("data", {}).get("findScenes", {}).get("count", 0)
-        items = [format_jellyfin_item(s) for s in scenes]
-        return JSONResponse({"Items": items, "TotalRecordCount": count, "StartIndex": 0})
+
+        def is_in_progress(scene):
+            resume = scene.get("resume_time") or 0
+            if resume <= 0:
+                return False
+            files = scene.get("files") or []
+            duration = files[0].get("duration") if files else None
+            if not duration or duration <= 0:
+                return True  # unknown duration -> keep it, better than dropping it
+            return resume < duration * RESUME_COMPLETE_THRESHOLD
+
+        in_progress = [s for s in scenes if is_in_progress(s)][:limit]
+        items = [format_jellyfin_item(s) for s in in_progress]
+        return JSONResponse({"Items": items, "TotalRecordCount": len(items), "StartIndex": 0})
     except Exception as e:
         logger.error(f"Error fetching resume items: {e}")
         return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
