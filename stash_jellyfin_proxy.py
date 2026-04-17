@@ -7592,13 +7592,14 @@ routes = [
 CaseInsensitivePathMiddleware.build_path_map(routes)
 
 middleware = [
-    # CORS MUST be outermost. Browsers send OPTIONS preflights without an
-    # Authorization header; if AuthenticationMiddleware runs first it rejects
-    # the preflight with 401 and no CORS headers, which the browser reports
-    # as "TypeError: Failed to fetch" with no way to diagnose. Keeping CORS
-    # on the outside also ensures 401/403 responses carry CORS headers so
-    # web clients can read the status.
-    Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]),
+    # CORS must sit above AuthenticationMiddleware. Browsers send OPTIONS
+    # preflights without an Authorization header; if auth ran first it
+    # would 401 the preflight and strip CORS headers, which the browser
+    # reports as "TypeError: Failed to fetch" with no way to diagnose.
+    # allow_private_network=True opts into Chrome's Private Network Access
+    # spec, so clients whose DNS resolves us to a LAN IP (split-horizon)
+    # aren't blocked.
+    Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"], allow_private_network=True),
     Middleware(RequestLoggingMiddleware),
     Middleware(CaseInsensitivePathMiddleware),
     Middleware(AuthenticationMiddleware),
@@ -8267,7 +8268,7 @@ ui_routes = [
 ]
 
 ui_middleware = [
-    Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+    Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"], allow_private_network=True),
 ]
 
 ui_app = Starlette(debug=False, routes=ui_routes, middleware=ui_middleware)
