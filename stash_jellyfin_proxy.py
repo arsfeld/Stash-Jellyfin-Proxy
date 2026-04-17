@@ -112,10 +112,6 @@ def _init_placeholder_png():
 
 _init_placeholder_png()
 
-# Jellyfin server version we advertise. Newer Android/Findroid/Afinity clients
-# reject older values. Bump this when a client gates behavior on a minimum.
-JELLYFIN_VERSION = "10.11.0"
-
 # --- Configuration Loading ---
 # Config file location: same directory as script, or specified path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -153,6 +149,9 @@ BANNER_TAGS = []  # e.g., ["Featured", "Showcase"]
 # Server identity
 SERVER_NAME = "Stash Media Server"
 SERVER_ID = ""  # Required - must be set in config file
+# Jellyfin server version we advertise. Newer Android/Findroid/Afinity clients
+# gate on a minimum version. Overridable in config for client-compat testing.
+JELLYFIN_VERSION = "10.11.0"
 
 # Pagination settings
 DEFAULT_PAGE_SIZE = 50
@@ -340,6 +339,7 @@ if _config:
     # Server identity
     SERVER_NAME = _config.get("SERVER_NAME", SERVER_NAME)
     SERVER_ID = _config.get("SERVER_ID", SERVER_ID)
+    JELLYFIN_VERSION = _config.get("JELLYFIN_VERSION", JELLYFIN_VERSION).strip() or JELLYFIN_VERSION
 
     # Pagination settings
     if "DEFAULT_PAGE_SIZE" in _config:
@@ -445,6 +445,9 @@ if os.getenv("SJS_PASSWORD"):
 if os.getenv("SERVER_ID"):
     SERVER_ID = os.getenv("SERVER_ID")
     _env_overrides.append("SERVER_ID")
+if os.getenv("JELLYFIN_VERSION"):
+    JELLYFIN_VERSION = os.getenv("JELLYFIN_VERSION")
+    _env_overrides.append("JELLYFIN_VERSION")
 if os.getenv("REQUIRE_AUTH_FOR_CONFIG"):
     REQUIRE_AUTH_FOR_CONFIG = os.getenv("REQUIRE_AUTH_FOR_CONFIG", "").lower() in ('true', 'yes', '1', 'on')
     _env_overrides.append("REQUIRE_AUTH_FOR_CONFIG")
