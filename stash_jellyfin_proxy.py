@@ -5770,8 +5770,8 @@ async def endpoint_sessions(request):
     if "/Progress" in path and item_id.startswith("scene-"):
         numeric_id = item_id.replace("scene-", "")
         try:
-            q = """mutation SceneUpdate($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id resume_time } }"""
-            stash_query(q, {"input": {"id": numeric_id, "resume_time": position_seconds}})
+            q = """mutation SceneSaveActivity($id: ID!, $resume_time: Float) { sceneSaveActivity(id: $id, resume_time: $resume_time) }"""
+            stash_query(q, {"id": numeric_id, "resume_time": position_seconds})
         except Exception as e:
             logger.debug(f"Error saving resume position for {item_id}: {e}")
 
@@ -5795,14 +5795,14 @@ async def endpoint_sessions(request):
                 played_percentage = (position_seconds / duration_seconds * 100) if duration_seconds > 0 else 0
 
                 if played_percentage > 90:
-                    q = """mutation SceneIncrementPlayCount($id: ID!) { sceneIncrementPlayCount(id: $id) }"""
+                    q = """mutation SceneAddPlay($id: ID!) { sceneAddPlay(id: $id) { count } }"""
                     stash_query(q, {"id": numeric_id})
-                    uq = """mutation SceneUpdate($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id } }"""
-                    stash_query(uq, {"input": {"id": numeric_id, "resume_time": 0}})
+                    uq = """mutation SceneSaveActivity($id: ID!, $resume_time: Float) { sceneSaveActivity(id: $id, resume_time: $resume_time) }"""
+                    stash_query(uq, {"id": numeric_id, "resume_time": 0})
                     logger.info(f"▶ Auto-marked played: {item_id} ({played_percentage:.0f}% watched)")
                 else:
-                    q = """mutation SceneUpdate($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id resume_time } }"""
-                    stash_query(q, {"input": {"id": numeric_id, "resume_time": position_seconds}})
+                    q = """mutation SceneSaveActivity($id: ID!, $resume_time: Float) { sceneSaveActivity(id: $id, resume_time: $resume_time) }"""
+                    stash_query(q, {"id": numeric_id, "resume_time": position_seconds})
                     logger.info(f"⏸ Saved resume position: {item_id} at {position_seconds:.0f}s ({played_percentage:.0f}%)")
             except Exception as e:
                 logger.error(f"Error updating play status for {item_id}: {e}")
@@ -7071,9 +7071,9 @@ async def endpoint_user_played_items(request):
     if item_id.startswith("scene-"):
         numeric_id = item_id.replace("scene-", "")
         try:
-            q = """mutation SceneIncrementPlayCount($id: ID!) { sceneIncrementPlayCount(id: $id) }"""
+            q = """mutation SceneAddPlay($id: ID!) { sceneAddPlay(id: $id) { count } }"""
             result = stash_query(q, {"id": numeric_id})
-            new_count = result.get("data", {}).get("sceneIncrementPlayCount") if result else None
+            new_count = (result.get("data", {}).get("sceneAddPlay") or {}).get("count") if result else None
             if new_count is not None:
                 logger.info(f"▶ Marked played: {item_id} (play count: {new_count})")
             else:
@@ -7088,12 +7088,16 @@ async def endpoint_user_unplayed_items(request):
     if item_id.startswith("scene-"):
         numeric_id = item_id.replace("scene-", "")
         try:
-            q = """mutation SceneUpdate($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id play_count } }"""
-            result = stash_query(q, {"input": {"id": numeric_id, "play_count": 0, "resume_time": 0}})
-            if result and result.get("data", {}).get("sceneUpdate"):
-                logger.info(f"⏮ Marked unplayed: {item_id}")
-            else:
-                logger.warning(f"Failed to mark unplayed {item_id}: {result}")
+            dq = """mutation SceneDeletePlay($id: ID!) { sceneDeletePlay(id: $id) { count } }"""
+            # sceneDeletePlay removes one play at a time — loop until history is empty
+            for _ in range(1000):
+                res = stash_query(dq, {"id": numeric_id})
+                count = (res.get("data", {}).get("sceneDeletePlay") or {}).get("count") if res else 0
+                if not count:
+                    break
+            aq = """mutation SceneSaveActivity($id: ID!, $resume_time: Float) { sceneSaveActivity(id: $id, resume_time: $resume_time) }"""
+            stash_query(aq, {"id": numeric_id, "resume_time": 0})
+            logger.info(f"⏮ Marked unplayed: {item_id}")
         except Exception as e:
             logger.error(f"Error marking unplayed {item_id}: {e}")
     return JSONResponse({"PlayCount": 0, "Played": False, "IsFavorite": False, "PlaybackPositionTicks": 0})
