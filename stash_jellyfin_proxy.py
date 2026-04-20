@@ -3193,6 +3193,26 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
     backdrop_tag = f"b{raw_id}"
     etag = hashlib.md5(f"{item_id}|{scene.get('play_count') or 0}|{scene.get('resume_time') or 0}|{scene.get('last_played_at') or ''}".encode()).hexdigest()[:16]
 
+    # Infuse ignores PlaybackPositionTicks on cold launch unless UserData looks
+    # like a real Jellyfin UserItemDataDto: LastPlayedDate must be a valid
+    # datetime (not ""), PlayedPercentage must be present when a resume exists,
+    # and ItemId must accompany Key. Senplayer is lenient here; Infuse is not.
+    resume_seconds = float(scene.get("resume_time") or 0)
+    play_count = scene.get("play_count") or 0
+    last_played = scene.get("last_played_at") or None
+    user_data = {
+        "PlaybackPositionTicks": int(resume_seconds * 10000000),
+        "PlayCount": play_count,
+        "IsFavorite": _is_scene_favorite(scene),
+        "Played": play_count > 0,
+        "Key": item_id,
+        "ItemId": item_id,
+    }
+    if last_played:
+        user_data["LastPlayedDate"] = last_played
+    if resume_seconds > 0 and duration > 0:
+        user_data["PlayedPercentage"] = min(100.0, (resume_seconds / duration) * 100.0)
+
     # Simplified item format - minimal fields for compatibility
     item = {
         "Name": title,
@@ -3209,14 +3229,7 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
         "BackdropImageTags": [backdrop_tag],
         "ImageBlurHashes": {"Primary": {primary_tag: "000000"}, "Backdrop": {backdrop_tag: "000000"}},
         "RunTimeTicks": int(duration * 10000000) if duration else 0,
-        "UserData": {
-            "PlaybackPositionTicks": int(scene.get("resume_time", 0) * 10000000),
-            "PlayCount": scene.get("play_count") or 0,
-            "IsFavorite": _is_scene_favorite(scene),
-            "Played": (scene.get("play_count") or 0) > 0,
-            "LastPlayedDate": scene.get("last_played_at", ""),
-            "Key": item_id
-        }
+        "UserData": user_data,
     }
 
     # Add optional fields only if they exist
