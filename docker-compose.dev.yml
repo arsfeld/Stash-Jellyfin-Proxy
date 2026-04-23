@@ -16,11 +16,15 @@ services:
       - CONFIG_FILE=/config/stash_jellyfin_proxy.conf
       - LOG_DIR=/config
       - TZ=America/Chicago
+    dns:
+      # Pihole serves the local-DNS record for stash-local.feldorn.com
+      # (→ 172.19.0.221 on the_internet, where Stash actually listens).
+      - 192.168.0.200
     networks:
-      # Joins the prod network so dev container can resolve `stash:9999`.
-      # That network is internal-only, so also attach the compose default
-      # network to allow port publishing to the host.
-      - media_mgmt_network
+      # Stash binds only on the_internet (SSL cert is issued for
+      # stash-local.feldorn.com). Compose `default` network is attached
+      # so host port publishing works.
+      - the_internet
       - default
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8096/System/Info/Public"]
@@ -44,6 +48,6 @@ services:
       - ./build_docker/jellyfin-web.config.json:/usr/share/nginx/html/config.json:ro
 
 networks:
-  media_mgmt_network:
+  the_internet:
     external: true
   default:
