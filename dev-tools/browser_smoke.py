@@ -21,6 +21,7 @@ import os
 import re
 import sys
 import time
+import urllib.request
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright, Error as PlaywrightError
@@ -32,15 +33,64 @@ SERVER_ID = "5884545f-0192-45e3-ae35-70061e0dba57"
 USER_ID = "bed0fa2f-5a08-543a-96eb-ef0150360506"
 ACCESS_TOKEN = "a89fc0ca-e371-4023-b85f-afcf1fc7d44b"
 
-ROUTES = [
-    ("home",          "/#/home.html"),
-    ("lib-scenes",    "/#/list.html?parentId=root-scenes&serverId=" + SERVER_ID),
-    ("lib-studios",   "/#/list.html?parentId=root-studios&serverId=" + SERVER_ID),
-    ("lib-performers","/#/list.html?parentId=root-performers&serverId=" + SERVER_ID),
-    ("lib-tags",      "/#/list.html?parentId=root-tags&serverId=" + SERVER_ID),
-    ("scene-detail",  "/#/details?id=scene-27968&serverId=" + SERVER_ID),
-    ("search",        "/#/search.html?query=cum"),
-]
+
+def _api_get(path):
+    req = urllib.request.Request(
+        API_BASE + path,
+        headers={"X-Emby-Authorization": f'MediaBrowser Token="{ACCESS_TOKEN}"'},
+    )
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        return json.loads(resp.read())
+
+
+def _first_id(path, prefix):
+    """Pull the first Items[].Id starting with `prefix` from a paginated endpoint."""
+    try:
+        data = _api_get(path)
+    except Exception:
+        return None
+    for it in data.get("Items", []):
+        iid = str(it.get("Id", ""))
+        if iid.startswith(prefix):
+            return iid
+    return None
+
+
+def discover_routes():
+    """Build the route list at runtime using real IDs so the harness
+    doesn't rot when Stash data changes."""
+    scene = _first_id(
+        f"/Users/{USER_ID}/Items?ParentId=root-scenes&Limit=20&IncludeItemTypes=Movie",
+        "scene-",
+    )
+    studio = _first_id(
+        f"/Users/{USER_ID}/Items?ParentId=root-studios&Limit=10",
+        "studio-",
+    )
+    performer = _first_id(
+        f"/Users/{USER_ID}/Items?ParentId=root-performers&Limit=10",
+        "performer-",
+    )
+    tag_group = "tag-cock-hero"  # stable name from TAG_GROUPS
+
+    routes = [
+        ("home",           "/#/home.html"),
+        ("favorites",      "/#/home.html?tab=1"),
+        ("lib-scenes",     f"/#/list.html?parentId=root-scenes&serverId={SERVER_ID}"),
+        ("lib-studios",    f"/#/list.html?parentId=root-studios&serverId={SERVER_ID}"),
+        ("lib-performers", f"/#/list.html?parentId=root-performers&serverId={SERVER_ID}"),
+        ("lib-groups",     f"/#/list.html?parentId=root-groups&serverId={SERVER_ID}"),
+        ("lib-tags",       f"/#/list.html?parentId=root-tags&serverId={SERVER_ID}"),
+        ("tag-group",      f"/#/list.html?parentId={tag_group}&serverId={SERVER_ID}"),
+        ("search",         "/#/search.html?query=cum"),
+    ]
+    if scene:
+        routes.append(("scene-detail", f"/#/details?id={scene}&serverId={SERVER_ID}"))
+    if studio:
+        routes.append(("studio-detail", f"/#/details?id={studio}&serverId={SERVER_ID}"))
+    if performer:
+        routes.append(("performer-detail", f"/#/details?id={performer}&serverId={SERVER_ID}"))
+    return routes
 
 SAFE_RE = re.compile(r"[^a-zA-Z0-9._-]+")
 
@@ -110,7 +160,7 @@ def walk(out_dir: Path, headless: bool = True, timeout_ms: int = 15000):
             pass
         time.sleep(1.0)
 
-        for name, route in ROUTES:
+        for name, route in discover_routes():
             console_events.clear()
             network_failures.clear()
             page_errors.clear()
