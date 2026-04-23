@@ -8029,6 +8029,67 @@ routes = [
 
 CaseInsensitivePathMiddleware.build_path_map(routes)
 
+# --- Global error handling contract -------------------------------------
+# Per implementation plan §4.8. Endpoints will, over Phase 0.6 and the
+# rebuild phases, replace ad-hoc try/except blocks with raises of the
+# typed errors below. Until then, the global 500 handler catches anything
+# that bubbles so we never leak a stack trace to clients or return HTML
+# error pages to JSON-expecting Jellyfin clients.
+
+class StashUnavailable(Exception):
+    """Raised when Stash is unreachable (connection refused, timeout)."""
+
+
+class StashError(Exception):
+    """Raised when Stash returned GraphQL errors; detail carries the msg."""
+
+
+class BadRequest(Exception):
+    """Raised when a query param or body field is invalid/un-coercible."""
+    def __init__(self, field: str, detail: str = ""):
+        super().__init__(detail or field)
+        self.field = field
+        self.detail = detail or f"invalid value for '{field}'"
+
+
+def _error_json(status: int, kind: str, **extra):
+    payload = {"error": kind}
+    payload.update(extra)
+    return JSONResponse(payload, status_code=status)
+
+
+async def _stash_unavailable_handler(request, exc):
+    logger.error(f"stash_unavailable on {request.method} {request.url.path}: {exc}")
+    return _error_json(503, "stash_unavailable")
+
+
+async def _stash_error_handler(request, exc):
+    logger.error(f"stash_error on {request.method} {request.url.path}: {exc}")
+    return _error_json(502, "stash_error", detail=str(exc)[:200])
+
+
+async def _bad_request_handler(request, exc):
+    logger.info(f"bad_request on {request.method} {request.url.path}: {exc.field}: {exc.detail}")
+    return _error_json(400, "bad_request", field=exc.field, detail=exc.detail)
+
+
+async def _unhandled_exception_handler(request, exc):
+    """Fallback. Logs the traceback at ERROR, returns JSON 500 so the
+    client (Jellyfin Web, Infuse, Swiftfin) gets a parseable response
+    instead of Starlette's HTML debug page."""
+    import traceback
+    tb = traceback.format_exc()
+    logger.error(f"internal error on {request.method} {request.url.path}: {exc}\n{tb}")
+    return _error_json(500, "internal")
+
+
+_error_contract_handlers = {
+    StashUnavailable: _stash_unavailable_handler,
+    StashError: _stash_error_handler,
+    BadRequest: _bad_request_handler,
+    Exception: _unhandled_exception_handler,
+}
+
 middleware = [
     # CORS must sit above AuthenticationMiddleware. Browsers send OPTIONS
     # preflights without an Authorization header; if auth ran first it
@@ -8043,7 +8104,10 @@ middleware = [
     Middleware(AuthenticationMiddleware),
 ]
 
-app = Starlette(debug=True, routes=routes, middleware=middleware)
+# debug=False in production so the Starlette debug 500 page doesn't leak
+# tracebacks — our _unhandled_exception_handler returns JSON instead.
+app = Starlette(debug=False, routes=routes, middleware=middleware,
+                exception_handlers=_error_contract_handlers)
 
 # --- Web UI Server ---
 PROXY_RUNNING = False  # Track if proxy is running
