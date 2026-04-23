@@ -962,30 +962,18 @@ def format_saved_filter_item(saved_filter: Dict[str, Any], parent_id: str) -> Di
 # ID converters live in proxy/util/ids.py (Phase 0.6 leaf).
 from proxy.util.ids import make_guid, extract_numeric_id, get_numeric_id  # noqa: F401
 
-_favorite_tag_id_cache = None
+# Favorites + played/unplayed + tag cache live in
+# proxy/endpoints/user_actions.py and proxy/stash/tags.py.
+from proxy.endpoints.user_actions import (  # noqa: F401
+    endpoint_user_favorites,
+    endpoint_user_item_favorite,
+    endpoint_user_item_unfavorite,
+    endpoint_user_played_items,
+    endpoint_user_unplayed_items,
+)
+from proxy.stash.tags import get_or_create_tag as _get_or_create_tag  # noqa: F401
 
-def _get_or_create_tag(tag_name: str) -> str:
-    """Get a tag ID by name, creating it if it doesn't exist. Caches the result."""
-    global _favorite_tag_id_cache
-    if _favorite_tag_id_cache:
-        return _favorite_tag_id_cache
-    try:
-        q = """query FindTags($name: String!) { findTags(tag_filter: {name: {value: $name, modifier: EQUALS}}) { tags { id name } } }"""
-        res = stash_query(q, {"name": tag_name})
-        tags = res.get("data", {}).get("findTags", {}).get("tags", [])
-        if tags:
-            _favorite_tag_id_cache = tags[0]["id"]
-            return _favorite_tag_id_cache
-        q = """mutation TagCreate($input: TagCreateInput!) { tagCreate(input: $input) { id name } }"""
-        res = stash_query(q, {"input": {"name": tag_name}})
-        tag = res.get("data", {}).get("tagCreate")
-        if tag:
-            _favorite_tag_id_cache = tag["id"]
-            logger.info(f"Created favorite tag '{tag_name}' with ID {_favorite_tag_id_cache}")
-            return _favorite_tag_id_cache
-    except Exception as e:
-        logger.error(f"Error getting/creating tag '{tag_name}': {e}")
-    return None
+
 
 # Scene mapping + favorite helpers live in proxy/mapping/scene.py.
 from proxy.mapping.scene import (  # noqa: F401
@@ -4080,151 +4068,8 @@ async def endpoint_items_counts(request):
         logger.error(f"Error getting item counts: {e}")
         return JSONResponse({"ItemCount": 0})
 
-async def endpoint_user_favorites(request):
-    """Return favorite items - scenes with the configured FAVORITE_TAG in Stash."""
-    if not FAVORITE_TAG:
-        return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
-    scene_fields = "id title code date details play_count resume_time last_played_at files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } studio { name } tags { name } performers { name id image_path } captions { language_code caption_type }"
-    try:
-        tag_id = _get_or_create_tag(FAVORITE_TAG)
-        if not tag_id:
-            return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
-        q = f"""query FindScenes($tag_ids: [ID!]) {{
-            findScenes(scene_filter: {{tags: {{value: $tag_ids, modifier: INCLUDES}}}}, filter: {{per_page: 100, sort: "updated_at", direction: DESC}}) {{
-                count
-                scenes {{ {scene_fields} }}
-            }}
-        }}"""
-        res = stash_query(q, {"tag_ids": [tag_id]})
-        scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-        count = res.get("data", {}).get("findScenes", {}).get("count", 0)
-        items = [format_jellyfin_item(s) for s in scenes]
-        return JSONResponse({"Items": items, "TotalRecordCount": count, "StartIndex": 0})
-    except Exception as e:
-        logger.error(f"Error fetching favorites: {e}")
-        return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
-async def endpoint_user_item_favorite(request):
-    """Mark item as favorite in Stash. Scenes/groups use FAVORITE_TAG, performers use native favorite field."""
-    item_id = request.path_params.get("item_id", "")
-    if item_id.startswith("scene-"):
-        if not FAVORITE_TAG:
-            logger.debug(f"Favorite toggled but FAVORITE_TAG not configured - ignoring")
-            return JSONResponse({"IsFavorite": True, "PlaybackPositionTicks": 0, "PlayCount": 0, "Played": False, "Key": item_id, "ItemId": item_id})
-        numeric_id = item_id.replace("scene-", "")
-        try:
-            tag_id = _get_or_create_tag(FAVORITE_TAG)
-            if tag_id:
-                scene_res = stash_query("""query FindScene($id: ID!) { findScene(id: $id) { id tags { id } } }""", {"id": numeric_id})
-                scene = scene_res.get("data", {}).get("findScene") if scene_res else None
-                if scene:
-                    existing_tag_ids = [t["id"] for t in scene.get("tags", [])]
-                    if tag_id not in existing_tag_ids:
-                        existing_tag_ids.append(tag_id)
-                    q = """mutation SceneUpdate($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id } }"""
-                    stash_query(q, {"input": {"id": numeric_id, "tag_ids": existing_tag_ids}})
-                    logger.info(f"★ Favorited scene: {item_id} (added tag '{FAVORITE_TAG}')")
-        except Exception as e:
-            logger.error(f"Error favoriting {item_id}: {e}")
-    elif item_id.startswith("group-"):
-        if not FAVORITE_TAG:
-            logger.debug(f"Favorite toggled on group but FAVORITE_TAG not configured - ignoring")
-            return JSONResponse({"IsFavorite": True, "PlaybackPositionTicks": 0, "PlayCount": 0, "Played": False, "Key": item_id, "ItemId": item_id})
-        group_id = item_id.replace("group-", "")
-        try:
-            tag_id = _get_or_create_tag(FAVORITE_TAG)
-            if tag_id:
-                group_res = stash_query("""query FindMovie($id: ID!) { findMovie(id: $id) { id tags { id } } }""", {"id": group_id})
-                group = group_res.get("data", {}).get("findMovie") if group_res else None
-                if group:
-                    existing_tag_ids = [t["id"] for t in group.get("tags", [])]
-                    if tag_id not in existing_tag_ids:
-                        existing_tag_ids.append(tag_id)
-                    q = """mutation MovieUpdate($input: MovieUpdateInput!) { movieUpdate(input: $input) { id } }"""
-                    stash_query(q, {"input": {"id": group_id, "tag_ids": existing_tag_ids}})
-                    logger.info(f"★ Favorited group: {item_id} (added tag '{FAVORITE_TAG}')")
-        except Exception as e:
-            logger.error(f"Error favoriting {item_id}: {e}")
-    elif item_id.startswith("performer-") or item_id.startswith("person-"):
-        if item_id.startswith("person-performer-"):
-            performer_id = item_id.replace("person-performer-", "")
-        elif item_id.startswith("performer-"):
-            performer_id = item_id.replace("performer-", "")
-        else:
-            performer_id = item_id.replace("person-", "")
-        try:
-            q = """mutation PerformerUpdate($input: PerformerUpdateInput!) { performerUpdate(input: $input) { id favorite } }"""
-            stash_query(q, {"input": {"id": performer_id, "favorite": True}})
-            logger.info(f"★ Favorited performer: {item_id}")
-        except Exception as e:
-            logger.error(f"Error favoriting performer {item_id}: {e}")
-    elif item_id.startswith("studio-"):
-        studio_id = item_id.replace("studio-", "")
-        try:
-            q = """mutation StudioUpdate($input: StudioUpdateInput!) { studioUpdate(input: $input) { id favorite } }"""
-            stash_query(q, {"input": {"id": studio_id, "favorite": True}})
-            logger.info(f"★ Favorited studio: {item_id}")
-        except Exception as e:
-            logger.error(f"Error favoriting studio {item_id}: {e}")
-    return JSONResponse({"IsFavorite": True, "PlaybackPositionTicks": 0, "PlayCount": 0, "Played": False, "Key": item_id, "ItemId": item_id})
 
-async def endpoint_user_item_unfavorite(request):
-    """Remove favorite in Stash. Scenes/groups use FAVORITE_TAG, performers use native favorite field."""
-    item_id = request.path_params.get("item_id", "")
-    if item_id.startswith("scene-"):
-        if not FAVORITE_TAG:
-            return JSONResponse({"IsFavorite": False, "PlaybackPositionTicks": 0, "PlayCount": 0, "Played": False, "Key": item_id, "ItemId": item_id})
-        numeric_id = item_id.replace("scene-", "")
-        try:
-            tag_id = _get_or_create_tag(FAVORITE_TAG)
-            if tag_id:
-                scene_res = stash_query("""query FindScene($id: ID!) { findScene(id: $id) { id tags { id } } }""", {"id": numeric_id})
-                scene = scene_res.get("data", {}).get("findScene") if scene_res else None
-                if scene:
-                    existing_tag_ids = [t["id"] for t in scene.get("tags", []) if t["id"] != tag_id]
-                    q = """mutation SceneUpdate($input: SceneUpdateInput!) { sceneUpdate(input: $input) { id } }"""
-                    stash_query(q, {"input": {"id": numeric_id, "tag_ids": existing_tag_ids}})
-                    logger.info(f"☆ Unfavorited scene: {item_id} (removed tag '{FAVORITE_TAG}')")
-        except Exception as e:
-            logger.error(f"Error unfavoriting {item_id}: {e}")
-    elif item_id.startswith("group-"):
-        if not FAVORITE_TAG:
-            return JSONResponse({"IsFavorite": False, "PlaybackPositionTicks": 0, "PlayCount": 0, "Played": False, "Key": item_id, "ItemId": item_id})
-        group_id = item_id.replace("group-", "")
-        try:
-            tag_id = _get_or_create_tag(FAVORITE_TAG)
-            if tag_id:
-                group_res = stash_query("""query FindMovie($id: ID!) { findMovie(id: $id) { id tags { id } } }""", {"id": group_id})
-                group = group_res.get("data", {}).get("findMovie") if group_res else None
-                if group:
-                    existing_tag_ids = [t["id"] for t in group.get("tags", []) if t["id"] != tag_id]
-                    q = """mutation MovieUpdate($input: MovieUpdateInput!) { movieUpdate(input: $input) { id } }"""
-                    stash_query(q, {"input": {"id": group_id, "tag_ids": existing_tag_ids}})
-                    logger.info(f"☆ Unfavorited group: {item_id} (removed tag '{FAVORITE_TAG}')")
-        except Exception as e:
-            logger.error(f"Error unfavoriting {item_id}: {e}")
-    elif item_id.startswith("performer-") or item_id.startswith("person-"):
-        if item_id.startswith("person-performer-"):
-            performer_id = item_id.replace("person-performer-", "")
-        elif item_id.startswith("performer-"):
-            performer_id = item_id.replace("performer-", "")
-        else:
-            performer_id = item_id.replace("person-", "")
-        try:
-            q = """mutation PerformerUpdate($input: PerformerUpdateInput!) { performerUpdate(input: $input) { id favorite } }"""
-            stash_query(q, {"input": {"id": performer_id, "favorite": False}})
-            logger.info(f"☆ Unfavorited performer: {item_id}")
-        except Exception as e:
-            logger.error(f"Error unfavoriting performer {item_id}: {e}")
-    elif item_id.startswith("studio-"):
-        studio_id = item_id.replace("studio-", "")
-        try:
-            q = """mutation StudioUpdate($input: StudioUpdateInput!) { studioUpdate(input: $input) { id favorite } }"""
-            stash_query(q, {"input": {"id": studio_id, "favorite": False}})
-            logger.info(f"☆ Unfavorited studio: {item_id}")
-        except Exception as e:
-            logger.error(f"Error unfavoriting studio {item_id}: {e}")
-    return JSONResponse({"IsFavorite": False, "PlaybackPositionTicks": 0, "PlayCount": 0, "Played": False, "Key": item_id, "ItemId": item_id})
 
 async def endpoint_items_filters(request):
     """Return filter options populated from Stash data."""
@@ -4257,42 +4102,7 @@ async def endpoint_items_filters(request):
 
 
 
-async def endpoint_user_played_items(request):
-    """Mark item as played by incrementing play count in Stash."""
-    item_id = request.path_params.get("item_id", "")
-    if item_id.startswith("scene-"):
-        numeric_id = item_id.replace("scene-", "")
-        try:
-            q = """mutation SceneAddPlay($id: ID!) { sceneAddPlay(id: $id) { count } }"""
-            result = stash_query(q, {"id": numeric_id})
-            new_count = (result.get("data", {}).get("sceneAddPlay") or {}).get("count") if result else None
-            if new_count is not None:
-                logger.info(f"▶ Marked played: {item_id} (play count: {new_count})")
-            else:
-                logger.warning(f"Failed to mark played {item_id}: {result}")
-        except Exception as e:
-            logger.error(f"Error marking played {item_id}: {e}")
-    return JSONResponse({"PlayCount": 1, "Played": True, "IsFavorite": False, "PlaybackPositionTicks": 0})
 
-async def endpoint_user_unplayed_items(request):
-    """Mark item as unplayed by resetting play count in Stash."""
-    item_id = request.path_params.get("item_id", "")
-    if item_id.startswith("scene-"):
-        numeric_id = item_id.replace("scene-", "")
-        try:
-            dq = """mutation SceneDeletePlay($id: ID!) { sceneDeletePlay(id: $id) { count } }"""
-            # sceneDeletePlay removes one play at a time — loop until history is empty
-            for _ in range(1000):
-                res = stash_query(dq, {"id": numeric_id})
-                count = (res.get("data", {}).get("sceneDeletePlay") or {}).get("count") if res else 0
-                if not count:
-                    break
-            aq = """mutation SceneSaveActivity($id: ID!, $resume_time: Float) { sceneSaveActivity(id: $id, resume_time: $resume_time) }"""
-            stash_query(aq, {"id": numeric_id, "resume_time": 0})
-            logger.info(f"⏮ Marked unplayed: {item_id}")
-        except Exception as e:
-            logger.error(f"Error marking unplayed {item_id}: {e}")
-    return JSONResponse({"PlayCount": 0, "Played": False, "IsFavorite": False, "PlaybackPositionTicks": 0})
 
 
 
