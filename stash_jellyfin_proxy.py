@@ -1155,80 +1155,10 @@ async def endpoint_authenticate_by_name(request):
 async def endpoint_users(request):
     return JSONResponse([_build_user_dto()])
 
-def _build_user_dto(username=None):
-    """Build a complete Jellyfin UserDto matching the 10.10.x schema."""
-    return {
-        "Name": username or SJS_USER or "Stash User",
-        "ServerId": SERVER_ID,
-        "Id": USER_ID,
-        "HasPassword": True,
-        "HasConfiguredPassword": True,
-        "HasConfiguredEasyPassword": False,
-        "EnableAutoLogin": False,
-        "LastLoginDate": "2024-01-01T00:00:00.0000000Z",
-        "LastActivityDate": "2024-01-01T00:00:00.0000000Z",
-        "PrimaryImageTag": "",
-        "Policy": {
-            "IsAdministrator": True,
-            "IsHidden": False,
-            "IsDisabled": False,
-            "MaxParentalRating": None,
-            "BlockedTags": [],
-            "AllowedTags": [],
-            "EnableUserPreferenceAccess": True,
-            "AccessSchedules": [],
-            "BlockUnratedItems": [],
-            "EnableRemoteControlOfOtherUsers": False,
-            "EnableSharedDeviceControl": True,
-            "EnableRemoteAccess": True,
-            "EnableLiveTvManagement": False,
-            "EnableLiveTvAccess": False,
-            "EnableContentDeletion": False,
-            "EnableContentDeletionFromFolders": [],
-            "EnableContentDownloading": True,
-            "EnableSyncTranscoding": True,
-            "EnableMediaConversion": False,
-            "EnabledDevices": [],
-            "EnableAllDevices": True,
-            "EnabledChannels": [],
-            "EnableAllChannels": True,
-            "EnabledFolders": [],
-            "EnableAllFolders": True,
-            "InvalidLoginAttemptCount": 0,
-            "LoginAttemptsBeforeLockout": -1,
-            "MaxActiveSessions": 0,
-            "EnablePlaybackRemuxing": True,
-            "ForceRemoteSourceTranscoding": False,
-            "EnableMediaPlayback": True,
-            "EnableAudioPlaybackTranscoding": True,
-            "EnableVideoPlaybackTranscoding": True,
-            "EnablePublicSharing": True,
-            "RemoteClientBitrateLimit": 0,
-            "AuthenticationProviderId": "Jellyfin.Server.Implementations.Users.DefaultAuthenticationProvider",
-            "PasswordResetProviderId": "Jellyfin.Server.Implementations.Users.DefaultPasswordResetProvider",
-            "SyncPlayAccess": "CreateAndJoinGroups",
-            "EnableCollectionManagement": False,
-            "EnableSubtitleManagement": False,
-            "EnableLyricManagement": False
-        },
-        "Configuration": {
-            "PlayDefaultAudioTrack": True,
-            "SubtitleLanguagePreference": "",
-            "DisplayMissingEpisodes": False,
-            "GroupedFolders": [],
-            "SubtitleMode": "Default",
-            "DisplayCollectionsView": False,
-            "EnableLocalPassword": False,
-            "OrderedViews": [],
-            "LatestItemsExcludes": [],
-            "MyMediaExcludes": [],
-            "HidePlayedInLatest": True,
-            "RememberAudioSelections": True,
-            "RememberSubtitleSelections": True,
-            "EnableNextEpisodeAutoPlay": True,
-            "CastReceiverId": ""
-        }
-    }
+# _build_user_dto lives in proxy/mapping/user.py now; keep a local alias
+# under its old name so every existing call site in the monolith works.
+from proxy.mapping.user import build_user_dto as _build_user_dto  # noqa: E402, F401
+
 
 async def endpoint_user_by_id(request):
     return JSONResponse(_build_user_dto())
@@ -1300,9 +1230,29 @@ async def endpoint_user_views(request):
         "TotalRecordCount": len(items)
     })
 
-async def endpoint_grouping_options(request):
-    # Infuse requests this and if it 404s, it shows "an error occurred"
-    return JSONResponse([])
+# Stub endpoints moved to proxy/endpoints/stubs.py.
+from proxy.endpoints.stubs import (  # noqa: F401
+    endpoint_ping, endpoint_sessions_capabilities, endpoint_sessions_list,
+    endpoint_system_endpoint, endpoint_system_info_storage,
+    endpoint_scheduled_tasks, endpoint_web_configuration_pages,
+    endpoint_activity_log, endpoint_server_domains,
+    endpoint_users_list, endpoint_users_public,
+    endpoint_branding, endpoint_splashscreen,
+    endpoint_quickconnect_enabled, endpoint_quickconnect_stub,
+    endpoint_grouping_options,
+    endpoint_similar, endpoint_recommendations, endpoint_instant_mix,
+    endpoint_intros, endpoint_special_features, endpoint_local_trailers,
+    endpoint_theme_songs, endpoint_theme_videos, endpoint_theme_media,
+    endpoint_additional_parts, endpoint_ancestors,
+    endpoint_user_item_rating,
+    endpoint_collections, endpoint_playlists,
+    endpoint_artists, endpoint_years,
+    endpoint_bitrate_test,
+    endpoint_media_segments, endpoint_danmu, endpoint_client_log,
+    endpoint_favicon,
+    catch_all,
+)
+
 
 async def endpoint_virtual_folders(request):
     # Infuse requests library virtual folders
@@ -4238,13 +4188,7 @@ async def endpoint_user_items_resume(request):
         logger.error(f"Error fetching resume items: {e}")
         return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
-async def endpoint_ping(request):
-    """Simple ping endpoint for connectivity checks."""
-    return Response(content="Stash-Jellyfin Proxy", media_type="text/plain")
 
-async def endpoint_sessions_capabilities(request):
-    """Return session capabilities - stub for client compatibility."""
-    return JSONResponse({})
 
 async def endpoint_items_counts(request):
     """Return item counts by type."""
@@ -4450,24 +4394,8 @@ async def endpoint_items_filters(request):
             "Years": [],
         })
 
-async def endpoint_bitrate_test(request):
-    """Return random bytes for bitrate testing - Swiftfin/Web use this before playback.
-    Jellyfin web sends `?Size=` (capital S); query param lookup is case-sensitive."""
-    qp = request.query_params
-    size = int(qp.get("Size") or qp.get("size") or 1000000)
-    size = min(size, 10000000)
-    import os
-    return Response(content=os.urandom(size), media_type="application/octet-stream")
 
-async def endpoint_local_trailers(request):
-    """Return empty list for local trailers - Stash doesn't support trailers."""
-    return JSONResponse([])
 
-async def endpoint_user_item_rating(request):
-    """Update item rating - stub that accepts but doesn't persist."""
-    # Stash has a rating100 field (0-100), Jellyfin uses different scales
-    # Could potentially sync this in the future
-    return JSONResponse({})
 
 async def endpoint_user_played_items(request):
     """Mark item as played by incrementing play count in Stash."""
@@ -4506,14 +4434,7 @@ async def endpoint_user_unplayed_items(request):
             logger.error(f"Error marking unplayed {item_id}: {e}")
     return JSONResponse({"PlayCount": 0, "Played": False, "IsFavorite": False, "PlaybackPositionTicks": 0})
 
-async def endpoint_collections(request):
-    """Return collections - maps to Stash groups/movies."""
-    # Could return groups as collections, but for now return empty
-    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
-async def endpoint_playlists(request):
-    """Return playlists - Stash doesn't have playlists."""
-    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
 def _scene_filter_clause_for_parent(parent_id):
     """Return (gql_filter_clause, variables_dict) for a given parent_id context, or (None, None)."""
@@ -4716,14 +4637,7 @@ async def endpoint_studios(request):
         logger.error(f"Error getting studios: {e}")
         return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
-async def endpoint_artists(request):
-    """Return artists - maps to Stash performers (alternative endpoint)."""
-    return await endpoint_persons(request)
 
-async def endpoint_years(request):
-    """Return available years for filtering."""
-    # Could query Stash for distinct years from scenes
-    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
 async def endpoint_search_hints(request):
     """Swiftfin search - returns SearchHints format used by /Search/Hints."""
@@ -4807,72 +4721,16 @@ async def endpoint_search_hints(request):
     logger.debug(f"SearchHints '{clean_search}' -> {len(hints)} hints (total={total_count})")
     return JSONResponse({"SearchHints": hints, "TotalRecordCount": total_count})
 
-async def endpoint_similar(request):
-    """Return similar items - stub."""
-    item_id = request.path_params.get("item_id")
-    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
-async def endpoint_recommendations(request):
-    """Return recommendations - stub."""
-    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
-async def endpoint_instant_mix(request):
-    """Return instant mix playlist - stub."""
-    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
-async def endpoint_intros(request):
-    """Return intro/trailer items - stub."""
-    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
-async def endpoint_special_features(request):
-    """Return special features - stub. Jellyfin spec returns a plain array."""
-    return JSONResponse([])
 
-async def endpoint_theme_songs(request):
-    """ThemeSongs stub. The response must include OwnerId; the web client's
-    ThemeMediaPlayer reads `result.OwnerId` unconditionally and crashes with
-    `Cannot read properties of undefined (reading 'OwnerId')` without it."""
-    return JSONResponse({
-        "Items": [],
-        "TotalRecordCount": 0,
-        "OwnerId": request.path_params.get("item_id", ""),
-    })
 
-async def endpoint_theme_videos(request):
-    """ThemeVideos stub — same OwnerId requirement as ThemeSongs."""
-    return JSONResponse({
-        "Items": [],
-        "TotalRecordCount": 0,
-        "OwnerId": request.path_params.get("item_id", ""),
-    })
 
-async def endpoint_theme_media(request):
-    """ThemeMedia combined response. Shape: AllThemeMediaResult."""
-    iid = request.path_params.get("item_id", "")
-    empty = {"Items": [], "TotalRecordCount": 0, "OwnerId": iid}
-    return JSONResponse({
-        "ThemeSongsResult": empty,
-        "ThemeVideosResult": empty,
-        "SoundtrackIds": [],
-    })
 
-async def endpoint_additional_parts(request):
-    """AdditionalParts stub. Same shape as ThemeSongs (needs OwnerId)."""
-    return JSONResponse({
-        "Items": [],
-        "TotalRecordCount": 0,
-        "OwnerId": request.path_params.get("item_id", ""),
-    })
 
-async def endpoint_ancestors(request):
-    """Ancestors stub. Jellyfin returns a plain BaseItemDto[] array."""
-    return JSONResponse([])
 
-async def endpoint_system_endpoint(request):
-    """System/Endpoint stub. Tells the client whether it's on the local
-    network; we don't know, but returning a plausible shape avoids a client
-    crash. Shape: EndpointInfo."""
-    return JSONResponse({"IsLocal": True, "IsInNetwork": True})
 
 
 # --- Stubs for endpoints real clients hit that we don't back with data ---
@@ -4881,141 +4739,37 @@ async def endpoint_system_endpoint(request):
 # result and a WARNING. Now each has a typed, shape-correct response so
 # logs stay quiet and strict-schema clients don't see an unexpected shape.
 
-async def endpoint_users_list(request):
-    """GET /Users — return the list of configured users. We're single-user,
-    so this mirrors /Users/Public."""
-    return JSONResponse([_build_user_dto()])
 
 
-async def endpoint_sessions_list(request):
-    """GET /Sessions — Jellyfin's active-sessions list. Clients (SenPlayer
-    in particular) poll this. Return an empty list, which renders cleanly
-    as 'no other clients playing'."""
-    return JSONResponse([])
 
 
-async def endpoint_system_info_storage(request):
-    """GET /System/Info/Storage — disk usage report. Stub with zeroed
-    entries; the proxy doesn't own the Stash storage."""
-    return JSONResponse({
-        "ProgramDataFolder": {"Name": "Program Data", "Path": "/config", "FreeSpace": 0, "UsedSpace": 0, "StorageType": "Unknown"},
-        "LogFolder": {"Name": "Logs", "Path": LOG_DIR, "FreeSpace": 0, "UsedSpace": 0, "StorageType": "Unknown"},
-        "CacheFolder": {"Name": "Cache", "Path": "/tmp", "FreeSpace": 0, "UsedSpace": 0, "StorageType": "Unknown"},
-        "InternalMetadataFolders": [],
-        "ExternalMetadataFolders": [],
-        "LibraryFolders": [],
-    })
 
 
-async def endpoint_scheduled_tasks(request):
-    """GET /ScheduledTasks — Jellyfin's task scheduler list. We have none."""
-    return JSONResponse([])
 
 
-async def endpoint_web_configuration_pages(request):
-    """GET /web/ConfigurationPages — Jellyfin Web admin tab hooks. None."""
-    return JSONResponse([])
 
 
-async def endpoint_activity_log(request):
-    """GET /System/ActivityLog/Entries — paginated activity feed. Empty."""
-    start = int(request.query_params.get("startIndex", "0"))
-    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": start})
 
 
-async def endpoint_server_domains(request):
-    """GET /System/Ext/ServerDomains — SenPlayer-specific domain list."""
-    return JSONResponse([])
 
 
 _favicon_cache = None
 
 
-async def endpoint_favicon(request):
-    """Serve Stash's favicon, proxied once and cached in-memory for the
-    lifetime of the process. Falls back to a minimal SVG if Stash is
-    unreachable — clients never see a 5xx for this."""
-    global _favicon_cache
-    if _favicon_cache is None:
-        try:
-            session = get_stash_session()
-            resp = session.get(f"{STASH_URL.rstrip('/')}/favicon.ico", timeout=5)
-            resp.raise_for_status()
-            _favicon_cache = (resp.content, resp.headers.get("Content-Type", "image/vnd.microsoft.icon"))
-        except Exception as e:
-            logger.warning(f"favicon fetch from Stash failed: {e}; serving SVG fallback")
-            # Minimal "S" logo SVG in Stash's signature blue. Works in every
-            # browser that ever cared about favicons.
-            svg = (
-                b'<?xml version="1.0"?>'
-                b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
-                b'<rect width="32" height="32" fill="#1a1a2e"/>'
-                b'<text x="16" y="23" font-family="Arial,sans-serif" font-size="22" '
-                b'font-weight="bold" fill="#4a90d9" text-anchor="middle">S</text>'
-                b'</svg>'
-            )
-            _favicon_cache = (svg, "image/svg+xml")
-    data, ct = _favicon_cache
-    return Response(
-        content=data,
-        media_type=ct,
-        headers={"Cache-Control": "public, max-age=86400"},
-    )
 
-async def endpoint_branding(request):
-    """Return branding configuration."""
-    return JSONResponse({
-        "LoginDisclaimer": None,
-        "CustomCss": None,
-        "SplashscreenEnabled": False
-    })
 
-async def endpoint_splashscreen(request):
-    """Return 404 - no custom splashscreen configured."""
-    return Response(status_code=404)
 
 async def endpoint_user_image(request):
     """Return a generated avatar for the user (shown pre-login in Swiftfin)."""
     img_data, content_type = generate_text_icon(SJS_USER or "?", width=200, height=200)
     return Response(content=img_data, media_type=content_type)
 
-async def endpoint_quickconnect_enabled(request):
-    """QuickConnect is not supported - return false."""
-    return Response(content="false", media_type="application/json")
 
-async def endpoint_quickconnect_stub(request):
-    """QuickConnect initiate/connect - not supported."""
-    return JSONResponse({"ErrCode": "QuickConnect not enabled"}, status_code=400)
 
-async def endpoint_users_public(request):
-    """Return the list of public (non-hidden) users for the login screen.
-    Must return the full UserDto schema — Fladder and other strongly-typed
-    clients (Dart/OpenAPI-generated) reject responses missing Policy or
-    Configuration fields with a generic "unable to connect to host" error."""
-    return JSONResponse([_build_user_dto()])
 
-async def endpoint_media_segments(request):
-    """
-    Return media segments for a scene - stub endpoint.
 
-    Note: Infuse does not currently support Jellyfin's MediaSegments API
-    (intro/outro/chapter skipping). It only uses traditional chapter markers
-    embedded in video files. This stub prevents "UNHANDLED ENDPOINT" warnings.
-    """
-    return JSONResponse({"Items": []})
 
-async def endpoint_danmu(request):
-    """Stub for SenPlayer's danmaku (bullet comments) endpoint - return empty."""
-    return JSONResponse([])
 
-async def endpoint_client_log(request):
-    """Accept client diagnostic log posts (Jellyfin Android sends these during startup)."""
-    return Response(status_code=204)
-
-async def catch_all(request):
-    """Catch any unhandled routes and log them for debugging."""
-    logger.warning(f"UNHANDLED ENDPOINT: {request.method} {request.url.path} - Query: {dict(request.query_params)}")
-    return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
 async def endpoint_websocket(websocket: WebSocket):
     """Jellyfin WebSocket endpoint for clients like Infuse-Direct that require it.
