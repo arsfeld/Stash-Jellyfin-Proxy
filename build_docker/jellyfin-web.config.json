@@ -1,7 +1,7 @@
 {
   "includeCorsCredentials": false,
   "multiserver": false,
-  "servers": ["http://localhost:18096"],
+  "servers": ["http://192.168.0.200:18096"],
   "themes": [
     { "name": "Apple TV", "id": "appletv", "color": "#bcbcbc" },
     { "name": "Blue Radiance", "id": "blueradiance", "color": "#011432" },
