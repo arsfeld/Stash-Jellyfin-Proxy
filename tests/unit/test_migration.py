@@ -1,56 +1,13 @@
-"""Unit tests for the v1 → v2 config migration.
-
-Executes only the migration helpers by extracting them from the single-file
-proxy, so tests don't depend on running the whole Starlette app.
-"""
-import ast
+"""Unit tests for the v1 → v2 config migration."""
 import os
-import shutil
-import sys
-from pathlib import Path
 
 import pytest
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-PROXY_SRC_PATH = REPO_ROOT / "stash_jellyfin_proxy.py"
-SOURCE = PROXY_SRC_PATH.read_text()
-
-
-def _extract():
-    """Pull run_config_migration, _write_v2_config and their module-level
-    state from the monolith (where they still live pre-extraction) into a
-    self-contained namespace. load_config is now its own module so we just
-    import it."""
-    from proxy.config.loader import load_config as _load_config
-    tree = ast.parse(SOURCE)
-    wanted_funcs = {"run_config_migration", "_write_v2_config"}
-    wanted_assigns = {
-        "CURRENT_CONFIG_VERSION", "_V2_DEFAULT_FLAT", "_V2_DEFAULT_PLAYERS",
-        "_V2_FILE_HEADER", "MIGRATION_PERFORMED", "MIGRATION_LOG",
-    }
-    parts = []
-    for node in tree.body:
-        if isinstance(node, ast.FunctionDef) and node.name in wanted_funcs:
-            parts.append(ast.get_source_segment(SOURCE, node))
-        elif isinstance(node, ast.Assign):
-            targets = [t.id for t in node.targets if isinstance(t, ast.Name)]
-            if any(name in wanted_assigns for name in targets):
-                parts.append(ast.get_source_segment(SOURCE, node))
-    ns = {
-        "os": os,
-        "sys": sys,
-        "datetime": __import__("datetime"),
-        "load_config": _load_config,  # migration helpers call this internally
-    }
-    exec("\n\n".join(parts), ns)
-    ns["load_config"] = _load_config
-    return ns
-
-
-MIGRATION = _extract()
-load_config = MIGRATION["load_config"]
-run_config_migration = MIGRATION["run_config_migration"]
-CURRENT = MIGRATION["CURRENT_CONFIG_VERSION"]
+from proxy.config.loader import load_config
+from proxy.config.migration import (
+    run_config_migration,
+    CURRENT_CONFIG_VERSION as CURRENT,
+)
 
 
 def _write(tmp_path, text):
