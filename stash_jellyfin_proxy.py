@@ -869,33 +869,8 @@ from proxy.endpoints.stubs import (  # noqa: F401
 )
 
 
-async def endpoint_display_preferences(request):
-    prefs_id = request.path_params.get("prefs_id", "usersettings")
-
-    if request.method == "POST":
-        return JSONResponse({"Id": prefs_id})
-
-    return JSONResponse({
-        "Id": prefs_id,
-        "SortBy": "SortName",
-        "SortOrder": "Ascending",
-        "RememberIndexing": False,
-        "PrimaryImageHeight": 250,
-        "PrimaryImageWidth": 250,
-        "CustomPrefs": {
-            "homesection0": "smalllibrarytiles",
-            "homesection1": "latestmedia",
-            "homesection2": "nextup",
-            "homesection3": "none",
-            "homesection4": "none",
-            "homesection5": "none",
-            "homesection6": "none",
-        },
-        "ScrollDirection": "Horizontal",
-        "ShowBackdrop": True,
-        "RememberSorting": False,
-        "ShowSidebar": False
-    })
+# Display-preferences + WebSocket endpoints live in proxy/endpoints/misc.py.
+from proxy.endpoints.misc import endpoint_display_preferences, endpoint_websocket  # noqa: F401
 
 # Search + list endpoints + query helpers live in proxy/endpoints/search.py
 # and proxy/stash/query_helpers.py.
@@ -998,30 +973,6 @@ _favicon_cache = None
 
 
 
-
-async def endpoint_websocket(websocket: WebSocket):
-    """Jellyfin WebSocket endpoint for clients like Infuse-Direct that require it.
-
-    Accepts the connection and runs a keepalive loop matching Jellyfin's protocol.
-    Without this, newer Infuse versions hang for ~3s after login then retry indefinitely.
-    """
-    await websocket.accept()
-    logger.debug(f"WebSocket connected: path={websocket.url.path} from {websocket.client}")
-    try:
-        # Send initial ForceKeepAlive so the client knows the interval (30s)
-        await websocket.send_json({"MessageType": "ForceKeepAlive", "Data": 30})
-        while True:
-            try:
-                msg = await asyncio.wait_for(websocket.receive_json(), timeout=60.0)
-                msg_type = msg.get("MessageType", "")
-                if msg_type == "KeepAlive":
-                    await websocket.send_json({"MessageType": "KeepAlive"})
-                # All other message types are acknowledged silently
-            except asyncio.TimeoutError:
-                # Send keepalive to prevent client disconnect
-                await websocket.send_json({"MessageType": "KeepAlive"})
-    except Exception as e:
-        logger.debug(f"WebSocket disconnected: {e}")
 
 # --- App Construction ---
 routes = [
