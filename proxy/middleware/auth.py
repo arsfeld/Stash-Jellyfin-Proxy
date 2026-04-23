@@ -69,6 +69,13 @@ def get_client_ip(scope) -> str:
     return client[0] if client else "unknown"
 
 
+def clear_ip_failures(client_ip: str) -> None:
+    """Remove any recorded failure history for an IP. Called after a
+    successful auth so a client that finally gets the password right
+    doesn't stay one failure away from a ban forever."""
+    _ip_failures.pop(client_ip, None)
+
+
 def record_auth_failure(client_ip: str, path: str, reason: str, user_agent: str = ""):
     """Record a failed auth attempt and check if IP should be banned.
 

@@ -1051,6 +1051,7 @@ from proxy.middleware.auth import (  # noqa: F401
     get_client_ip,
     record_auth_failure,
     save_banned_ips_to_config,
+    clear_ip_failures,
 )
 
 
@@ -1562,11 +1563,10 @@ async def endpoint_authenticate_by_name(request):
 
     # Accept config password (strip whitespace from both for comparison)
     if pw.strip() == SJS_PASSWORD.strip():
-        # Clear any failed auth attempts for this IP on successful login
+        # Clear any failed auth attempts for this IP on successful login.
         client_ip = get_client_ip(request.scope)
-        if client_ip in _ip_failures:
-            del _ip_failures[client_ip]
-            logger.debug(f"Cleared auth failure tracking for {client_ip} after successful login")
+        clear_ip_failures(client_ip)
+        logger.debug(f"Cleared auth failure tracking for {client_ip} after successful login")
 
         record_auth_attempt(success=True)
         logger.info(f"Auth SUCCESS for user {SJS_USER}")
