@@ -3158,19 +3158,8 @@ def format_saved_filter_item(saved_filter: Dict[str, Any], parent_id: str) -> Di
 # --- Jellyfin Models & Helpers ---
 # Note: SERVER_ID and ACCESS_TOKEN are configured/persisted at startup
 
-def make_guid(numeric_id: str) -> str:
-    """Convert a numeric ID to a GUID-like format that Jellyfin clients expect."""
-    # Pad the ID and format as a pseudo-GUID
-    padded = str(numeric_id).zfill(32)
-    return f"{padded[:8]}-{padded[8:12]}-{padded[12:16]}-{padded[16:20]}-{padded[20:32]}"
-
-def extract_numeric_id(guid_id: str) -> str:
-    """Extract numeric ID from a GUID format, or return as-is if already numeric."""
-    if "-" in guid_id:
-        # It's a GUID, extract the numeric part
-        numeric = guid_id.replace("-", "").lstrip("0")
-        return numeric if numeric else "0"
-    return guid_id
+# ID converters live in proxy/util/ids.py (Phase 0.6 leaf).
+from proxy.util.ids import make_guid, extract_numeric_id, get_numeric_id  # noqa: F401
 
 _favorite_tag_id_cache = None
 
@@ -6054,16 +6043,7 @@ async def endpoint_playback_info(request):
         "PlaySessionId": f"session-{item_id}"
     })
 
-def get_numeric_id(item_id: str) -> str:
-    """Extract numeric ID from various formats: scene-123, studio-456, or GUID."""
-    if item_id.startswith("scene-"):
-        return item_id.replace("scene-", "")
-    elif item_id.startswith("studio-"):
-        return item_id.replace("studio-", "")
-    elif "-" in item_id:
-        # GUID format - extract numeric part
-        return extract_numeric_id(item_id)
-    return item_id
+# get_numeric_id now lives in proxy/util/ids.py and is imported at the top.
 
 def fetch_from_stash(url: str, extra_headers: Dict[str, str] = None, timeout: int = 30, stream: bool = False) -> Tuple[bytes, str, Dict[str, str]]:
     """
