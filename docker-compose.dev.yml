@@ -15,7 +15,10 @@ services:
     environment:
       - CONFIG_FILE=/config/stash_jellyfin_proxy.conf
       - LOG_DIR=/config
-      - TZ=America/New_York
+      - TZ=America/Chicago
+    networks:
+      # Joins the prod network so dev container can resolve `stash:9999`.
+      - media_mgmt_network
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8096/System/Info/Public"]
       interval: 30s
@@ -29,3 +32,7 @@ services:
     restart: unless-stopped
     ports:
       - "18098:80"
+
+networks:
+  media_mgmt_network:
+    external: true
