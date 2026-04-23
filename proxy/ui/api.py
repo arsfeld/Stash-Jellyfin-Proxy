@@ -174,3 +174,465 @@ async def ui_api_auth_config(request):
     except Exception as e:
         logger.error(f"Config authentication error: {e}")
         return JSONResponse({"success": False, "error": str(e)})
+
+
+# --- Config read/write endpoint (extracted from monolith) ---
+import json as _json_mod  # already imported above, but explicit here for clarity
+from proxy.config.helpers import normalize_path
+async def ui_api_config(request):
+    """Get or set configuration."""
+    # Declare globals at top of function (required before any reference)
+
+    if request.method == "GET":
+        return JSONResponse({
+            "config": {
+                "STASH_URL": runtime.STASH_URL,
+                "STASH_API_KEY": "*" * min(len(runtime.STASH_API_KEY), 20) if runtime.STASH_API_KEY else "",
+                "STASH_GRAPHQL_PATH": runtime.STASH_GRAPHQL_PATH,
+                "STASH_VERIFY_TLS": runtime.STASH_VERIFY_TLS,
+                "PROXY_BIND": runtime.PROXY_BIND,
+                "PROXY_PORT": runtime.PROXY_PORT,
+                "UI_PORT": runtime.UI_PORT,
+                "SJS_USER": runtime.SJS_USER,
+                "SJS_PASSWORD": "*" * min(len(runtime.SJS_PASSWORD), 10) if runtime.SJS_PASSWORD else "",
+                "SERVER_ID": runtime.SERVER_ID,
+                "SERVER_NAME": runtime.SERVER_NAME,
+                "TAG_GROUPS": runtime.TAG_GROUPS,
+                "FAVORITE_TAG": runtime.FAVORITE_TAG,
+                "LATEST_GROUPS": runtime.LATEST_GROUPS,
+                "BANNER_MODE": runtime.BANNER_MODE,
+                "BANNER_POOL_SIZE": runtime.BANNER_POOL_SIZE,
+                "BANNER_TAGS": runtime.BANNER_TAGS,
+                "STASH_TIMEOUT": runtime.STASH_TIMEOUT,
+                "STASH_RETRIES": runtime.STASH_RETRIES,
+                "ENABLE_FILTERS": runtime.ENABLE_FILTERS,
+                "ENABLE_IMAGE_RESIZE": runtime.ENABLE_IMAGE_RESIZE,
+                "ENABLE_TAG_FILTERS": runtime.ENABLE_TAG_FILTERS,
+                "ENABLE_ALL_TAGS": runtime.ENABLE_ALL_TAGS,
+                "REQUIRE_AUTH_FOR_CONFIG": runtime.REQUIRE_AUTH_FOR_CONFIG,
+                "IMAGE_CACHE_MAX_SIZE": runtime.IMAGE_CACHE_MAX_SIZE,
+                "DEFAULT_PAGE_SIZE": runtime.DEFAULT_PAGE_SIZE,
+                "MAX_PAGE_SIZE": runtime.MAX_PAGE_SIZE,
+                "LOG_LEVEL": runtime.LOG_LEVEL,
+                "LOG_DIR": runtime.LOG_DIR,
+                "LOG_FILE": runtime.LOG_FILE,
+                "LOG_MAX_SIZE_MB": runtime.LOG_MAX_SIZE_MB,
+                "LOG_BACKUP_COUNT": runtime.LOG_BACKUP_COUNT,
+                "BAN_THRESHOLD": runtime.BAN_THRESHOLD,
+                "BAN_WINDOW_MINUTES": runtime.BAN_WINDOW_MINUTES,
+                "BANNED_IPS": ", ".join(sorted(runtime.BANNED_IPS)) if runtime.BANNED_IPS else ""
+            },
+            "env_fields": runtime.env_overrides,
+            "defined_fields": sorted(list(runtime.config_defined_keys))
+        })
+    elif request.method == "POST":
+        try:
+            data = await request.json()
+            config_keys = [
+                "STASH_URL", "STASH_API_KEY", "STASH_GRAPHQL_PATH", "STASH_VERIFY_TLS",
+                "PROXY_BIND", "PROXY_PORT", "UI_PORT",
+                "SJS_USER", "SJS_PASSWORD", "SERVER_ID", "SERVER_NAME",
+                "TAG_GROUPS", "FAVORITE_TAG", "LATEST_GROUPS",
+                "BANNER_MODE", "BANNER_POOL_SIZE", "BANNER_TAGS",
+                "STASH_TIMEOUT", "STASH_RETRIES",
+                "ENABLE_FILTERS", "ENABLE_IMAGE_RESIZE", "ENABLE_TAG_FILTERS", "ENABLE_ALL_TAGS", "REQUIRE_AUTH_FOR_CONFIG", "IMAGE_CACHE_MAX_SIZE",
+                "DEFAULT_PAGE_SIZE", "MAX_PAGE_SIZE",
+                "LOG_LEVEL", "LOG_DIR", "LOG_FILE", "LOG_MAX_SIZE_MB", "LOG_BACKUP_COUNT",
+                "BAN_THRESHOLD", "BAN_WINDOW_MINUTES", "BANNED_IPS"
+            ]
+
+            # Sensitive keys - log changes but mask values
+            sensitive_keys = ["STASH_API_KEY", "SJS_PASSWORD"]
+
+            # Read existing config file preserving all lines
+            original_lines = []
+            existing_values = {}  # Currently active (uncommented) values
+            all_keys_in_file = set()  # Track all keys in file (commented or not)
+            if os.path.isfile(runtime.CONFIG_FILE):
+                with open(runtime.CONFIG_FILE, 'r') as f:
+                    original_lines = f.readlines()
+                    for line in original_lines:
+                        stripped = line.strip()
+                        if stripped and not stripped.startswith('#') and '=' in stripped:
+                            key, _, value = stripped.partition('=')
+                            key = key.strip()
+                            existing_values[key] = value.strip().strip('"').strip("'")
+                            all_keys_in_file.add(key)
+                        elif stripped.startswith('#') and '=' in stripped:
+                            # Track commented keys too
+                            uncommented = stripped.lstrip('#').strip()
+                            if '=' in uncommented:
+                                key, _, _ = uncommented.partition('=')
+                                all_keys_in_file.add(key.strip())
+
+            # Get current running values to compare against
+            current_running = {
+                "STASH_URL": runtime.STASH_URL,
+                "STASH_API_KEY": runtime.STASH_API_KEY,
+                "STASH_GRAPHQL_PATH": runtime.STASH_GRAPHQL_PATH,
+                "STASH_VERIFY_TLS": "true" if runtime.STASH_VERIFY_TLS else "false",
+                "PROXY_BIND": runtime.PROXY_BIND,
+                "PROXY_PORT": str(runtime.PROXY_PORT),
+                "UI_PORT": str(runtime.UI_PORT),
+                "SJS_USER": runtime.SJS_USER,
+                "SJS_PASSWORD": runtime.SJS_PASSWORD,
+                "SERVER_ID": runtime.SERVER_ID,
+                "SERVER_NAME": runtime.SERVER_NAME,
+                "TAG_GROUPS": ", ".join(runtime.TAG_GROUPS) if runtime.TAG_GROUPS else "",
+                "FAVORITE_TAG": runtime.FAVORITE_TAG,
+                "LATEST_GROUPS": ", ".join(runtime.LATEST_GROUPS) if runtime.LATEST_GROUPS else "",
+                "BANNER_MODE": runtime.BANNER_MODE,
+                "BANNER_POOL_SIZE": str(runtime.BANNER_POOL_SIZE),
+                "BANNER_TAGS": ", ".join(runtime.BANNER_TAGS) if runtime.BANNER_TAGS else "",
+                "STASH_TIMEOUT": str(runtime.STASH_TIMEOUT),
+                "STASH_RETRIES": str(runtime.STASH_RETRIES),
+                "ENABLE_FILTERS": "true" if runtime.ENABLE_FILTERS else "false",
+                "ENABLE_IMAGE_RESIZE": "true" if runtime.ENABLE_IMAGE_RESIZE else "false",
+                "ENABLE_TAG_FILTERS": "true" if runtime.ENABLE_TAG_FILTERS else "false",
+                "ENABLE_ALL_TAGS": "true" if runtime.ENABLE_ALL_TAGS else "false",
+                "REQUIRE_AUTH_FOR_CONFIG": "true" if runtime.REQUIRE_AUTH_FOR_CONFIG else "false",
+                "IMAGE_CACHE_MAX_SIZE": str(runtime.IMAGE_CACHE_MAX_SIZE),
+                "DEFAULT_PAGE_SIZE": str(runtime.DEFAULT_PAGE_SIZE),
+                "MAX_PAGE_SIZE": str(runtime.MAX_PAGE_SIZE),
+                "LOG_LEVEL": runtime.LOG_LEVEL,
+                "LOG_DIR": runtime.LOG_DIR,
+                "LOG_FILE": runtime.LOG_FILE,
+                "LOG_MAX_SIZE_MB": str(runtime.LOG_MAX_SIZE_MB),
+                "LOG_BACKUP_COUNT": str(runtime.LOG_BACKUP_COUNT),
+                "BAN_THRESHOLD": str(runtime.BAN_THRESHOLD),
+                "BAN_WINDOW_MINUTES": str(runtime.BAN_WINDOW_MINUTES),
+                "BANNED_IPS": ", ".join(sorted(runtime.BANNED_IPS)) if runtime.BANNED_IPS else "",
+            }
+
+            # Default values for comparison
+            defaults = {
+                "STASH_URL": "https://stash:9999",
+                "STASH_API_KEY": "",
+                "STASH_GRAPHQL_PATH": "/graphql",
+                "STASH_VERIFY_TLS": "false",
+                "PROXY_BIND": "0.0.0.0",
+                "PROXY_PORT": "8096",
+                "UI_PORT": "8097",
+                "SJS_USER": "",
+                "SJS_PASSWORD": "",
+                "SERVER_ID": "",
+                "SERVER_NAME": "Stash Media Server",
+                "TAG_GROUPS": "",
+                "FAVORITE_TAG": "",
+                "LATEST_GROUPS": "",
+                "BANNER_MODE": "recent",
+                "BANNER_POOL_SIZE": "200",
+                "BANNER_TAGS": "",
+                "STASH_TIMEOUT": "30",
+                "STASH_RETRIES": "3",
+                "ENABLE_FILTERS": "true",
+                "ENABLE_IMAGE_RESIZE": "true",
+                "ENABLE_TAG_FILTERS": "false",
+                "ENABLE_ALL_TAGS": "false",
+                "REQUIRE_AUTH_FOR_CONFIG": "false",
+                "IMAGE_CACHE_MAX_SIZE": "1000",
+                "DEFAULT_PAGE_SIZE": "50",
+                "MAX_PAGE_SIZE": "200",
+                "LOG_LEVEL": "INFO",
+                "LOG_DIR": "/config",
+                "LOG_FILE": "stash_jellyfin_proxy.log",
+                "LOG_MAX_SIZE_MB": "10",
+                "LOG_BACKUP_COUNT": "3",
+                "BAN_THRESHOLD": "10",
+                "BAN_WINDOW_MINUTES": "15",
+                "BANNED_IPS": "",
+            }
+
+            # Prepare new values and track which keys should be commented out (reverted to default)
+            updates = {}
+            comment_out = set()  # Keys to comment out (user wants to use default)
+
+            for key in config_keys:
+                if key in data:
+                    value = data[key]
+                    # Don't update masked passwords
+                    if key in ["STASH_API_KEY", "SJS_PASSWORD"] and str(value).startswith("*"):
+                        continue
+                    if isinstance(value, list):
+                        value = ", ".join(value)
+                    elif isinstance(value, bool):
+                        value = "true" if value else "false"
+                    new_value = str(value)
+
+                    # Check if value equals default
+                    default_value = defaults.get(key, "")
+                    is_default = (new_value == default_value)
+
+                    # If user cleared the field (empty) and there's a non-empty default,
+                    # treat this as wanting the default value
+                    is_cleared_for_default = (new_value == "" and default_value != "")
+
+                    # Check if key is currently defined (uncommented) in config file
+                    is_defined_in_file = key in existing_values
+
+                    # Compare against running value
+                    running_value = current_running.get(key, "")
+
+                    if (is_default or is_cleared_for_default) and is_defined_in_file:
+                        # User cleared the field or set to default - comment out the line to use default
+                        comment_out.add(key)
+                    elif new_value != running_value and not is_cleared_for_default:
+                        # Value changed to something non-default
+                        updates[key] = new_value
+
+            # Update lines in-place
+            updated_keys = set()
+            commented_keys = set()
+            new_lines = []
+            for line in original_lines:
+                stripped = line.strip()
+
+                # Check for uncommented key=value
+                if stripped and not stripped.startswith('#') and '=' in stripped:
+                    key, _, old_value = stripped.partition('=')
+                    key = key.strip()
+                    if key in comment_out:
+                        # Comment out this line (user wants default)
+                        indent = len(line) - len(line.lstrip())
+                        new_lines.append(f'{" " * indent}# {stripped}\n')
+                        commented_keys.add(key)
+                    elif key in updates:
+                        indent = len(line) - len(line.lstrip())
+                        new_lines.append(f'{" " * indent}{key} = "{updates[key]}"\n')
+                        updated_keys.add(key)
+                    else:
+                        new_lines.append(line)
+                # Check for commented key=value - uncomment if value needs to change
+                elif stripped.startswith('#') and '=' in stripped:
+                    uncommented = stripped.lstrip('#').strip()
+                    if '=' in uncommented:
+                        key, _, old_value = uncommented.partition('=')
+                        key = key.strip()
+                        if key in updates and key not in updated_keys:
+                            # Uncomment and update the value
+                            indent = len(line) - len(line.lstrip())
+                            new_lines.append(f'{" " * indent}{key} = "{updates[key]}"\n')
+                            updated_keys.add(key)
+                        else:
+                            new_lines.append(line)
+                    else:
+                        new_lines.append(line)
+                else:
+                    new_lines.append(line)
+
+            # Only add truly new keys that don't exist anywhere in the file
+            for key in updates:
+                if key not in updated_keys:
+                    new_lines.append(f'{key} = "{updates[key]}"\n')
+
+            # Log configuration changes
+            for key, new_val in updates.items():
+                old_val = current_running.get(key, "(unknown)")
+                if key in sensitive_keys:
+                    logger.info(f"Config changed: {key} = ******* (sensitive)")
+                else:
+                    logger.info(f"Config changed: {key}: \"{old_val}\" -> \"{new_val}\"")
+
+            # Log reverted-to-default fields
+            for key in commented_keys:
+                old_val = existing_values.get(key, "(unknown)")
+                default_val = defaults.get(key, "")
+                if key in sensitive_keys:
+                    logger.info(f"Config reverted to default: {key} (sensitive)")
+                else:
+                    logger.info(f"Config reverted to default: {key}: \"{old_val}\" -> default \"{default_val}\"")
+
+            # Write updated config file
+            with open(runtime.CONFIG_FILE, 'w') as f:
+                f.writelines(new_lines)
+
+            # Apply configuration changes immediately (where safe to do so)
+            # Settings that need restart: PROXY_BIND, PROXY_PORT, UI_PORT, LOG_DIR, LOG_FILE
+            # Settings that need restart: STASH_URL, STASH_API_KEY (connection settings)
+            # Settings that need restart: SJS_USER, SJS_PASSWORD (auth tokens may be cached)
+
+            applied_immediately = []
+            needs_restart = []
+
+            # Apply safe settings from updates dict
+            for key, new_val in updates.items():
+                if key == "TAG_GROUPS":
+                    runtime.TAG_GROUPS = [t.strip() for t in new_val.split(",") if t.strip()]
+                    applied_immediately.append(key)
+                elif key == "FAVORITE_TAG":
+                    runtime.FAVORITE_TAG = new_val.strip()
+                    runtime.favorite_tag_id_cache = None
+                    applied_immediately.append(key)
+                elif key == "LATEST_GROUPS":
+                    runtime.LATEST_GROUPS = [t.strip() for t in new_val.split(",") if t.strip()]
+                    applied_immediately.append(key)
+                elif key == "BANNER_MODE":
+                    m = new_val.strip().lower()
+                    runtime.BANNER_MODE = m if m in ("recent", "tag") else "recent"
+                    applied_immediately.append(key)
+                elif key == "BANNER_POOL_SIZE":
+                    try:
+                        runtime.BANNER_POOL_SIZE = max(1, int(new_val))
+                    except ValueError:
+                        runtime.BANNER_POOL_SIZE = 200
+                    applied_immediately.append(key)
+                elif key == "BANNER_TAGS":
+                    runtime.BANNER_TAGS = [t.strip() for t in new_val.split(",") if t.strip()]
+                    applied_immediately.append(key)
+                elif key == "SERVER_NAME":
+                    runtime.SERVER_NAME = new_val
+                    applied_immediately.append(key)
+                elif key == "STASH_TIMEOUT":
+                    runtime.STASH_TIMEOUT = int(new_val)
+                    applied_immediately.append(key)
+                elif key == "STASH_RETRIES":
+                    runtime.STASH_RETRIES = int(new_val)
+                    applied_immediately.append(key)
+                elif key == "STASH_GRAPHQL_PATH":
+                    runtime.STASH_GRAPHQL_PATH = normalize_path(new_val)
+                    applied_immediately.append(key)
+                elif key == "STASH_VERIFY_TLS":
+                    runtime.STASH_VERIFY_TLS = new_val.lower() in ('true', 'yes', '1', 'on')
+                    applied_immediately.append(key)
+                elif key == "ENABLE_FILTERS":
+                    runtime.ENABLE_FILTERS = new_val.lower() in ('true', 'yes', '1', 'on')
+                    applied_immediately.append(key)
+                elif key == "ENABLE_IMAGE_RESIZE":
+                    runtime.ENABLE_IMAGE_RESIZE = new_val.lower() in ('true', 'yes', '1', 'on')
+                    applied_immediately.append(key)
+                elif key == "ENABLE_TAG_FILTERS":
+                    runtime.ENABLE_TAG_FILTERS = new_val.lower() in ('true', 'yes', '1', 'on')
+                    applied_immediately.append(key)
+                elif key == "ENABLE_ALL_TAGS":
+                    runtime.ENABLE_ALL_TAGS = new_val.lower() in ('true', 'yes', '1', 'on')
+                    applied_immediately.append(key)
+                elif key == "IMAGE_CACHE_MAX_SIZE":
+                    runtime.IMAGE_CACHE_MAX_SIZE = int(new_val)
+                    applied_immediately.append(key)
+                elif key == "DEFAULT_PAGE_SIZE":
+                    runtime.DEFAULT_PAGE_SIZE = int(new_val)
+                    applied_immediately.append(key)
+                elif key == "MAX_PAGE_SIZE":
+                    runtime.MAX_PAGE_SIZE = int(new_val)
+                    applied_immediately.append(key)
+                elif key == "REQUIRE_AUTH_FOR_CONFIG":
+                    runtime.REQUIRE_AUTH_FOR_CONFIG = new_val.lower() in ('true', 'yes', '1', 'on')
+                    applied_immediately.append(key)
+                elif key == "LOG_LEVEL":
+                    runtime.LOG_LEVEL = new_val.upper()
+                    # Update logger level
+                    level = getattr(logging, runtime.LOG_LEVEL, logging.INFO)
+                    logger.setLevel(level)
+                    for handler in logger.handlers:
+                        handler.setLevel(level)
+                    applied_immediately.append(key)
+                elif key == "BAN_THRESHOLD":
+                    runtime.BAN_THRESHOLD = int(new_val)
+                    applied_immediately.append(key)
+                elif key == "BAN_WINDOW_MINUTES":
+                    runtime.BAN_WINDOW_MINUTES = int(new_val)
+                    applied_immediately.append(key)
+                elif key == "BANNED_IPS":
+                    runtime.BANNED_IPS = set(ip.strip() for ip in new_val.split(",") if ip.strip())
+                    applied_immediately.append(key)
+                elif key in ["PROXY_BIND", "PROXY_PORT", "UI_PORT", "LOG_DIR", "LOG_FILE",
+                             "STASH_URL", "STASH_API_KEY", "SJS_USER", "SJS_PASSWORD", "SERVER_ID"]:
+                    needs_restart.append(key)
+
+            # Apply default values for commented-out keys
+            for key in commented_keys:
+                default_val = defaults.get(key, "")
+                if key == "TAG_GROUPS":
+                    runtime.TAG_GROUPS = []
+                    applied_immediately.append(key)
+                elif key == "FAVORITE_TAG":
+                    runtime.FAVORITE_TAG = ""
+                    runtime.favorite_tag_id_cache = None
+                    applied_immediately.append(key)
+                elif key == "LATEST_GROUPS":
+                    runtime.LATEST_GROUPS = []
+                    applied_immediately.append(key)
+                elif key == "BANNER_MODE":
+                    runtime.BANNER_MODE = "recent"
+                    applied_immediately.append(key)
+                elif key == "BANNER_POOL_SIZE":
+                    runtime.BANNER_POOL_SIZE = 200
+                    applied_immediately.append(key)
+                elif key == "BANNER_TAGS":
+                    runtime.BANNER_TAGS = []
+                    applied_immediately.append(key)
+                elif key == "SERVER_NAME":
+                    runtime.SERVER_NAME = "Stash Media Server"
+                    applied_immediately.append(key)
+                elif key == "STASH_TIMEOUT":
+                    runtime.STASH_TIMEOUT = 30
+                    applied_immediately.append(key)
+                elif key == "STASH_RETRIES":
+                    runtime.STASH_RETRIES = 3
+                    applied_immediately.append(key)
+                elif key == "STASH_GRAPHQL_PATH":
+                    runtime.STASH_GRAPHQL_PATH = "/graphql"
+                    applied_immediately.append(key)
+                elif key == "STASH_VERIFY_TLS":
+                    runtime.STASH_VERIFY_TLS = False
+                    applied_immediately.append(key)
+                elif key == "ENABLE_FILTERS":
+                    runtime.ENABLE_FILTERS = True
+                    applied_immediately.append(key)
+                elif key == "ENABLE_IMAGE_RESIZE":
+                    runtime.ENABLE_IMAGE_RESIZE = True
+                    applied_immediately.append(key)
+                elif key == "ENABLE_TAG_FILTERS":
+                    runtime.ENABLE_TAG_FILTERS = False
+                    applied_immediately.append(key)
+                elif key == "ENABLE_ALL_TAGS":
+                    runtime.ENABLE_ALL_TAGS = False
+                    applied_immediately.append(key)
+                elif key == "IMAGE_CACHE_MAX_SIZE":
+                    runtime.IMAGE_CACHE_MAX_SIZE = 100
+                    applied_immediately.append(key)
+                elif key == "DEFAULT_PAGE_SIZE":
+                    runtime.DEFAULT_PAGE_SIZE = 50
+                    applied_immediately.append(key)
+                elif key == "MAX_PAGE_SIZE":
+                    runtime.MAX_PAGE_SIZE = 200
+                    applied_immediately.append(key)
+                elif key == "REQUIRE_AUTH_FOR_CONFIG":
+                    runtime.REQUIRE_AUTH_FOR_CONFIG = False
+                    applied_immediately.append(key)
+                elif key == "LOG_LEVEL":
+                    runtime.LOG_LEVEL = "INFO"
+                    logger.setLevel(logging.INFO)
+                    for handler in logger.handlers:
+                        handler.setLevel(logging.INFO)
+                    applied_immediately.append(key)
+                elif key == "BAN_THRESHOLD":
+                    runtime.BAN_THRESHOLD = 10
+                    applied_immediately.append(key)
+                elif key == "BAN_WINDOW_MINUTES":
+                    runtime.BAN_WINDOW_MINUTES = 15
+                    applied_immediately.append(key)
+                elif key == "BANNED_IPS":
+                    runtime.BANNED_IPS = set()
+                    applied_immediately.append(key)
+
+            # Update _config_defined_keys to reflect new state
+            for key in updates:
+                runtime.config_defined_keys.add(key)
+            for key in commented_keys:
+                runtime.config_defined_keys.discard(key)
+
+            if applied_immediately:
+                logger.info(f"Applied immediately: {', '.join(applied_immediately)}")
+            if needs_restart:
+                logger.info(f"Requires restart: {', '.join(needs_restart)}")
+
+            return JSONResponse({
+                "success": True,
+                "applied_immediately": applied_immediately,
+                "needs_restart": needs_restart
+            })
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+

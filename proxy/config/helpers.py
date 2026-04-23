@@ -1,4 +1,5 @@
-"""Pure helpers for config-value coercion and normalization."""
+"""Pure helpers for config-value coercion, normalization, and persistence."""
+import os
 import uuid
 
 
@@ -43,3 +44,43 @@ def normalize_server_id(server_id):
 def generate_server_id():
     """Generate a server ID in standard UUID format (8-4-4-4-12)."""
     return str(uuid.uuid4())
+
+
+def save_config_value(config_file: str, key: str, value: str, comment: str = None) -> bool:
+    """Write a KEY = value line to the config file. Updates an existing
+    entry (commented or active) in-place; appends if not found."""
+    if not os.path.isfile(config_file):
+        with open(config_file, 'w') as f:
+            if comment:
+                f.write(f'# {comment}\n')
+            f.write(f'{key} = {value}\n')
+        return True
+
+    with open(config_file, 'r') as f:
+        lines = f.readlines()
+
+    updated = False
+    new_lines = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('#') and key in stripped and '=' in stripped:
+            new_lines.append(f'{key} = {value}\n')
+            updated = True
+        elif stripped.startswith(key) and '=' in stripped:
+            new_lines.append(f'{key} = {value}\n')
+            updated = True
+        else:
+            new_lines.append(line)
+
+    if not updated:
+        prefix = f'\n# {comment}\n' if comment else '\n'
+        new_lines.append(f'{prefix}{key} = {value}\n')
+
+    with open(config_file, 'w') as f:
+        f.writelines(new_lines)
+    return True
+
+
+def save_server_id_to_config(config_file: str, server_id: str) -> bool:
+    """Convenience wrapper for saving SERVER_ID."""
+    return save_config_value(config_file, "SERVER_ID", server_id, "Server identification (auto-generated)")

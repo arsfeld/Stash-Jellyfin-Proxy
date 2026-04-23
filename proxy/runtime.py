@@ -111,6 +111,13 @@ MIGRATION_LOG: List[str] = []
 # --- Image byte cache (Pillow output keyed by (item_id, size)) ---
 IMAGE_CACHE: Dict[Any, Any] = {}
 
+# --- Live config state (mutable at runtime via ui_api_config) ---
+# Keys that are currently overridden via environment variables — the Web UI
+# shows them as read-only. Populated at bootstrap.
+env_overrides: List[str] = []
+# The Stash tag id for FAVORITE_TAG, cached after first lookup.
+favorite_tag_id_cache: Any = None
+
 
 def publish(**kwargs):
     """Bulk-set attributes. Used by the monolith bootstrap to copy its
