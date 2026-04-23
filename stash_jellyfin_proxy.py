@@ -1359,43 +1359,21 @@ async def endpoint_display_preferences(request):
         "ShowSidebar": False
     })
 
-def get_stash_sort_params(request, context="scenes") -> Tuple[str, str]:
-    """Map Jellyfin SortBy/SortOrder to Stash sort/direction.
-    context: 'scenes' for scene listings, 'folders' for performers/studios/groups/tags."""
-    sort_by_raw = request.query_params.get("SortBy") or request.query_params.get("sortBy") or ("PremiereDate" if context == "scenes" else "SortName")
-    sort_order = request.query_params.get("SortOrder") or request.query_params.get("sortOrder") or ("Descending" if context == "scenes" else "Ascending")
+# Search + list endpoints + query helpers live in proxy/endpoints/search.py
+# and proxy/stash/query_helpers.py.
+from proxy.stash.query_helpers import (  # noqa: F401
+    get_stash_sort_params,
+    scene_filter_clause_for_parent as _scene_filter_clause_for_parent,
+)
+from proxy.endpoints.search import (  # noqa: F401
+    endpoint_items_counts,
+    endpoint_items_filters,
+    endpoint_genres,
+    endpoint_persons,
+    endpoint_studios,
+    endpoint_search_hints,
+)
 
-    sort_by = sort_by_raw.split(",")[0].strip()
-
-    if context == "folders":
-        sort_mapping = {
-            "sortname": "name", "name": "name",
-            "datecreated": "created_at", "premieredate": "created_at",
-            "datelastcontentadded": "created_at",
-            "random": "random", "communityrating": "rating",
-        }
-        default_sort = "name"
-    else:
-        sort_mapping = {
-            "sortname": "title", "name": "title",
-            "premieredate": "date",
-            "datecreated": "created_at",
-            "datelastcontentadded": "created_at",
-            "dateplayed": "last_played_at",
-            "productionyear": "date",
-            "random": "random", "runtime": "duration",
-            "communityrating": "rating", "playcount": "play_count",
-            "criticrating": "rating",
-            "resolution": "bitrate",
-        }
-        default_sort = "date"
-
-    stash_sort = sort_mapping.get(sort_by.lower(), default_sort)
-    stash_direction = "ASC" if sort_order == "Ascending" else "DESC"
-
-    logger.debug(f"Sort mapping ({context}): {sort_by_raw} -> {sort_by} -> {stash_sort} {stash_direction}")
-
-    return stash_sort, stash_direction
 
 def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
     """
@@ -3389,51 +3367,7 @@ async def endpoint_playback_info(request):
 
 # get_numeric_id now lives in proxy/util/ids.py and is imported at the top.
 
-def fetch_from_stash(url: str, extra_headers: Dict[str, str] = None, timeout: int = 30, stream: bool = False) -> Tuple[bytes, str, Dict[str, str]]:
-    """
-    Fetch content from Stash using authenticated session for proper redirect handling.
-    Returns (data, content_type, response_headers).
-    """
-    # Use the authenticated session
-    session = get_stash_session()
-
-    # Add extra headers
-    headers = extra_headers or {}
-
-    try:
-        response = session.get(url, headers=headers, timeout=timeout, stream=stream, allow_redirects=True)
-
-        # Log response details for debugging
-        content_type = response.headers.get('Content-Type', 'application/octet-stream')
-
-        # Check if we got HTML instead of media (indicates auth failure)
-        if 'text/html' in content_type:
-            # Read a bit of content for debugging
-            if stream:
-                preview = next(response.iter_content(chunk_size=200), b'').decode('utf-8', errors='ignore')
-            else:
-                preview = response.text[:200]
-            logger.error(f"Got HTML response instead of media from {url}")
-            logger.error(f"First 200 chars: {preview}")
-            raise Exception(f"Authentication failed - received HTML instead of media")
-
-        response.raise_for_status()
-
-        # Build response headers dict
-        resp_headers = dict(response.headers)
-
-        if stream:
-            # For streaming, return chunks
-            data = b''.join(response.iter_content(chunk_size=65536))
-        else:
-            data = response.content
-
-        logger.debug(f"Fetch success from {url}: {len(data)} bytes, type={content_type}")
-        return data, content_type, resp_headers
-
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Request failed for {url}: {e}")
-        raise
+from proxy.stash.client import fetch_from_stash  # noqa: F401
 
 async def endpoint_stream(request):
     """Proxy video stream from Stash with proper authentication using true streaming."""
@@ -4038,66 +3972,6 @@ async def endpoint_user_items_resume(request):
 
 
 
-async def endpoint_items_counts(request):
-    """Return item counts by type."""
-    # Query Stash for counts
-    try:
-        count_q = """query {
-            findScenes { count }
-            findPerformers { count }
-            findStudios { count }
-            findMovies { count }
-        }"""
-        res = stash_query(count_q)
-        data = res.get("data", {})
-        return JSONResponse({
-            "MovieCount": data.get("findScenes", {}).get("count", 0),
-            "SeriesCount": 0,
-            "EpisodeCount": 0,
-            "ArtistCount": data.get("findPerformers", {}).get("count", 0),
-            "ProgramCount": 0,
-            "TrailerCount": 0,
-            "SongCount": 0,
-            "AlbumCount": 0,
-            "MusicVideoCount": 0,
-            "BoxSetCount": data.get("findMovies", {}).get("count", 0),
-            "BookCount": 0,
-            "ItemCount": data.get("findScenes", {}).get("count", 0)
-        })
-    except Exception as e:
-        logger.error(f"Error getting item counts: {e}")
-        return JSONResponse({"ItemCount": 0})
-
-
-
-
-async def endpoint_items_filters(request):
-    """Return filter options populated from Stash data."""
-    parent_id = request.query_params.get("parentId") or request.query_params.get("ParentId")
-
-    try:
-        tags_q = """query { findTags(filter: {per_page: 200, sort: "name", direction: ASC}) { tags { name } } }"""
-        studios_q = """query { findStudios(filter: {per_page: 200, sort: "name", direction: ASC}) { studios { name } } }"""
-        tags_res = stash_query(tags_q)
-        studios_res = stash_query(studios_q)
-
-        tag_names = [t["name"] for t in tags_res.get("data", {}).get("findTags", {}).get("tags", [])]
-        studio_names = [s["name"] for s in studios_res.get("data", {}).get("findStudios", {}).get("studios", [])]
-
-        return JSONResponse({
-            "Genres": studio_names,
-            "Tags": tag_names,
-            "OfficialRatings": [],
-            "Years": [],
-        })
-    except Exception as e:
-        logger.error(f"Failed to fetch filters: {e}")
-        return JSONResponse({
-            "Genres": [],
-            "Tags": [],
-            "OfficialRatings": [],
-            "Years": [],
-        })
 
 
 
@@ -4106,290 +3980,17 @@ async def endpoint_items_filters(request):
 
 
 
-def _scene_filter_clause_for_parent(parent_id):
-    """Return (gql_filter_clause, variables_dict) for a given parent_id context, or (None, None)."""
-    if not parent_id:
-        return None, None
-    if parent_id.startswith("performer-"):
-        pid = parent_id.replace("performer-", "")
-        return "scene_filter: {performers: {value: $ids, modifier: INCLUDES}}", {"ids": [pid]}
-    elif parent_id.startswith("studio-"):
-        sid = parent_id.replace("studio-", "")
-        return "scene_filter: {studios: {value: $ids, modifier: INCLUDES}}", {"ids": [sid]}
-    elif parent_id.startswith("group-"):
-        gid = parent_id.replace("group-", "")
-        return "scene_filter: {movies: {value: $ids, modifier: INCLUDES}}", {"ids": [gid]}
-    elif parent_id.startswith("tagitem-"):
-        tid = parent_id.replace("tagitem-", "")
-        return "scene_filter: {tags: {value: $ids, modifier: INCLUDES}}", {"ids": [tid]}
-    return None, None
-
-
-async def endpoint_genres(request):
-    """Return genres (Stash tags), optionally filtered to only those present in a parent context."""
-    parent_id = request.query_params.get("ParentId") or request.query_params.get("parentId")
-
-    try:
-        filter_clause, fvars = _scene_filter_clause_for_parent(parent_id)
-
-        if filter_clause:
-            # Fetch only the tags present in scenes matching this context
-            q = f"""query FindSceneTags($ids: [ID!]) {{
-                findScenes({filter_clause}, filter: {{per_page: -1}}) {{
-                    scenes {{ tags {{ id name }} }}
-                }}
-            }}"""
-            res = stash_query(q, fvars)
-            scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-            seen = {}
-            for s in scenes:
-                for t in s.get("tags", []):
-                    seen[t["id"]] = t["name"]
-            items = [
-                {"Name": name, "Id": f"genre-{tid}", "ServerId": SERVER_ID,
-                 "Type": "Genre", "ImageTags": {"Primary": "img"}, "ImageBlurHashes": {"Primary": {"img": "000000"}}, "BackdropImageTags": []}
-                for tid, name in sorted(seen.items(), key=lambda x: x[1])
-            ]
-        else:
-            # Return all tags with at least one scene
-            q = """query { findTags(filter: {per_page: -1, sort: "name", direction: ASC}) {
-                tags { id name scene_count }
-            }}"""
-            res = stash_query(q)
-            tags = res.get("data", {}).get("findTags", {}).get("tags", [])
-            items = [
-                {"Name": t["name"], "Id": f"genre-{t['id']}", "ServerId": SERVER_ID,
-                 "Type": "Genre", "ImageTags": {"Primary": "img"}, "ImageBlurHashes": {"Primary": {"img": "000000"}}, "BackdropImageTags": []}
-                for t in tags if t.get("scene_count", 0) > 0
-            ]
-
-        return JSONResponse({"Items": items, "TotalRecordCount": len(items), "StartIndex": 0})
-    except Exception as e:
-        logger.error(f"Error getting genres: {e}")
-        return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
-
-async def endpoint_persons(request):
-    """Return persons - maps to Stash performers."""
-    start_index = max(0, int(request.query_params.get("startIndex") or request.query_params.get("StartIndex") or 0))
-    limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or DEFAULT_PAGE_SIZE)
-    limit = max(1, min(limit, MAX_PAGE_SIZE))
-
-    search_term = request.query_params.get("searchTerm") or request.query_params.get("SearchTerm")
-    filters_param = request.query_params.get("Filters") or request.query_params.get("filters") or ""
-    filter_favorites = "isfavorite" in filters_param.lower()
-    folder_sort, folder_dir = get_stash_sort_params(request, context="folders")
-
-    try:
-        page = (start_index // limit) + 1
-
-        if search_term:
-            clean_search = search_term.strip('"\'')
-            logger.debug(f"Persons search: '{clean_search}'")
-
-            count_q = """query CountPerformers($q: String!) {
-                findPerformers(filter: {q: $q}) { count }
-            }"""
-            count_res = stash_query(count_q, {"q": clean_search})
-            total_count = count_res.get("data", {}).get("findPerformers", {}).get("count", 0)
-
-            q = """query FindPerformers($q: String!, $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
-                findPerformers(filter: {q: $q, page: $page, per_page: $per_page, sort: $sort, direction: $direction}) {
-                    performers { id name image_path scene_count }
-                }
-            }"""
-            res = stash_query(q, {"q": clean_search, "page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
-            logger.debug(f"Persons search '{clean_search}' returned {total_count} matches")
-        elif filter_favorites:
-            # Return only performers marked as favorite in Stash (native favorite field)
-            count_q = """query { findPerformers(performer_filter: {filter_favorites: true}) { count } }"""
-            count_res = stash_query(count_q)
-            total_count = count_res.get("data", {}).get("findPerformers", {}).get("count", 0)
-
-            q = """query FindFavPerformers($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
-                findPerformers(
-                    performer_filter: {filter_favorites: true},
-                    filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}
-                ) {
-                    performers { id name image_path scene_count }
-                }
-            }"""
-            res = stash_query(q, {"page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
-            logger.debug(f"Persons favorites returned {total_count} favorite performers")
-        else:
-            count_q = """query { findPerformers { count } }"""
-            count_res = stash_query(count_q)
-            total_count = count_res.get("data", {}).get("findPerformers", {}).get("count", 0)
-
-            q = """query FindPerformers($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
-                findPerformers(filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}) {
-                    performers { id name image_path scene_count }
-                }
-            }"""
-            res = stash_query(q, {"page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
-
-        performers = res.get("data", {}).get("findPerformers", {}).get("performers", [])
-
-        items = []
-        for p in performers:
-            has_image = bool(p.get("image_path"))
-            item = {
-                "Name": p["name"],
-                "Id": f"performer-{p['id']}",
-                "ServerId": SERVER_ID,
-                "Type": "Person",
-                "ImageTags": {"Primary": "img"},
-                "ImageBlurHashes": {"Primary": {"img": "000000"}},
-                "BackdropImageTags": []
-            }
-            items.append(item)
-        return JSONResponse({"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index})
-    except Exception as e:
-        logger.error(f"Error getting persons: {e}")
-        return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
-
-async def endpoint_studios(request):
-    """Return studios, optionally filtered to only those present in a parent context."""
-    start_index = max(0, int(request.query_params.get("startIndex") or request.query_params.get("StartIndex") or 0))
-    limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or DEFAULT_PAGE_SIZE)
-    limit = max(1, min(limit, MAX_PAGE_SIZE))
-    parent_id = request.query_params.get("ParentId") or request.query_params.get("parentId")
-    folder_sort, folder_dir = get_stash_sort_params(request, context="folders")
-
-    try:
-        filter_clause, fvars = _scene_filter_clause_for_parent(parent_id)
-
-        if filter_clause:
-            # Fetch only the studios present in scenes matching this context
-            q = f"""query FindSceneStudios($ids: [ID!]) {{
-                findScenes({filter_clause}, filter: {{per_page: -1}}) {{
-                    scenes {{ studio {{ id name image_path }} }}
-                }}
-            }}"""
-            res = stash_query(q, fvars)
-            scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-            seen = {}
-            for s in scenes:
-                studio = s.get("studio")
-                if studio:
-                    seen[studio["id"]] = studio
-            items = [
-                {"Name": s["name"], "Id": f"studio-{s['id']}", "ServerId": SERVER_ID,
-                 "Type": "Studio",
-                 "ImageTags": {"Primary": "img"},
-                 "ImageBlurHashes": {"Primary": {"img": "000000"}},
-                 "BackdropImageTags": []}
-                for s in sorted(seen.values(), key=lambda x: x["name"])
-            ]
-            return JSONResponse({"Items": items, "TotalRecordCount": len(items), "StartIndex": 0})
-        else:
-            count_q = """query { findStudios { count } }"""
-            count_res = stash_query(count_q)
-            total_count = count_res.get("data", {}).get("findStudios", {}).get("count", 0)
-
-            page = (start_index // limit) + 1
-            q = """query FindStudios($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
-                findStudios(filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}) {
-                    studios { id name image_path scene_count }
-                }
-            }"""
-            res = stash_query(q, {"page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
-            studios = res.get("data", {}).get("findStudios", {}).get("studios", [])
-            items = [
-                {"Name": s["name"], "Id": f"studio-{s['id']}", "ServerId": SERVER_ID,
-                 "Type": "Studio",
-                 "ImageTags": {"Primary": "img"},
-                 "ImageBlurHashes": {"Primary": {"img": "000000"}},
-                 "BackdropImageTags": []}
-                for s in studios
-            ]
-            return JSONResponse({"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index})
-    except Exception as e:
-        logger.error(f"Error getting studios: {e}")
-        return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
 
 
 
-async def endpoint_search_hints(request):
-    """Swiftfin search - returns SearchHints format used by /Search/Hints."""
-    search_term = request.query_params.get("searchTerm") or request.query_params.get("SearchTerm") or ""
-    limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 20)
-    limit = max(1, min(limit, 50))
 
-    include_item_types_raw = [v for k, v in request.query_params.multi_items() if k.lower() == "includeitemtypes"]
-    include_item_types = []
-    for val in include_item_types_raw:
-        include_item_types.extend([t.strip().lower() for t in val.split(",") if t.strip()])
 
-    hints = []
-    total_count = 0
 
-    if not search_term.strip():
-        return JSONResponse({"SearchHints": [], "TotalRecordCount": 0})
 
-    clean_search = search_term.strip('"\'')
 
-    search_scenes = not include_item_types or "movie" in include_item_types or "video" in include_item_types
-    search_persons = not include_item_types or "person" in include_item_types
 
-    try:
-        if search_scenes:
-            q = """query FindScenes($q: String!, $per_page: Int!) {
-                findScenes(filter: {q: $q, per_page: $per_page, sort: "date", direction: DESC}) {
-                    count
-                    scenes { id title date files { duration } }
-                }
-            }"""
-            res = stash_query(q, {"q": clean_search, "per_page": limit})
-            data = res.get("data", {}).get("findScenes", {})
-            total_count += data.get("count", 0)
-            for s in data.get("scenes", []):
-                scene_id = f"scene-{s['id']}"
-                duration = 0
-                if s.get("files"):
-                    duration = s["files"][0].get("duration") or 0
-                title = s.get("title") or f"Scene {s['id']}"
-                hint = {
-                    "Name": title,
-                    "Id": scene_id,
-                    "ServerId": SERVER_ID,
-                    "Type": "Movie",
-                    "MediaType": "Video",
-                    "RunTimeTicks": int(duration * 10000000),
-                    "PrimaryImageTag": "img",
-                    "ImageTag": "img",
-                }
-                date = s.get("date")
-                if date:
-                    hint["ProductionYear"] = int(date[:4])
-                hints.append(hint)
 
-        if search_persons:
-            perf_limit = max(5, limit // 2)
-            q = """query FindPerformers($q: String!, $per_page: Int!) {
-                findPerformers(filter: {q: $q, per_page: $per_page}) {
-                    count
-                    performers { id name image_path }
-                }
-            }"""
-            res = stash_query(q, {"q": clean_search, "per_page": perf_limit})
-            data = res.get("data", {}).get("findPerformers", {})
-            total_count += data.get("count", 0)
-            for p in data.get("performers", []):
-                hint = {
-                    "Name": p["name"],
-                    "Id": f"performer-{p['id']}",
-                    "ServerId": SERVER_ID,
-                    "Type": "Person",
-                    "MediaType": "",
-                }
-                if p.get("image_path"):
-                    hint["PrimaryImageTag"] = "img"
-                hints.append(hint)
-    except Exception as e:
-        logger.error(f"Search hints error: {e}")
 
-    logger.debug(f"SearchHints '{clean_search}' -> {len(hints)} hints (total={total_count})")
-    return JSONResponse({"SearchHints": hints, "TotalRecordCount": total_count})
 
 
 
