@@ -5699,11 +5699,20 @@ async def _unhandled_exception_handler(request, exc):
     return _error_json(500, "internal")
 
 
+# NOTE: do NOT register a catch-all Exception handler here. That catches
+# ConnectionReset / asyncio.CancelledError during streaming responses
+# before they reach RequestLoggingMiddleware's try/except, which is what
+# logs "▶ Stream started" when the client disconnects. Swiftfin's player
+# holds a single long-lived range request open and only disconnects at
+# the end; catching the disconnect higher up silently stole that log
+# event and left the Dashboard's active-stream list empty.
+# If we need a generic 500 handler later, make it conditional on the
+# response not having started, or move it into an ASGI middleware above
+# RequestLoggingMiddleware so logging still fires.
 _error_contract_handlers = {
     StashUnavailable: _stash_unavailable_handler,
     StashError: _stash_error_handler,
     BadRequest: _bad_request_handler,
-    Exception: _unhandled_exception_handler,
 }
 
 middleware = [
