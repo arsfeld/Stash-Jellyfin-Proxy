@@ -1,0 +1,2042 @@
+{
+  "compare_mode": "shape",
+  "name": "items_resume",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/Resume?Limit=12&Fields=PrimaryImageAspectRatio&MediaTypes=Video"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b39279"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "49c1a4e220f42102",
+          "HasSubtitles": false,
+          "Id": "scene-39279",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b39279": "000000"
+            },
+            "Primary": {
+              "p39279": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p39279"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 2250247,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-39279",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 30,
+                  "BitRate": 2250247,
+                  "Codec": "h264",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 30,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Goon Solo - Female Orgasm Pussy Contractions Compilation Split Screen",
+              "Path": "/data/Video-B/--NEW/empornium/Gooning Megapack/Goon Solo - Female Orgasm Pussy Contractions Compilation Split Screen.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 1980300000,
+              "Size": 55703012,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 30,
+              "BitRate": 2250247,
+              "Codec": "h264",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 30,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Goon Solo - Female Orgasm Pussy Contractions Compilation Split Screen",
+          "ParentId": "root-scenes",
+          "PartCount": 1,
+          "Path": "/data/Video-B/--NEW/empornium/Gooning Megapack/Goon Solo - Female Orgasm Pussy Contractions Compilation Split Screen.mp4",
+          "RunTimeTicks": 1980300000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Goon Solo - Female Orgasm Pussy Contractions Compilation Split Screen",
+          "SourceType": "Default",
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-39279",
+            "Key": "scene-39279",
+            "LastPlayedDate": "2026-04-22T01:45:36Z",
+            "PlayCount": 1,
+            "PlaybackPositionTicks": 1474691800,
+            "Played": true,
+            "PlayedPercentage": 74.46810079280917
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b39221"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "8bd2e98b542f6bda",
+          "Genres": [
+            "JOI",
+            "Porn Music Video"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-39221",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b39221": "000000"
+            },
+            "Primary": {
+              "p39221": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p39221"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 3305262,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-39221",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 30,
+                  "BitRate": 3305262,
+                  "Codec": "h264",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 30,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Porn Addiction Fuel - Goon PMV",
+              "Path": "/data/Video-B/--NEW/empornium/Gooning Megapack/Goon - Goon And Never Stop! - 1920x1080.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 3328399999,
+              "Size": 137516278,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 30,
+              "BitRate": 3305262,
+              "Codec": "h264",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 30,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Porn Addiction Fuel - Goon PMV",
+          "ParentId": "root-scenes",
+          "PartCount": 1,
+          "Path": "/data/Video-B/--NEW/empornium/Gooning Megapack/Goon - Goon And Never Stop! - 1920x1080.mp4",
+          "PremiereDate": "2021-03-20T00:00:00.0000000Z",
+          "ProductionYear": 2021,
+          "RunTimeTicks": 3328399999,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Porn Addiction Fuel - Goon PMV",
+          "SourceType": "Default",
+          "Tags": [
+            "JOI",
+            "Porn Music Video"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-39221",
+            "Key": "scene-39221",
+            "LastPlayedDate": "2026-04-21T01:54:11Z",
+            "PlayCount": 1,
+            "PlaybackPositionTicks": 1510000000,
+            "Played": true,
+            "PlayedPercentage": 45.367143372190846
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b39223"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "4ede46e861a0187a",
+          "Genres": [
+            "BBC",
+            "Big Ass",
+            "Blowjob",
+            "Dancing",
+            "Deepthroat"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-39223",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b39223": "000000"
+            },
+            "Primary": {
+              "p39223": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p39223"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 3119650,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-39223",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 30,
+                  "BitRate": 3119650,
+                  "Codec": "h264",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 30,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "The NoFap Corrupter",
+              "Path": "/data/Video-B/--NEW/empornium/Gooning Megapack/Goon - Goon No Fap Challenge-1920x1080.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 3393300000,
+              "Size": 132323097,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 30,
+              "BitRate": 3119650,
+              "Codec": "h264",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 30,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "The NoFap Corrupter",
+          "ParentId": "root-scenes",
+          "PartCount": 1,
+          "Path": "/data/Video-B/--NEW/empornium/Gooning Megapack/Goon - Goon No Fap Challenge-1920x1080.mp4",
+          "People": [
+            {
+              "Id": "person-528",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p528": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p528"
+              },
+              "Name": "Nicole Aniston",
+              "PrimaryImageTag": "p528",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-707",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p707": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p707"
+              },
+              "Name": "Aidra Fox",
+              "PrimaryImageTag": "p707",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-723",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p723": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p723"
+              },
+              "Name": "Jillian Janson",
+              "PrimaryImageTag": "p723",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-933",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p933": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p933"
+              },
+              "Name": "Gina Valentina",
+              "PrimaryImageTag": "p933",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1124",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1124": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1124"
+              },
+              "Name": "Kenzie Reeves",
+              "PrimaryImageTag": "p1124",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1214",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1214": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1214"
+              },
+              "Name": "Adriana Chechik",
+              "PrimaryImageTag": "p1214",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1257",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1257": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1257"
+              },
+              "Name": "Ariana Marie",
+              "PrimaryImageTag": "p1257",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-3022",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p3022": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p3022"
+              },
+              "Name": "Holly Hendrix",
+              "PrimaryImageTag": "p3022",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-3792",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p3792": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p3792"
+              },
+              "Name": "Eva Elfie",
+              "PrimaryImageTag": "p3792",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-4676",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p4676": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p4676"
+              },
+              "Name": "Penelope Kay",
+              "PrimaryImageTag": "p4676",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2021-10-03T00:00:00.0000000Z",
+          "ProductionYear": 2021,
+          "RunTimeTicks": 3393300000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "The NoFap Corrupter",
+          "SourceType": "Default",
+          "Tags": [
+            "BBC",
+            "Big Ass",
+            "Blowjob",
+            "Dancing",
+            "Deepthroat",
+            "PAWG",
+            "Porn Music Video",
+            "Pornstar",
+            "Riding",
+            "Twerking"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-39223",
+            "Key": "scene-39223",
+            "LastPlayedDate": "2026-04-21T01:53:32Z",
+            "PlayCount": 1,
+            "PlaybackPositionTicks": 20000000,
+            "Played": true,
+            "PlayedPercentage": 0.5893967524238942
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b38728"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "001885c93a8e2ff2",
+          "Genres": [
+            "!2. Miscellenous JOI",
+            "JOI",
+            "Step Daughter"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-38728",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b38728": "000000"
+            },
+            "Primary": {
+              "p38728": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p38728"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 9324555,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-38728",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 30,
+                  "BitRate": 9324555,
+                  "Codec": "h264",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 30,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Gracie Gates: Please Cum For Me",
+              "Path": "/data2/Video-B/Miscellaneous - JOI/2025-07-22 Gracie Gates Please Cum For Me.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 7641400000,
+              "Size": 890655891,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 30,
+              "BitRate": 9324555,
+              "Codec": "h264",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 30,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Gracie Gates: Please Cum For Me",
+          "Overview": "alt chick Gracie wants you to listen to her jerk off instructions\n\nStudio: Bad Family POV",
+          "ParentId": "root-scenes",
+          "PartCount": 1,
+          "Path": "/data2/Video-B/Miscellaneous - JOI/2025-07-22 Gracie Gates Please Cum For Me.mp4",
+          "People": [
+            {
+              "Id": "person-4292",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p4292": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p4292"
+              },
+              "Name": "Gracie Gates",
+              "PrimaryImageTag": "p4292",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2025-07-22T00:00:00.0000000Z",
+          "ProductionYear": 2025,
+          "RunTimeTicks": 7641400000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Gracie Gates: Please Cum For Me",
+          "SourceType": "Default",
+          "Tags": [
+            "!2. Miscellenous JOI",
+            "JOI",
+            "Step Daughter"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-38728",
+            "Key": "scene-38728",
+            "LastPlayedDate": "2026-04-15T03:43:45Z",
+            "PlayCount": 1,
+            "PlaybackPositionTicks": 6377192010,
+            "Played": true,
+            "PlayedPercentage": 83.45580665846572
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b37644"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "c219c8f4f6cc7fd6",
+          "Genres": [
+            "!2. Miscellenous JOI",
+            "FAVORITE",
+            "Good Boy",
+            "Gooning",
+            "Hypno"
+          ],
+          "HasSubtitles": true,
+          "Id": "scene-37644",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b37644": "000000"
+            },
+            "Primary": {
+              "p37644": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p37644"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 1043109,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-37644",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "854:480",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 1043109,
+                  "Codec": "h264",
+                  "Height": 480,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 854
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                },
+                {
+                  "Codec": "srt",
+                  "DeliveryMethod": "External",
+                  "DeliveryUrl": "Subtitles/1/0/Stream.srt",
+                  "DisplayLanguage": "ENG",
+                  "DisplayTitle": "ENG (SRT)",
+                  "Index": 2,
+                  "IsDefault": true,
+                  "IsExternal": true,
+                  "IsForced": false,
+                  "IsTextSubtitleStream": true,
+                  "Language": "eng",
+                  "SupportsExternalStream": true,
+                  "Title": "ENG",
+                  "Type": "Subtitle"
+                }
+              ],
+              "Name": "Relapse For Big Tits Gooner",
+              "Path": "/data2/Video-B/Miscellaneous - JOI/Relapse For Big Tits Gooner.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 20103900000,
+              "Size": 262131910,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "854:480",
+              "AverageFrameRate": 29.97,
+              "BitRate": 1043109,
+              "Codec": "h264",
+              "Height": 480,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 854
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            },
+            {
+              "Codec": "srt",
+              "DeliveryMethod": "External",
+              "DeliveryUrl": "Subtitles/1/0/Stream.srt",
+              "DisplayLanguage": "ENG",
+              "DisplayTitle": "ENG (SRT)",
+              "Index": 2,
+              "IsDefault": true,
+              "IsExternal": true,
+              "IsForced": false,
+              "IsTextSubtitleStream": true,
+              "Language": "eng",
+              "SupportsExternalStream": true,
+              "Title": "ENG",
+              "Type": "Subtitle"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Relapse For Big Tits Gooner",
+          "Overview": "Daily Tit Addiction Therapy Session – Watch Once Per Day\n\nThis guided video is your daily therapy assignment. Designed to be watched exactly once a day between sessions, it helps you confront and admit your addiction to big tits and porn while training you to regain control.\n\nIn a calm yet commanding voice, your therapist guides you through a powerful resistance exercise: take out your cock but do not stroke until instructed. You will stare at big, round, shiny tits while learning to resist the overwhelming urge to touch yourself. Periodic stroking rewards are given only after you demonstrate honesty and effort. The session repeatedly reinforces the truth that you are addicted to dominant women with perfect breasts and that true progress begins with full acceptance of your weakness.\n\nFollow the rules strictly: headphones on, private undisturbed space, and watch only once daily. Complete your homework, confess any slips in your next session, and tell your wife “I am addicted to big perfect tits” every day as part of the treatment. Trust the process — your recovery starts with this daily ritual.",
+          "ParentId": "root-scenes",
+          "PartCount": 1,
+          "Path": "/data2/Video-B/Miscellaneous - JOI/Relapse For Big Tits Gooner.mp4",
+          "RunTimeTicks": 20103900000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Relapse For Big Tits Gooner",
+          "SourceType": "Default",
+          "Tags": [
+            "!2. Miscellenous JOI",
+            "FAVORITE",
+            "Good Boy",
+            "Gooning",
+            "Hypno",
+            "JOI",
+            "Tit Worship"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": true,
+            "ItemId": "scene-37644",
+            "Key": "scene-37644",
+            "LastPlayedDate": "2026-04-14T03:38:03Z",
+            "PlayCount": 13,
+            "PlaybackPositionTicks": 91550000,
+            "Played": true,
+            "PlayedPercentage": 0.45538427867229736
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b35224"
+          ],
+          "CanDownload": true,
+          "Container": "mkv",
+          "Etag": "945a2138d9184179",
+          "Genres": [
+            "!2. Miscellenous JOI",
+            "JOI",
+            "Natural Tits",
+            "Nipple Piercing",
+            "Nipples"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-35224",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b35224": "000000"
+            },
+            "Primary": {
+              "p35224": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p35224"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 3204227,
+              "Container": "mkv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-35224",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 30,
+                  "BitRate": 3204227,
+                  "Codec": "hevc",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 30,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "opus",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "OPUS - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Worship My Tits",
+              "Path": "/data2/Video-B/Miscellaneous - JOI/Olivia Young - 2024-01-24 Worship My Tits.mkv",
+              "Protocol": "File",
+              "RunTimeTicks": 4984400000,
+              "Size": 199639407,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 30,
+              "BitRate": 3204227,
+              "Codec": "hevc",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 30,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "opus",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "OPUS - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Worship My Tits",
+          "Overview": "I love my natural perky perfect tits, and I know you do too. Worship my tits. Stroke your cock for me and my perfect tits while I tease you in my bra before taking it off to tease you more. You love my tits. Show me how much you love them by cumming all over them at the end!",
+          "ParentId": "root-scenes",
+          "PartCount": 1,
+          "Path": "/data2/Video-B/Miscellaneous - JOI/Olivia Young - 2024-01-24 Worship My Tits.mkv",
+          "People": [
+            {
+              "Id": "person-4089",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p4089": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p4089"
+              },
+              "Name": "Olivia Young",
+              "PrimaryImageTag": "p4089",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2024-01-24T00:00:00.0000000Z",
+          "ProductionYear": 2024,
+          "RunTimeTicks": 4984400000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Worship My Tits",
+          "SourceType": "Default",
+          "Tags": [
+            "!2. Miscellenous JOI",
+            "JOI",
+            "Natural Tits",
+            "Nipple Piercing",
+            "Nipples",
+            "Small Tits",
+            "Tit Worship"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-35224",
+            "Key": "scene-35224",
+            "LastPlayedDate": "2026-04-14T02:29:48Z",
+            "PlayCount": 1,
+            "PlaybackPositionTicks": 189316930,
+            "Played": true,
+            "PlayedPercentage": 3.79818894952251
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b39050"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "8c0218347e95943c",
+          "Genres": [
+            "!2. Miscellenous JOI",
+            "JOI"
+          ],
+          "HasSubtitles": true,
+          "Id": "scene-39050",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b39050": "000000"
+            },
+            "Primary": {
+              "p39050": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p39050"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 8708307,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-39050",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 8708307,
+                  "Codec": "h264",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                },
+                {
+                  "Codec": "srt",
+                  "DeliveryMethod": "External",
+                  "DeliveryUrl": "Subtitles/1/0/Stream.srt",
+                  "DisplayLanguage": "ENG",
+                  "DisplayTitle": "ENG (SRT)",
+                  "Index": 2,
+                  "IsDefault": true,
+                  "IsExternal": true,
+                  "IsForced": false,
+                  "IsTextSubtitleStream": true,
+                  "Language": "eng",
+                  "SupportsExternalStream": true,
+                  "Title": "ENG",
+                  "Type": "Subtitle"
+                }
+              ],
+              "Name": "JOI Stop and Go",
+              "Path": "/data2/Video-B/Miscellaneous - JOI/ShotsofSimone - JOI Stop and Go.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 9139800000,
+              "Size": 994902016,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 29.97,
+              "BitRate": 8708307,
+              "Codec": "h264",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            },
+            {
+              "Codec": "srt",
+              "DeliveryMethod": "External",
+              "DeliveryUrl": "Subtitles/1/0/Stream.srt",
+              "DisplayLanguage": "ENG",
+              "DisplayTitle": "ENG (SRT)",
+              "Index": 2,
+              "IsDefault": true,
+              "IsExternal": true,
+              "IsForced": false,
+              "IsTextSubtitleStream": true,
+              "Language": "eng",
+              "SupportsExternalStream": true,
+              "Title": "ENG",
+              "Type": "Subtitle"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "JOI Stop and Go",
+          "Overview": "Studio: OnlyFans",
+          "ParentId": "root-scenes",
+          "PartCount": 1,
+          "Path": "/data2/Video-B/Miscellaneous - JOI/ShotsofSimone - JOI Stop and Go.mp4",
+          "People": [
+            {
+              "Id": "person-4647",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p4647": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p4647"
+              },
+              "Name": "ShotsofSimone",
+              "PrimaryImageTag": "p4647",
+              "Type": "Actor"
+            }
+          ],
+          "RunTimeTicks": 9139800000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "JOI Stop and Go",
+          "SourceType": "Default",
+          "Tags": [
+            "!2. Miscellenous JOI",
+            "JOI"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-39050",
+            "Key": "scene-39050",
+            "LastPlayedDate": "2026-04-10T00:47:02Z",
+            "PlayCount": 1,
+            "PlaybackPositionTicks": 22095070,
+            "Played": true,
+            "PlayedPercentage": 0.2417456618306746
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b38937"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "af12b59975af0dc9",
+          "Genres": [
+            "!2. Miscellenous JOI",
+            "JOI"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-38937",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b38937": "000000"
+            },
+            "Primary": {
+              "p38937": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p38937"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 7694514,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-38937",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1280:720",
+                  "AverageFrameRate": 47.95,
+                  "BitRate": 7694514,
+                  "Codec": "h264",
+                  "Height": 720,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 47.95,
+                  "Type": "Video",
+                  "Width": 1280
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "JOI Squirt Solo",
+              "Path": "/data2/Video-B/Miscellaneous - JOI/Nina Cola - JOI Squirt Solo.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 6818900000,
+              "Size": 655851725,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1280:720",
+              "AverageFrameRate": 47.95,
+              "BitRate": 7694514,
+              "Codec": "h264",
+              "Height": 720,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 47.95,
+              "Type": "Video",
+              "Width": 1280
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "JOI Squirt Solo",
+          "Overview": "Studio: OnlyFans",
+          "ParentId": "root-scenes",
+          "PartCount": 1,
+          "Path": "/data2/Video-B/Miscellaneous - JOI/Nina Cola - JOI Squirt Solo.mp4",
+          "People": [
+            {
+              "Id": "person-4615",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p4615": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p4615"
+              },
+              "Name": "Nina Cola",
+              "PrimaryImageTag": "p4615",
+              "Type": "Actor"
+            }
+          ],
+          "RunTimeTicks": 6818900000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "JOI Squirt Solo",
+          "SourceType": "Default",
+          "Tags": [
+            "!2. Miscellenous JOI",
+            "JOI"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-38937",
+            "Key": "scene-38937",
+            "LastPlayedDate": "2026-03-25T12:48:17Z",
+            "PlayCount": 1,
+            "PlaybackPositionTicks": 5720213189,
+            "Played": true,
+            "PlayedPercentage": 83.88762395694319
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b38688"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "878b49d0638a6776",
+          "Genres": [
+            "!2. Miscellenous JOI",
+            "Cum Countdown",
+            "Gooning",
+            "JOI"
+          ],
+          "HasSubtitles": true,
+          "Id": "scene-38688",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b38688": "000000"
+            },
+            "Primary": {
+              "p38688": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p38688"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 4092440,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-38688",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 24,
+                  "BitRate": 4092440,
+                  "Codec": "h264",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 24,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                },
+                {
+                  "Codec": "srt",
+                  "DeliveryMethod": "External",
+                  "DeliveryUrl": "Subtitles/1/0/Stream.srt",
+                  "DisplayLanguage": "ENG",
+                  "DisplayTitle": "ENG (SRT)",
+                  "Index": 2,
+                  "IsDefault": true,
+                  "IsExternal": true,
+                  "IsForced": false,
+                  "IsTextSubtitleStream": true,
+                  "Language": "eng",
+                  "SupportsExternalStream": true,
+                  "Title": "ENG",
+                  "Type": "Subtitle"
+                }
+              ],
+              "Name": "AI Gooning Cum Countdown",
+              "Path": "/data2/Video-B/Miscellaneous - JOI/AI Gooning Cum Countdown.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 2843100000,
+              "Size": 145439691,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 24,
+              "BitRate": 4092440,
+              "Codec": "h264",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 24,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            },
+            {
+              "Codec": "srt",
+              "DeliveryMethod": "External",
+              "DeliveryUrl": "Subtitles/1/0/Stream.srt",
+              "DisplayLanguage": "ENG",
+              "DisplayTitle": "ENG (SRT)",
+              "Index": 2,
+              "IsDefault": true,
+              "IsExternal": true,
+              "IsForced": false,
+              "IsTextSubtitleStream": true,
+              "Language": "eng",
+              "SupportsExternalStream": true,
+              "Title": "ENG",
+              "Type": "Subtitle"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "AI Gooning Cum Countdown",
+          "ParentId": "root-scenes",
+          "PartCount": 1,
+          "Path": "/data2/Video-B/Miscellaneous - JOI/AI Gooning Cum Countdown.mp4",
+          "RunTimeTicks": 2843100000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "AI Gooning Cum Countdown",
+          "SourceType": "Default",
+          "Tags": [
+            "!2. Miscellenous JOI",
+            "Cum Countdown",
+            "Gooning",
+            "JOI"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-38688",
+            "Key": "scene-38688",
+            "LastPlayedDate": "2026-01-07T22:14:57Z",
+            "PlayCount": 1,
+            "PlaybackPositionTicks": 129416340,
+            "Played": true,
+            "PlayedPercentage": 4.551944708241005
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b38223"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "05c76359bf535fe5",
+          "Genres": [
+            "Hairy Pussy",
+            "Rough"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-38223",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b38223": "000000"
+            },
+            "Primary": {
+              "p38223": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p38223"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 5304137,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-38223",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 25,
+                  "BitRate": 5304137,
+                  "Codec": "h264",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 25,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Summer in the City 1",
+              "Path": "/data/Video-B/Studios/I Feel Myself/I Feel Myself - 2022-04-12 - Summer in the City 1.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 7978400000,
+              "Size": 528981633,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 25,
+              "BitRate": 5304137,
+              "Codec": "h264",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 25,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Summer in the City 1",
+          "Overview": "Sweet summer romance, long hazy days, and even longer kisses - is there anything more divine? Only, I suppose, the nights. When it’s cool enough to press skin to skin without sticking together, and the promises of those daytime kisses are kept. All the simmering intensity of that sexual tension, .\n\nStudio: I Feel Myself",
+          "ParentId": "root-scenes",
+          "PartCount": 1,
+          "Path": "/data/Video-B/Studios/I Feel Myself/I Feel Myself - 2022-04-12 - Summer in the City 1.mp4",
+          "PremiereDate": "2022-04-12T00:00:00.0000000Z",
+          "ProductionYear": 2022,
+          "RunTimeTicks": 7978400000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Summer in the City 1",
+          "SourceType": "Default",
+          "Tags": [
+            "Hairy Pussy",
+            "Rough"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-38223",
+            "Key": "scene-38223",
+            "LastPlayedDate": "2025-12-19T22:08:39Z",
+            "PlayCount": 1,
+            "PlaybackPositionTicks": 7047339040,
+            "Played": true,
+            "PlayedPercentage": 88.33022961997393
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b15886"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "dc307602924bfe03",
+          "Genres": [
+            "!2. Miscellenous JOI",
+            "Big Tits",
+            "Natural Tits",
+            "Tit Worship"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-15886",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b15886": "000000"
+            },
+            "Primary": {
+              "p15886": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p15886"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 8116996,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-15886",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 8116996,
+                  "Codec": "h264",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Natural DDD breast worship",
+              "Path": "/data2/Video-B/Miscellaneous - JOI/Goddess Canna - 2019-10-05 Natural DDD breast worship.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 2673000000,
+              "Size": 271209509,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 29.97,
+              "BitRate": 8116996,
+              "Codec": "h264",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Natural DDD breast worship",
+          "Overview": "Teasing you with my soft, natural 36 DDD breasts.  Starting in sheer white lingerie showing my deep cleavage, I pose and play with my breasts in different positions.  Exposing my full breasts I let them hang, swing, bounce and drop. Front and side view.\n\nStudio: Clips4Sale",
+          "ParentId": "root-scenes",
+          "PartCount": 1,
+          "Path": "/data2/Video-B/Miscellaneous - JOI/Goddess Canna - 2019-10-05 Natural DDD breast worship.mp4",
+          "People": [
+            {
+              "Id": "person-972",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p972": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p972"
+              },
+              "Name": "Goddess Canna",
+              "PrimaryImageTag": "p972",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2019-10-05T00:00:00.0000000Z",
+          "ProductionYear": 2019,
+          "RunTimeTicks": 2673000000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Natural DDD breast worship",
+          "SourceType": "Default",
+          "Tags": [
+            "!2. Miscellenous JOI",
+            "Big Tits",
+            "Natural Tits",
+            "Tit Worship"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-15886",
+            "Key": "scene-15886",
+            "LastPlayedDate": "2025-12-16T22:36:38Z",
+            "PlayCount": 1,
+            "PlaybackPositionTicks": 2206283740,
+            "Played": true,
+            "PlayedPercentage": 82.53960867938646
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b37964"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "4d3e4b915c1762b2",
+          "Genres": [
+            "!1. File By Performer",
+            "Goddess Worship",
+            "Gooning",
+            "Jerk Off Instruction",
+            "Mind Fuck"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-37964",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b37964": "000000"
+            },
+            "Primary": {
+              "p37964": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p37964"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 1879761,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-37964",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 30,
+                  "BitRate": 1879761,
+                  "Codec": "h264",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 30,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Goon Counseling The 7 Stages Of Acceptance: Part 2",
+              "Path": "/data2/Video-B/Performers/Alissa Ryan/Alissa Ryan - 2023-09-29 Goon Counseling The 7 Stages Of Acceptance Part 2.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 7240700000,
+              "Size": 170135769,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 30,
+              "BitRate": 1879761,
+              "Codec": "h264",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 30,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Goon Counseling The 7 Stages Of Acceptance: Part 2",
+          "Overview": "You’ve come in today with a smug look on your face, like you know something I don’t and I’m willing to take an educated guess you went home after our last session and came to the conclusion there was just simply no way you are a goonaholic. You’re just a man that loves ass and tits. All men love ass and tits, of course when I put them in your face and left you alone you were going to stroke yourself silly. You agree that it was a bit outlandish that you found yourself jerking off in my office when we both know that is absolutely not acceptable but it was “a one time thing” you just couldn’t help yourself, I’m too sexy, but that of course doesn’t mean you’re a goonaholic. Did I hit the nail on the head? Of course I did, this isn’t my first rodeo, you are all so predictable. You’re in denial of your true purpose, you’re in denial of who you are and who you were meant to be. We could go back and forth all day but instead of explaining to you why you’re in way over your head I’ll just give you another simple test. It’s simple DO NOT look to the left side of the screen. Focus on me, only me and our counseling session. If you aren’t a goonaholic you won’t need to look over there. You’ll be able to focus on the task at hand. Let’s start our session, and just remember no matter what I put up on that screen, do not peak.   (Exclusive Bonus Video for those that purchase ALL 7 parts WITH Markup Code GOONPATIENT after EACH (If you are buying the series in bulk, you may tribute the remaining $7/video) - Instructions will be sent to your inbox after the last part is released on how to gain access to the exclusive content. This video will NOT be listed on my store) USE CODE:GOONPATIENT - $7 MARKUPNOTICEME - 50% MARKUPALISSASGOONER - 75% MARKUPALISSAADDICT - 100% MARKUPDRAINME - 500% MARKUPIBELONGTOALISSA - 1000% MARKUP ILOVEALISSA - $100 MARKUP",
+          "ParentId": "root-scenes",
+          "PartCount": 1,
+          "Path": "/data2/Video-B/Performers/Alissa Ryan/Alissa Ryan - 2023-09-29 Goon Counseling The 7 Stages Of Acceptance Part 2.mp4",
+          "People": [
+            {
+              "Id": "person-3961",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p3961": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p3961"
+              },
+              "Name": "Alissa Ryan",
+              "PrimaryImageTag": "p3961",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2023-09-29T00:00:00.0000000Z",
+          "ProductionYear": 2023,
+          "RunTimeTicks": 7240700000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Goon Counseling The 7 Stages Of Acceptance: Part 2",
+          "SourceType": "Default",
+          "Tags": [
+            "!1. File By Performer",
+            "Goddess Worship",
+            "Gooning",
+            "Jerk Off Instruction",
+            "Mind Fuck"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-37964",
+            "Key": "scene-37964",
+            "LastPlayedDate": "2025-12-10T21:35:36Z",
+            "PlayCount": 1,
+            "PlaybackPositionTicks": 19377850,
+            "Played": true,
+            "PlayedPercentage": 0.26762398663112685
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 12
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

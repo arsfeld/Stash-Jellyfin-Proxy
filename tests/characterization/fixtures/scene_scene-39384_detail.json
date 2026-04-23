@@ -1,0 +1,157 @@
+{
+  "compare_mode": "full",
+  "name": "scene_scene-39384_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/scene-39384"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [
+        "b39384"
+      ],
+      "CanDownload": true,
+      "Container": "mp4",
+      "Etag": "a64231a625010654",
+      "Genres": [
+        "Big Ass",
+        "Cumshot",
+        "Handjob",
+        "Orgasm",
+        "Short Woman"
+      ],
+      "HasSubtitles": false,
+      "Id": "scene-39384",
+      "ImageBlurHashes": {
+        "Backdrop": {
+          "b39384": "000000"
+        },
+        "Primary": {
+          "p39384": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "p39384"
+      },
+      "IsFolder": false,
+      "LocationType": "FileSystem",
+      "MediaSources": [
+        {
+          "Bitrate": 12499679,
+          "Container": "mp4",
+          "DefaultAudioStreamIndex": 1,
+          "DefaultSubtitleStreamIndex": -1,
+          "Id": "scene-39384",
+          "MediaStreams": [
+            {
+              "AspectRatio": "3840:2160",
+              "AverageFrameRate": 29.97,
+              "BitRate": 12499679,
+              "Codec": "h264",
+              "Height": 2160,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 3840
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "Name": "Late Night Twerk And Jerk: Ryder Rey's Hot Handjob Wake-Up Call",
+          "Path": "/data/Video-B/Studios/Finish Him/Finish Him - 2026-04-15 - Late Night Twerk And Jerk - Ryder Rey's Hot Handjob Wake-Up Call.mp4",
+          "Protocol": "File",
+          "RunTimeTicks": 7517200000,
+          "Size": 1174528667,
+          "SupportsDirectPlay": true,
+          "SupportsDirectStream": true,
+          "SupportsTranscoding": false,
+          "Type": "Default"
+        }
+      ],
+      "MediaStreams": [
+        {
+          "AspectRatio": "3840:2160",
+          "AverageFrameRate": 29.97,
+          "BitRate": 12499679,
+          "Codec": "h264",
+          "Height": 2160,
+          "Index": 0,
+          "IsDefault": true,
+          "IsExternal": false,
+          "IsForced": false,
+          "RealFrameRate": 29.97,
+          "Type": "Video",
+          "Width": 3840
+        },
+        {
+          "ChannelLayout": "stereo",
+          "Channels": 2,
+          "Codec": "aac",
+          "DisplayLanguage": "Unknown",
+          "DisplayTitle": "AAC - Stereo",
+          "Index": 1,
+          "IsDefault": true,
+          "IsExternal": false,
+          "IsForced": false,
+          "IsInterlaced": false,
+          "IsTextSubtitleStream": false,
+          "Language": "und",
+          "SampleRate": 48000,
+          "SupportsExternalStream": false,
+          "Type": "Audio"
+        }
+      ],
+      "MediaType": "Video",
+      "Name": "Late Night Twerk And Jerk: Ryder Rey's Hot Handjob Wake-Up Call",
+      "Overview": "Studio: Finish Him",
+      "ParentId": "root-scenes",
+      "PartCount": 1,
+      "Path": "/data/Video-B/Studios/Finish Him/Finish Him - 2026-04-15 - Late Night Twerk And Jerk - Ryder Rey's Hot Handjob Wake-Up Call.mp4",
+      "PremiereDate": "2026-04-15T00:00:00.0000000Z",
+      "ProductionYear": 2026,
+      "RunTimeTicks": 7517200000,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "Late Night Twerk And Jerk: Ryder Rey's Hot Handjob Wake-Up Call",
+      "SourceType": "Default",
+      "Tags": [
+        "Big Ass",
+        "Cumshot",
+        "Handjob",
+        "Orgasm",
+        "Short Woman",
+        "Small Tits"
+      ],
+      "Type": "Movie",
+      "UserData": {
+        "IsFavorite": false,
+        "ItemId": "scene-39384",
+        "Key": "scene-39384",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      },
+      "VideoType": "VideoFile"
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

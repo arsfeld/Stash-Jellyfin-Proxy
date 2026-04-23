@@ -1,0 +1,442 @@
+{
+  "compare_mode": "full",
+  "name": "group_group-177_items",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=group-177&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b19649"
+          ],
+          "CanDownload": true,
+          "Container": "mkv",
+          "Etag": "a61fd9b28be91a47",
+          "Genres": [
+            "!8. Movie",
+            "Big Tits",
+            "Cumshots",
+            "Gonzo"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-19649",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b19649": "000000"
+            },
+            "Primary": {
+              "p19649": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p19649"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 1016920,
+              "Container": "mkv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-19649",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "512:384",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 1016920,
+                  "Codec": "hevc",
+                  "Height": 384,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 512
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "\"I Got The Biggest Tits!\" Wet T-Shirt Contest 5 - Scene 1",
+              "Path": "/data2/Movies/I Got The Biggest Tits! Wet T-Shirt Contest 5 (2004)/I Got The Biggest Tits! Wet T-Shirt Contest 5 (2004) scene 1.mkv",
+              "Protocol": "File",
+              "RunTimeTicks": 15166800000,
+              "Size": 192793197,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "512:384",
+              "AverageFrameRate": 29.97,
+              "BitRate": 1016920,
+              "Codec": "hevc",
+              "Height": 384,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 512
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "\"I Got The Biggest Tits!\" Wet T-Shirt Contest 5 - Scene 1",
+          "Overview": "100% natural, perfect and juicy monster tits!! All deliciously round and firm, big and bouncy. This is shot on location in South America. These beauties take it like crazy up the ass and love cum on their tits and on their faces. This is quite possibly the best volume of this tit-lovin' series yet!",
+          "ParentId": "group-177",
+          "PartCount": 1,
+          "Path": "/data2/Movies/I Got The Biggest Tits! Wet T-Shirt Contest 5 (2004)/I Got The Biggest Tits! Wet T-Shirt Contest 5 (2004) scene 1.mkv",
+          "PremiereDate": "2004-11-05T00:00:00.0000000Z",
+          "ProductionYear": 2004,
+          "RunTimeTicks": 15166800000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "\"I Got The Biggest Tits!\" Wet T-Shirt Contest 5 - Scene 1",
+          "SourceType": "Default",
+          "Tags": [
+            "!8. Movie",
+            "Big Tits",
+            "Cumshots",
+            "Gonzo"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-19649",
+            "Key": "scene-19649",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b19648"
+          ],
+          "CanDownload": true,
+          "Container": "mkv",
+          "Etag": "f9879f6e95057cae",
+          "Genres": [
+            "!8. Movie",
+            "Big Tits",
+            "Cumshots",
+            "Gonzo"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-19648",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b19648": "000000"
+            },
+            "Primary": {
+              "p19648": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p19648"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 991270,
+              "Container": "mkv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-19648",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "512:384",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 991270,
+                  "Codec": "hevc",
+                  "Height": 384,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 512
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "\"I Got The Biggest Tits!\" Wet T-Shirt Contest 5 - Scene 4",
+              "Path": "/data2/Movies/I Got The Biggest Tits! Wet T-Shirt Contest 5 (2004)/I Got The Biggest Tits! Wet T-Shirt Contest 5 (2004) scene 4.mkv",
+              "Protocol": "File",
+              "RunTimeTicks": 12461500000,
+              "Size": 154408431,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "512:384",
+              "AverageFrameRate": 29.97,
+              "BitRate": 991270,
+              "Codec": "hevc",
+              "Height": 384,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 512
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "\"I Got The Biggest Tits!\" Wet T-Shirt Contest 5 - Scene 4",
+          "Overview": "100% natural, perfect and juicy monster tits!! All deliciously round and firm, big and bouncy. This is shot on location in South America. These beauties take it like crazy up the ass and love cum on their tits and on their faces. This is quite possibly the best volume of this tit-lovin' series yet!",
+          "ParentId": "group-177",
+          "PartCount": 1,
+          "Path": "/data2/Movies/I Got The Biggest Tits! Wet T-Shirt Contest 5 (2004)/I Got The Biggest Tits! Wet T-Shirt Contest 5 (2004) scene 4.mkv",
+          "PremiereDate": "2004-11-05T00:00:00.0000000Z",
+          "ProductionYear": 2004,
+          "RunTimeTicks": 12461500000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "\"I Got The Biggest Tits!\" Wet T-Shirt Contest 5 - Scene 4",
+          "SourceType": "Default",
+          "Tags": [
+            "!8. Movie",
+            "Big Tits",
+            "Cumshots",
+            "Gonzo"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-19648",
+            "Key": "scene-19648",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b19650"
+          ],
+          "CanDownload": true,
+          "Container": "mkv",
+          "Etag": "f51d0339a41fadae",
+          "Genres": [
+            "!8. Movie",
+            "Big Tits",
+            "Cumshots",
+            "Gonzo"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-19650",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b19650": "000000"
+            },
+            "Primary": {
+              "p19650": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p19650"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 922158,
+              "Container": "mkv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-19650",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "512:384",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 922158,
+                  "Codec": "hevc",
+                  "Height": 384,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 512
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "\"I Got The Biggest Tits!\" Wet T-Shirt Contest 5 - Scene 5",
+              "Path": "/data2/Movies/I Got The Biggest Tits! Wet T-Shirt Contest 5 (2004)/I Got The Biggest Tits! Wet T-Shirt Contest 5 (2004) scene 5.mkv",
+              "Protocol": "File",
+              "RunTimeTicks": 14004000000,
+              "Size": 161423769,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "512:384",
+              "AverageFrameRate": 29.97,
+              "BitRate": 922158,
+              "Codec": "hevc",
+              "Height": 384,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 512
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "\"I Got The Biggest Tits!\" Wet T-Shirt Contest 5 - Scene 5",
+          "Overview": "100% natural, perfect and juicy monster tits!! All deliciously round and firm, big and bouncy. This is shot on location in South America. These beauties take it like crazy up the ass and love cum on their tits and on their faces. This is quite possibly the best volume of this tit-lovin' series yet!",
+          "ParentId": "group-177",
+          "PartCount": 1,
+          "Path": "/data2/Movies/I Got The Biggest Tits! Wet T-Shirt Contest 5 (2004)/I Got The Biggest Tits! Wet T-Shirt Contest 5 (2004) scene 5.mkv",
+          "PremiereDate": "2004-11-05T00:00:00.0000000Z",
+          "ProductionYear": 2004,
+          "RunTimeTicks": 14004000000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "\"I Got The Biggest Tits!\" Wet T-Shirt Contest 5 - Scene 5",
+          "SourceType": "Default",
+          "Tags": [
+            "!8. Movie",
+            "Big Tits",
+            "Cumshots",
+            "Gonzo"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-19650",
+            "Key": "scene-19650",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 3
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

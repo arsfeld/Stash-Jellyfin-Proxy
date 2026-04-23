@@ -1,0 +1,170 @@
+{
+  "compare_mode": "full",
+  "name": "performer_performer-2919_items",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=performer-2919&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b27271"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "7cbf46e0bfd99b94",
+          "Genres": [
+            "Missing or Removed"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-27271",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b27271": "000000"
+            },
+            "Primary": {
+              "p27271": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p27271"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 6404567,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-27271",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 23.98,
+                  "BitRate": 6404567,
+                  "Codec": "h264",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 23.98,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "The Masturbater",
+              "Path": "/data/Video-B/Studios/Digital Playground/Digital Playground - 2014-09-27 - Abby Cross - The Masturbater.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 13097300000,
+              "Size": 1048528881,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 23.98,
+              "BitRate": 6404567,
+              "Codec": "h264",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 23.98,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "The Masturbater",
+          "Overview": "Red, the color of Abby Cross' itsy bitsy bikini will make any man hard and horny!  The pool boy watches her from the bathroom window and lets his imagination run wild, having Abby guide his dick throughout his fantasy.\n\nStudio: Digital Playground",
+          "ParentId": "performer-2919",
+          "PartCount": 1,
+          "Path": "/data/Video-B/Studios/Digital Playground/Digital Playground - 2014-09-27 - Abby Cross - The Masturbater.mp4",
+          "People": [
+            {
+              "Id": "person-2919",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p2919": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p2919"
+              },
+              "Name": "Abby Cross",
+              "PrimaryImageTag": "p2919",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2014-09-27T00:00:00.0000000Z",
+          "ProductionYear": 2014,
+          "RunTimeTicks": 13097300000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "The Masturbater",
+          "SourceType": "Default",
+          "Tags": [
+            "Missing or Removed"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-27271",
+            "Key": "scene-27271",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 1
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "compare_mode": "full",
+  "name": "group_group-82_items",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=group-82&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b18094"
+          ],
+          "CanDownload": true,
+          "Container": "mkv",
+          "Etag": "87dee23aa4abff6d",
+          "Genres": [
+            "!8. Movie",
+            "Big Tits",
+            "Cumshots",
+            "Gonzo"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-18094",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b18094": "000000"
+            },
+            "Primary": {
+              "p18094": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p18094"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 464936,
+              "Container": "mkv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-18094",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "480:360",
+                  "AverageFrameRate": 23.98,
+                  "BitRate": 464936,
+                  "Codec": "hevc",
+                  "Height": 360,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 23.98,
+                  "Type": "Video",
+                  "Width": 480
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "110% Natural #5",
+              "Path": "/data2/Movies/110% Natural 5 (2003)/110% Natural 5 (2003).mkv",
+              "Protocol": "File",
+              "RunTimeTicks": 96127300000,
+              "Size": 558663282,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "480:360",
+              "AverageFrameRate": 23.98,
+              "BitRate": 464936,
+              "Codec": "hevc",
+              "Height": 360,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 23.98,
+              "Type": "Video",
+              "Width": 480
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "110% Natural #5",
+          "Overview": "110% Natural #5 has everything but the kitchen sink: Hungarian, Czech and Scottish big and natural breasts. Lots of DPs, anals galore, 3-on-1s, and 2-on-1s. If you're a connoisseur of the pleasures of the flesh, this is the film for you. Enjoy the fucking, sucking, blowing, and cumming in the many positions such as standing, cowgirl, doggie, and the not so mundane missionary style. Entertaining, to say the least!",
+          "ParentId": "group-82",
+          "PartCount": 1,
+          "Path": "/data2/Movies/110% Natural 5 (2003)/110% Natural 5 (2003).mkv",
+          "People": [
+            {
+              "Id": "person-1693",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1693": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1693"
+              },
+              "Name": "Daria Glower",
+              "PrimaryImageTag": "p1693",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2003-07-21T00:00:00.0000000Z",
+          "ProductionYear": 2003,
+          "RunTimeTicks": 96127300000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "110% Natural #5",
+          "SourceType": "Default",
+          "Tags": [
+            "!8. Movie",
+            "Big Tits",
+            "Cumshots",
+            "Gonzo"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-18094",
+            "Key": "scene-18094",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 1
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

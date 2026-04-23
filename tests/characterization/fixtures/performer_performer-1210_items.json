@@ -1,0 +1,179 @@
+{
+  "compare_mode": "full",
+  "name": "performer_performer-1210_items",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=performer-1210&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b6763"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "14e272595e25b91a",
+          "Genres": [
+            "Amateur",
+            "Blond Hair",
+            "Facial",
+            "Hairless Pussy",
+            "JOI"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-6763",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b6763": "000000"
+            },
+            "Primary": {
+              "p6763": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p6763"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 5247472,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-6763",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 5247472,
+                  "Codec": "mpeg4",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Nervous Newbie",
+              "Path": "/data/Video-B/Studios/Manojob/Manojob - 2011-11-08 - Abbie Anderson - Nervous Newbie.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 10726099999,
+              "Size": 703558790,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 29.97,
+              "BitRate": 5247472,
+              "Codec": "mpeg4",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Nervous Newbie",
+          "Overview": "I have an ad out in cyberspace. It's a casting call, and I'm looking for newbies. In the 5 years I've had the ad up, it's gotten a lot of responses...mostly from single males (even though I specifically tell single males not to reply). \"Abagail\" replied. She got on the bus in Texas, got out of a shitty relationship, and stepped on to a porno set for the very first time ever -- the Manojob set. She's since changed her name to \"Abbie Anderson\", and even though her name should have been \"Nervous Nellie\" for this scene, it's still a keeper. Our Stunt Cock certainly thought so, as he delivered a facial blast that just about blew the poor girl's head off!\n\nStudio: Manojob",
+          "ParentId": "performer-1210",
+          "PartCount": 1,
+          "Path": "/data/Video-B/Studios/Manojob/Manojob - 2011-11-08 - Abbie Anderson - Nervous Newbie.mp4",
+          "People": [
+            {
+              "Id": "person-1210",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1210": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1210"
+              },
+              "Name": "Abbie Anderson",
+              "PrimaryImageTag": "p1210",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2011-11-08T00:00:00.0000000Z",
+          "ProductionYear": 2011,
+          "RunTimeTicks": 10726099999,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Nervous Newbie",
+          "SourceType": "Default",
+          "Tags": [
+            "Amateur",
+            "Blond Hair",
+            "Facial",
+            "Hairless Pussy",
+            "JOI",
+            "Natural Tits"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-6763",
+            "Key": "scene-6763",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 1
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

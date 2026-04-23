@@ -1,0 +1,41 @@
+{
+  "compare_mode": "full",
+  "name": "studio_studio-291_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/studio-291"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [],
+      "ChildCount": 7,
+      "CollectionType": "movies",
+      "Id": "studio-291",
+      "ImageBlurHashes": {
+        "Primary": {
+          "img": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "img"
+      },
+      "IsFolder": true,
+      "Name": "Addicted To Boobs",
+      "PrimaryImageAspectRatio": 0.6667,
+      "RecursiveItemCount": 7,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "Addicted To Boobs",
+      "Type": "BoxSet",
+      "UserData": {
+        "IsFavorite": false,
+        "Key": "studio-291",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

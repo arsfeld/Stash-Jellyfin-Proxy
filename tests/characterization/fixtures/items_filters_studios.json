@@ -1,0 +1,46 @@
+{
+  "compare_mode": "shape",
+  "name": "items_filters_studios",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=filters-studios&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-studios-39",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "No Image",
+          "ParentId": "filters-studios",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "No Image",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-studios-39",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 1
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

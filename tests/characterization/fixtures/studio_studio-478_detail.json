@@ -1,0 +1,41 @@
+{
+  "compare_mode": "full",
+  "name": "studio_studio-478_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/studio-478"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [],
+      "ChildCount": 0,
+      "CollectionType": "movies",
+      "Id": "studio-478",
+      "ImageBlurHashes": {
+        "Primary": {
+          "img": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "img"
+      },
+      "IsFolder": true,
+      "Name": "Airerose Entertainment (Network)",
+      "PrimaryImageAspectRatio": 0.6667,
+      "RecursiveItemCount": 0,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "Airerose Entertainment (Network)",
+      "Type": "BoxSet",
+      "UserData": {
+        "IsFavorite": false,
+        "Key": "studio-478",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

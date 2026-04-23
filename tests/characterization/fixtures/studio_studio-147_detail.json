@@ -1,0 +1,41 @@
+{
+  "compare_mode": "full",
+  "name": "studio_studio-147_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/studio-147"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [],
+      "ChildCount": 31,
+      "CollectionType": "movies",
+      "Id": "studio-147",
+      "ImageBlurHashes": {
+        "Primary": {
+          "img": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "img"
+      },
+      "IsFolder": true,
+      "Name": "A POV Story",
+      "PrimaryImageAspectRatio": 0.6667,
+      "RecursiveItemCount": 31,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "A POV Story",
+      "Type": "BoxSet",
+      "UserData": {
+        "IsFavorite": false,
+        "Key": "studio-147",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

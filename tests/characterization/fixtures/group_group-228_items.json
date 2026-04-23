@@ -1,0 +1,228 @@
+{
+  "compare_mode": "full",
+  "name": "group_group-228_items",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=group-228&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b19782"
+          ],
+          "CanDownload": true,
+          "Container": "mkv",
+          "Etag": "47b91d8a8160198a",
+          "Genres": [
+            "!8. Movie",
+            "European"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-19782",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b19782": "000000"
+            },
+            "Primary": {
+              "p19782": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p19782"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 660168,
+              "Container": "mkv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-19782",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "576:320",
+                  "AverageFrameRate": 25,
+                  "BitRate": 660168,
+                  "Codec": "hevc",
+                  "Height": 320,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 25,
+                  "Type": "Video",
+                  "Width": 576
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "All In",
+              "Path": "/data2/Movies/All In (2006)/All In (2006).mkv",
+              "Protocol": "File",
+              "RunTimeTicks": 55130800000,
+              "Size": 454944984,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "576:320",
+              "AverageFrameRate": 25,
+              "BitRate": 660168,
+              "Codec": "hevc",
+              "Height": 320,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 25,
+              "Type": "Video",
+              "Width": 576
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "All In",
+          "Overview": "You are about to enter a world unlike any you have ever seen before. Where Sin is in, Poker is King and the only game is No-Limit Texas Hold Em! Where courage is rewarded and weakness exploited, and you have to know whether to hold em or fold em! It is survival of the fittest in a high-stakes game of brazen moves and bad beats where the bold, the bad and the beautiful defy the odds and go ALL IN! Are you ready to see what is in the cards and find out the true meaning of No-Limit Hold Em? Starring Katie Morgan, Monica Mayhem, Kami Andrews, Dylan Ryder, Lexi Bardot and Jeannie Marie Sullivan, we soon find out that when the chips are down, these girls are certainly not shy about going All In. A thrilling round of red hot hardcore action running to six hardcore sex scenes and over one and a half hours.\n\nStudio: Private",
+          "ParentId": "group-228",
+          "PartCount": 1,
+          "Path": "/data2/Movies/All In (2006)/All In (2006).mkv",
+          "People": [
+            {
+              "Id": "person-89",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p89": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p89"
+              },
+              "Name": "Dylan Ryder",
+              "PrimaryImageTag": "p89",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-902",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p902": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p902"
+              },
+              "Name": "Lexi Bardot",
+              "PrimaryImageTag": "p902",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-977",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p977": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p977"
+              },
+              "Name": "Katie Morgan",
+              "PrimaryImageTag": "p977",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1186",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1186": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1186"
+              },
+              "Name": "Jeanie Marie Sullivan",
+              "PrimaryImageTag": "p1186",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-2257",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p2257": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p2257"
+              },
+              "Name": "Monica Mayhem",
+              "PrimaryImageTag": "p2257",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2006-10-11T00:00:00.0000000Z",
+          "ProductionYear": 2006,
+          "RunTimeTicks": 55130800000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "All In",
+          "SourceType": "Default",
+          "Tags": [
+            "!8. Movie",
+            "European"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-19782",
+            "Key": "scene-19782",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 1
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

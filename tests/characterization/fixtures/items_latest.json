@@ -1,0 +1,14 @@
+{
+  "compare_mode": "shape",
+  "name": "items_latest",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/Latest?Limit=16&Fields=PrimaryImageAspectRatio&ParentId=root-scenes"
+  },
+  "response": {
+    "body": [],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

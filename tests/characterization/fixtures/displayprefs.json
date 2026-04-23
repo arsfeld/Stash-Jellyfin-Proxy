@@ -1,0 +1,34 @@
+{
+  "compare_mode": "full",
+  "name": "displayprefs",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/DisplayPreferences/usersettings?userId=bed0fa2f-5a08-543a-96eb-ef0150360506&client=emby"
+  },
+  "response": {
+    "body": {
+      "CustomPrefs": {
+        "homesection0": "smalllibrarytiles",
+        "homesection1": "latestmedia",
+        "homesection2": "nextup",
+        "homesection3": "none",
+        "homesection4": "none",
+        "homesection5": "none",
+        "homesection6": "none"
+      },
+      "Id": "usersettings",
+      "PrimaryImageHeight": 250,
+      "PrimaryImageWidth": 250,
+      "RememberIndexing": false,
+      "RememberSorting": false,
+      "ScrollDirection": "Horizontal",
+      "ShowBackdrop": true,
+      "ShowSidebar": false,
+      "SortBy": "SortName",
+      "SortOrder": "Ascending"
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

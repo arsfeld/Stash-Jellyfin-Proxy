@@ -1,0 +1,696 @@
+{
+  "compare_mode": "full",
+  "name": "items_root-studios",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=root-studios&Limit=25&StartIndex=0&Fields=PrimaryImageAspectRatio"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "filters-studios",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "FILTERS",
+          "ParentId": "root-studios",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "!!!FILTERS",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filters-studios",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 3,
+          "CollectionType": "movies",
+          "Id": "studio-367",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "2 Chicks Same Time",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 3,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-367",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "studio-377",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "3rd Degree",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-377",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 31,
+          "CollectionType": "movies",
+          "Id": "studio-147",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "A POV Story",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 31,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-147",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "studio-217",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Adam & Eve Pictures",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-217",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 7,
+          "CollectionType": "movies",
+          "Id": "studio-291",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Addicted To Boobs",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 7,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-291",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 0,
+          "CollectionType": "movies",
+          "Id": "studio-393",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Adult Prime",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 0,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-393",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 0,
+          "CollectionType": "movies",
+          "Id": "studio-421",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Adult Time Originals",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 0,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-421",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 20,
+          "CollectionType": "movies",
+          "Id": "studio-314",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "After Hours Exposed",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 20,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-314",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 0,
+          "CollectionType": "movies",
+          "Id": "studio-478",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Airerose Entertainment (Network)",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 0,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-478",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 0,
+          "CollectionType": "movies",
+          "Id": "studio-446",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Alex Adams Media",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 0,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-446",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 13,
+          "CollectionType": "movies",
+          "Id": "studio-148",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Alexa Pearl",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 13,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-148",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "studio-160",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "AliceNZ",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-160",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 3,
+          "CollectionType": "movies",
+          "Id": "studio-120",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "All Girl Massage",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 3,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-120",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "studio-179",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Amadani",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-179",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 255,
+          "CollectionType": "movies",
+          "Id": "studio-171",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Amber Hahn",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 255,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-171",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 23,
+          "CollectionType": "movies",
+          "Id": "studio-81",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "American Daydreams",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 23,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-81",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 0,
+          "CollectionType": "movies",
+          "Id": "studio-567",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Anal Vids",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 0,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-567",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 4,
+          "CollectionType": "movies",
+          "Id": "studio-230",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Angela White",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 4,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-230",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 5,
+          "CollectionType": "movies",
+          "Id": "studio-190",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Arabelle's Playground",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 5,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-190",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "studio-570",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "ARPorn",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-570",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 0,
+          "CollectionType": "movies",
+          "Id": "studio-394",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "ARX Bucks",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 0,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-394",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "studio-525",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "ASMR Fantasy",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-525",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "studio-104",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Ass Masterpiece",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-104",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 3,
+          "CollectionType": "movies",
+          "Id": "studio-43",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Ass Parade",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 3,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-43",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 515
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

@@ -1,0 +1,835 @@
+{
+  "compare_mode": "full",
+  "name": "performer_performer-2354_items",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=performer-2354&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b19489"
+          ],
+          "CanDownload": true,
+          "Container": "mkv",
+          "Etag": "79e41803f7044e4d",
+          "Genres": [
+            "!8. Movie",
+            "Anal",
+            "Gaping",
+            "Group Sex",
+            "Interracial"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-19489",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b19489": "000000"
+            },
+            "Primary": {
+              "p19489": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p19489"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 819396,
+              "Container": "mkv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-19489",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "576:416",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 819396,
+                  "Codec": "hevc",
+                  "Height": 416,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 576
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Anal Buffet [CD1]",
+              "Path": "/data2/Movies/Anal Buffet (2008)/Anal Buffet (2008).mkv",
+              "Protocol": "File",
+              "RunTimeTicks": 40708300000,
+              "Size": 416953078,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "576:416",
+              "AverageFrameRate": 29.97,
+              "BitRate": 819396,
+              "Codec": "hevc",
+              "Height": 416,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 576
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Anal Buffet [CD1]",
+          "Overview": "These dirty blondes take it deep, deeper, gone! Fun times with Bobbi and Loona's hungry buttholes! Beautiful beach babes crave sun and cock! Harmony, the whore, takes 3 big, hard cocks in every hole! Big butts, big tits, big anal gape rimming!\n\nStudio: Evil Angel",
+          "ParentId": "performer-2354",
+          "PartCount": 1,
+          "Path": "/data2/Movies/Anal Buffet (2008)/Anal Buffet (2008).mkv",
+          "People": [
+            {
+              "Id": "person-62",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p62": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p62"
+              },
+              "Name": "Carmella Bing",
+              "PrimaryImageTag": "p62",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-67",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p67": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p67"
+              },
+              "Name": "Loona Luxx",
+              "PrimaryImageTag": "p67",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-818",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p818": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p818"
+              },
+              "Name": "Adrianna Nicole",
+              "PrimaryImageTag": "p818",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1000",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1000": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1000"
+              },
+              "Name": "Annette Schwarz",
+              "PrimaryImageTag": "p1000",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1002",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1002": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1002"
+              },
+              "Name": "Chelsie Rae",
+              "PrimaryImageTag": "p1002",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1033",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1033": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1033"
+              },
+              "Name": "Tricia Oaks",
+              "PrimaryImageTag": "p1033",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1650",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1650": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1650"
+              },
+              "Name": "Harmony Rose",
+              "PrimaryImageTag": "p1650",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-2157",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p2157": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p2157"
+              },
+              "Name": "Lexi Love",
+              "PrimaryImageTag": "p2157",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-2354",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p2354": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p2354"
+              },
+              "Name": "Aaliyah Jolie",
+              "PrimaryImageTag": "p2354",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2008-12-12T00:00:00.0000000Z",
+          "ProductionYear": 2008,
+          "RunTimeTicks": 40708300000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Anal Buffet [CD1]",
+          "SourceType": "Default",
+          "Tags": [
+            "!8. Movie",
+            "Anal",
+            "Gaping",
+            "Group Sex",
+            "Interracial",
+            "Rimming"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-19489",
+            "Key": "scene-19489",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b19490"
+          ],
+          "CanDownload": true,
+          "Container": "mkv",
+          "Etag": "7fe5f579e283d891",
+          "Genres": [
+            "!8. Movie",
+            "Anal",
+            "Gaping",
+            "Group Sex",
+            "Interracial"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-19490",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b19490": "000000"
+            },
+            "Primary": {
+              "p19490": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p19490"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 978838,
+              "Container": "mkv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-19490",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "576:416",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 978838,
+                  "Codec": "hevc",
+                  "Height": 416,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 576
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Anal Buffet [CD2]",
+              "Path": "/data2/Movies/Anal Buffet (2008)/Anal Buffet (2008) scene 2.mkv",
+              "Protocol": "File",
+              "RunTimeTicks": 32783400000,
+              "Size": 401120940,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "576:416",
+              "AverageFrameRate": 29.97,
+              "BitRate": 978838,
+              "Codec": "hevc",
+              "Height": 416,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 576
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Anal Buffet [CD2]",
+          "Overview": "These dirty blondes take it deep, deeper, gone! Fun times with Bobbi and Loona's hungry buttholes! Beautiful beach babes crave sun and cock! Harmony, the whore, takes 3 big, hard cocks in every hole! Big butts, big tits, big anal gape rimming!\n\nStudio: Evil Angel",
+          "ParentId": "performer-2354",
+          "PartCount": 1,
+          "Path": "/data2/Movies/Anal Buffet (2008)/Anal Buffet (2008) scene 2.mkv",
+          "People": [
+            {
+              "Id": "person-62",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p62": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p62"
+              },
+              "Name": "Carmella Bing",
+              "PrimaryImageTag": "p62",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-67",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p67": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p67"
+              },
+              "Name": "Loona Luxx",
+              "PrimaryImageTag": "p67",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-818",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p818": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p818"
+              },
+              "Name": "Adrianna Nicole",
+              "PrimaryImageTag": "p818",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1000",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1000": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1000"
+              },
+              "Name": "Annette Schwarz",
+              "PrimaryImageTag": "p1000",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1002",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1002": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1002"
+              },
+              "Name": "Chelsie Rae",
+              "PrimaryImageTag": "p1002",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1033",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1033": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1033"
+              },
+              "Name": "Tricia Oaks",
+              "PrimaryImageTag": "p1033",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1650",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1650": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1650"
+              },
+              "Name": "Harmony Rose",
+              "PrimaryImageTag": "p1650",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-2157",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p2157": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p2157"
+              },
+              "Name": "Lexi Love",
+              "PrimaryImageTag": "p2157",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-2354",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p2354": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p2354"
+              },
+              "Name": "Aaliyah Jolie",
+              "PrimaryImageTag": "p2354",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2008-12-12T00:00:00.0000000Z",
+          "ProductionYear": 2008,
+          "RunTimeTicks": 32783400000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Anal Buffet [CD2]",
+          "SourceType": "Default",
+          "Tags": [
+            "!8. Movie",
+            "Anal",
+            "Gaping",
+            "Group Sex",
+            "Interracial",
+            "Rimming"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-19490",
+            "Key": "scene-19490",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b19491"
+          ],
+          "CanDownload": true,
+          "Container": "mkv",
+          "Etag": "b9b3b9ca3d2d7325",
+          "Genres": [
+            "!8. Movie",
+            "Anal",
+            "Gaping",
+            "Group Sex",
+            "Interracial"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-19491",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b19491": "000000"
+            },
+            "Primary": {
+              "p19491": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p19491"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 629262,
+              "Container": "mkv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-19491",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "512:368",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 629262,
+                  "Codec": "hevc",
+                  "Height": 368,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 512
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Anal Buffet [CD3]",
+              "Path": "/data2/Movies/Anal Buffet (2008)/Anal Buffet (2008) scene 3.mkv",
+              "Protocol": "File",
+              "RunTimeTicks": 55681600000,
+              "Size": 437979501,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "512:368",
+              "AverageFrameRate": 29.97,
+              "BitRate": 629262,
+              "Codec": "hevc",
+              "Height": 368,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 512
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Anal Buffet [CD3]",
+          "Overview": "These dirty blondes take it deep, deeper, gone! Fun times with Bobbi and Loona's hungry buttholes! Beautiful beach babes crave sun and cock! Harmony, the whore, takes 3 big, hard cocks in every hole! Big butts, big tits, big anal gape rimming!\n\nStudio: Evil Angel",
+          "ParentId": "performer-2354",
+          "PartCount": 1,
+          "Path": "/data2/Movies/Anal Buffet (2008)/Anal Buffet (2008) scene 3.mkv",
+          "People": [
+            {
+              "Id": "person-62",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p62": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p62"
+              },
+              "Name": "Carmella Bing",
+              "PrimaryImageTag": "p62",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-67",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p67": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p67"
+              },
+              "Name": "Loona Luxx",
+              "PrimaryImageTag": "p67",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-818",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p818": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p818"
+              },
+              "Name": "Adrianna Nicole",
+              "PrimaryImageTag": "p818",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1000",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1000": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1000"
+              },
+              "Name": "Annette Schwarz",
+              "PrimaryImageTag": "p1000",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1002",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1002": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1002"
+              },
+              "Name": "Chelsie Rae",
+              "PrimaryImageTag": "p1002",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1033",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1033": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1033"
+              },
+              "Name": "Tricia Oaks",
+              "PrimaryImageTag": "p1033",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1650",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1650": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1650"
+              },
+              "Name": "Harmony Rose",
+              "PrimaryImageTag": "p1650",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-2157",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p2157": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p2157"
+              },
+              "Name": "Lexi Love",
+              "PrimaryImageTag": "p2157",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-2354",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p2354": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p2354"
+              },
+              "Name": "Aaliyah Jolie",
+              "PrimaryImageTag": "p2354",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2008-12-12T00:00:00.0000000Z",
+          "ProductionYear": 2008,
+          "RunTimeTicks": 55681600000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Anal Buffet [CD3]",
+          "SourceType": "Default",
+          "Tags": [
+            "!8. Movie",
+            "Anal",
+            "Gaping",
+            "Group Sex",
+            "Interracial",
+            "Rimming"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-19491",
+            "Key": "scene-19491",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 3
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

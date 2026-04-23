@@ -1,0 +1,694 @@
+{
+  "compare_mode": "full",
+  "name": "items_root-groups",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=root-groups&Limit=25&StartIndex=0&Fields=PrimaryImageAspectRatio"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 3,
+          "CollectionType": "movies",
+          "Id": "group-177",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "\"I Got The Biggest Tits!\" Wet T-Shirt Contest 5",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 3,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-177",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-10",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "10 Dirty Talkin' Masturbators",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-10",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "group-81",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "25 Sexiest Boobs Ever!",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-81",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "group-4",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "100% Natural Wonders 4",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-4",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-82",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "110% Natural #5",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-82",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-83",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "About Face 2",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-83",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "group-47",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Addicted to Boobs #7",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-47",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-227",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Addiction",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-227",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-84",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Adventure Sex #4",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-84",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-228",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "All In",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-228",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-85",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Amanda by Night",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-85",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-206",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Amsterdam Sex Games",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-206",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 3,
+          "CollectionType": "movies",
+          "Id": "group-86",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Anal Buffet",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 3,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-86",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-235",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Anal Dancing",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-235",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-59",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Anal Workout 4",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-59",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "group-92",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Anally Yours...Love, Carmella Bing",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-92",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-80",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Anne: A Taboo Parody",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-80",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-93",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Apocalypse X",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-93",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-229",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Ass Riders",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-229",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-87",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Babewatch 6",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-87",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-24",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Baby Got Boobs Vol. 4",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-24",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "group-50",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Baby I Wanna Cum For You #2",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-50",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 3,
+          "CollectionType": "movies",
+          "Id": "group-314",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Bad Babysitter",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 3,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-314",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "group-88",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Barely Legal P.O.V.",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-88",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "group-94",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Beautifully Stacked",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "group-94",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 335
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

@@ -1,0 +1,569 @@
+{
+  "compare_mode": "full",
+  "name": "studio_studio-367_items",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=studio-367&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b37600"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "f26221b054f51667",
+          "Genres": [
+            "!0. Miscellaneous",
+            "69",
+            "American",
+            "Ass Smacking",
+            "Babes"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-37600",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b37600": "000000"
+            },
+            "Primary": {
+              "p37600": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p37600"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 12324541,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-37600",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 12324541,
+                  "Codec": "h264",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Hot Blondes Lexi Belle And Mia Malkova Want A Cock To Share",
+              "Path": "/data2/Video-B/Miscellaneous/Lexi Belle Mia Malkova - 2025-04-20 Hot Blondes Lexi Belle And Mia Malkova Want A Cock To Share.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 16889200000,
+              "Size": 2601891549,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 29.97,
+              "BitRate": 12324541,
+              "Codec": "h264",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Hot Blondes Lexi Belle And Mia Malkova Want A Cock To Share",
+          "Overview": "Lexi Belle and Mia Malkova need a roommate, and they're about to interview a male prospect. But when Johnny shows up, he discovers that the place is a studio apartment, not a three-bedroom place like he expected. But it all makes sense when Johnny also finds out that Lexi and Mia are crazy into sharing ... everything, including their tits, ass and pussy! They give Johnny a trial run by telling him to pull his cock out and fuck both of them in a threesome. Double the pussy, double the blowjobs ... double the pleasure! Think he'll sign the lease? He'd fuckin' better!\n\nStudio: 2 Chicks Same Time",
+          "ParentId": "studio-367",
+          "PartCount": 1,
+          "Path": "/data2/Video-B/Miscellaneous/Lexi Belle Mia Malkova - 2025-04-20 Hot Blondes Lexi Belle And Mia Malkova Want A Cock To Share.mp4",
+          "People": [
+            {
+              "Id": "person-581",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p581": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p581"
+              },
+              "Name": "Lexi Belle",
+              "PrimaryImageTag": "p581",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1466",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1466": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1466"
+              },
+              "Name": "Mia Malkova",
+              "PrimaryImageTag": "p1466",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2025-04-20T00:00:00.0000000Z",
+          "ProductionYear": 2025,
+          "RunTimeTicks": 16889200000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Hot Blondes Lexi Belle And Mia Malkova Want A Cock To Share",
+          "SourceType": "Default",
+          "Tags": [
+            "!0. Miscellaneous",
+            "69",
+            "American",
+            "Ass Smacking",
+            "Babes",
+            "Big Ass",
+            "Big Dick",
+            "Blonde Hair (Female)",
+            "Blowjob",
+            "Bubble Butt",
+            "Caucasian",
+            "Cum in Mouth",
+            "Cum Swapping",
+            "Deepthroat",
+            "Doggy Style",
+            "Face Fuck",
+            "Facial",
+            "Hairy Pussy",
+            "Handjob",
+            "Medium Boobs",
+            "Natural Tits",
+            "Orgasm",
+            "PAWG",
+            "Pussy",
+            "Pussy Licking",
+            "Reverse Cowgirl",
+            "Rimming",
+            "Short Woman",
+            "Small Tits",
+            "Threesome",
+            "Threesome (BGG)",
+            "Trimmed Pussy"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-37600",
+            "Key": "scene-37600",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b24844"
+          ],
+          "CanDownload": true,
+          "Container": "wmv",
+          "Etag": "b435b3d5823080fa",
+          "Genres": [
+            "!0. Miscellaneous",
+            "69",
+            "Ball Licking",
+            "Big Ass",
+            "Big Tits"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-24844",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b24844": "000000"
+            },
+            "Primary": {
+              "p24844": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p24844"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 2107623,
+              "Container": "wmv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-24844",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "850:480",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 2107623,
+                  "Codec": "wmv3",
+                  "Height": 480,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 850
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "wmav2",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "WMAV2 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Lesbian Alanah Rae fucking in the bedroom with her piercings",
+              "Path": "/data2/Video-B/Miscellaneous/Alanah Rae Deauxma - 2011-09-02 Lesbian Alanah Rae fucking in the bedroom with her piercings.wmv",
+              "Protocol": "File",
+              "RunTimeTicks": 17277000000,
+              "Size": 455167829,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "850:480",
+              "AverageFrameRate": 29.97,
+              "BitRate": 2107623,
+              "Codec": "wmv3",
+              "Height": 480,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 850
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "wmav2",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "WMAV2 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Lesbian Alanah Rae fucking in the bedroom with her piercings",
+          "Overview": "Alanah invited Deauxma  over to check out her new place. As they were checking out the new place Deauxma notice the view outside and it so happens to be Alec (or as Alanah would call him) \"Mr Steamy\" a neighbor that Alanah has been wanting to fuck! Deauxma the instigator that she is goes outside to invite \"Mr Steamy\" over meet Alanah and get to know his neighbors a lot closer!\n\nStudio: 2 Chicks Same Time",
+          "ParentId": "studio-367",
+          "PartCount": 1,
+          "Path": "/data2/Video-B/Miscellaneous/Alanah Rae Deauxma - 2011-09-02 Lesbian Alanah Rae fucking in the bedroom with her piercings.wmv",
+          "People": [
+            {
+              "Id": "person-524",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p524": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p524"
+              },
+              "Name": "Alanah Rae",
+              "PrimaryImageTag": "p524",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-612",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p612": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p612"
+              },
+              "Name": "Deauxma",
+              "PrimaryImageTag": "p612",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2011-09-02T00:00:00.0000000Z",
+          "ProductionYear": 2011,
+          "RunTimeTicks": 17277000000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Lesbian Alanah Rae fucking in the bedroom with her piercings",
+          "SourceType": "Default",
+          "Tags": [
+            "!0. Miscellaneous",
+            "69",
+            "Ball Licking",
+            "Big Ass",
+            "Big Tits",
+            "Blond Hair",
+            "Blowjob",
+            "Brown Hair",
+            "Facial",
+            "Fake Tits",
+            "Foot Fetish",
+            "Hairless Pussy",
+            "Lesbian",
+            "Lesbian Action",
+            "Mature Woman",
+            "Piercing",
+            "Tattoos"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-24844",
+            "Key": "scene-24844",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b29224"
+          ],
+          "CanDownload": true,
+          "Container": "avi",
+          "Etag": "798dc5664a213ebe",
+          "Genres": [
+            "!1. File By Performer"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-29224",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b29224": "000000"
+            },
+            "Primary": {
+              "p29224": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p29224"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 1530774,
+              "Container": "avi",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-29224",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "576:432",
+                  "AverageFrameRate": 23.98,
+                  "BitRate": 1530774,
+                  "Codec": "mpeg4",
+                  "Height": 432,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 23.98,
+                  "Type": "Video",
+                  "Width": 576
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Ahryan Astyn Fucking in the Outdoors with Her Piercings",
+              "Path": "/data2/Video-B/Performers/Ahryan Astyn/Ahryan Astyn Nikki Sexx - 2 Chicks Same Time - 2008-07-04 Ahryan Astyn Fucking in the Outdoors with Her Piercings.avi",
+              "Protocol": "File",
+              "RunTimeTicks": 15252400000,
+              "Size": 291850240,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "576:432",
+              "AverageFrameRate": 23.98,
+              "BitRate": 1530774,
+              "Codec": "mpeg4",
+              "Height": 432,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 23.98,
+              "Type": "Video",
+              "Width": 576
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Ahryan Astyn Fucking in the Outdoors with Her Piercings",
+          "Overview": "Nikki Sexx & Ahryan Astyn love the fast life. When their acquaintance Jerry shows them his sports car and bike, they're impressed. But the girls don't want to ride the vehicles, they want to ride him. They don't want to waste any time getting to some fast and furious fucking!!!\n\nStudio: 2 Chicks Same Time",
+          "ParentId": "studio-367",
+          "PartCount": 1,
+          "Path": "/data2/Video-B/Performers/Ahryan Astyn/Ahryan Astyn Nikki Sexx - 2 Chicks Same Time - 2008-07-04 Ahryan Astyn Fucking in the Outdoors with Her Piercings.avi",
+          "People": [
+            {
+              "Id": "person-248",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p248": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p248"
+              },
+              "Name": "Ahryan Astyn",
+              "PrimaryImageTag": "p248",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-453",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p453": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p453"
+              },
+              "Name": "Nikki Sexx",
+              "PrimaryImageTag": "p453",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2008-07-04T00:00:00.0000000Z",
+          "ProductionYear": 2008,
+          "RunTimeTicks": 15252400000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Ahryan Astyn Fucking in the Outdoors with Her Piercings",
+          "SourceType": "Default",
+          "Tags": [
+            "!1. File By Performer"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-29224",
+            "Key": "scene-29224",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 3
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

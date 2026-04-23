@@ -27,3 +27,8 @@ only-include = ["stash_jellyfin_proxy.py"]
 [tool.uv]
 # `uv run stash_jellyfin_proxy.py` resolves dependencies from [project].
 # `uv sync` creates a .venv matching this lockfile.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers"

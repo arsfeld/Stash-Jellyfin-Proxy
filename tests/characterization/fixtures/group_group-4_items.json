@@ -1,0 +1,357 @@
+{
+  "compare_mode": "full",
+  "name": "group_group-4_items",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=group-4&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b18092"
+          ],
+          "CanDownload": true,
+          "Container": "mkv",
+          "Etag": "838b5fd01e1fcd81",
+          "Genres": [
+            "!8. Movie",
+            "Big Tits",
+            "Gonzo"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-18092",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b18092": "000000"
+            },
+            "Primary": {
+              "p18092": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p18092"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 715590,
+              "Container": "mkv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-18092",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "512:384",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 715590,
+                  "Codec": "hevc",
+                  "Height": 384,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 512
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "100% Natural Wonders 4 - CD1",
+              "Path": "/data2/Movies/100% Natural Wonders 4 (2005)/100% Natural Wonders 4 (2005) scene 1.mkv",
+              "Protocol": "File",
+              "RunTimeTicks": 46843500000,
+              "Size": 419009528,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "512:384",
+              "AverageFrameRate": 29.97,
+              "BitRate": 715590,
+              "Codec": "hevc",
+              "Height": 384,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 512
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "100% Natural Wonders 4 - CD1",
+          "Overview": "Tiffany's tight twat gets tenderized by Talon's massive cock. Velicity is a voluptuous slut who loves fucking two guys at the same time. Adrianna relishes getting her tight ass reamed and creamed. Riley's puffy pussy gets plowed as her ripe young titties bounce up and down as if she was making milk shakes. Franchezca can't get enough cum as she takes two massive loads to her face!\n\nStudio: Lethal Hardcore",
+          "ParentId": "group-4",
+          "PartCount": 1,
+          "Path": "/data2/Movies/100% Natural Wonders 4 (2005)/100% Natural Wonders 4 (2005) scene 1.mkv",
+          "People": [
+            {
+              "Id": "person-310",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p310": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p310"
+              },
+              "Name": "Velicity Von",
+              "PrimaryImageTag": "p310",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-818",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p818": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p818"
+              },
+              "Name": "Adrianna Nicole",
+              "PrimaryImageTag": "p818",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2005-12-13T00:00:00.0000000Z",
+          "ProductionYear": 2005,
+          "RunTimeTicks": 46843500000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "100% Natural Wonders 4 - CD1",
+          "SourceType": "Default",
+          "Tags": [
+            "!8. Movie",
+            "Big Tits",
+            "Gonzo"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-18092",
+            "Key": "scene-18092",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b18093"
+          ],
+          "CanDownload": true,
+          "Container": "mkv",
+          "Etag": "fb760f3512c7ca3d",
+          "Genres": [
+            "!8. Movie",
+            "Big Tits",
+            "Gonzo"
+          ],
+          "HasSubtitles": false,
+          "Id": "scene-18093",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b18093": "000000"
+            },
+            "Primary": {
+              "p18093": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p18093"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 763902,
+              "Container": "mkv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-18093",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "512:384",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 763902,
+                  "Codec": "hevc",
+                  "Height": 384,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 512
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "100% Natural Wonders 4 - CD2",
+              "Path": "/data2/Movies/100% Natural Wonders 4 (2005)/100% Natural Wonders 4 (2005) scene 2.mkv",
+              "Protocol": "File",
+              "RunTimeTicks": 43384700000,
+              "Size": 414270909,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "512:384",
+              "AverageFrameRate": 29.97,
+              "BitRate": 763902,
+              "Codec": "hevc",
+              "Height": 384,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 512
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "100% Natural Wonders 4 - CD2",
+          "Overview": "Tiffany's tight twat gets tenderized by Talon's massive cock. Velicity is a voluptuous slut who loves fucking two guys at the same time. Adrianna relishes getting her tight ass reamed and creamed. Riley's puffy pussy gets plowed as her ripe young titties bounce up and down as if she was making milk shakes. Franchezca can't get enough cum as she takes two massive loads to her face!\n\nStudio: Lethal Hardcore",
+          "ParentId": "group-4",
+          "PartCount": 1,
+          "Path": "/data2/Movies/100% Natural Wonders 4 (2005)/100% Natural Wonders 4 (2005) scene 2.mkv",
+          "People": [
+            {
+              "Id": "person-310",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p310": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p310"
+              },
+              "Name": "Velicity Von",
+              "PrimaryImageTag": "p310",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-818",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p818": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p818"
+              },
+              "Name": "Adrianna Nicole",
+              "PrimaryImageTag": "p818",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2005-12-13T00:00:00.0000000Z",
+          "ProductionYear": 2005,
+          "RunTimeTicks": 43384700000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "100% Natural Wonders 4 - CD2",
+          "SourceType": "Default",
+          "Tags": [
+            "!8. Movie",
+            "Big Tits",
+            "Gonzo"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-18093",
+            "Key": "scene-18093",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 2
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

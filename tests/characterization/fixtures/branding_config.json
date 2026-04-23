@@ -1,0 +1,18 @@
+{
+  "compare_mode": "full",
+  "name": "branding_config",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Branding/Configuration"
+  },
+  "response": {
+    "body": {
+      "CustomCss": null,
+      "LoginDisclaimer": null,
+      "SplashscreenEnabled": false
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

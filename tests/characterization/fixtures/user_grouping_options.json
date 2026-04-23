@@ -1,0 +1,14 @@
+{
+  "compare_mode": "full",
+  "name": "user_grouping_options",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/GroupingOptions"
+  },
+  "response": {
+    "body": [],
+    "content_type": "application/json",
+    "status": 200
+  }
+}

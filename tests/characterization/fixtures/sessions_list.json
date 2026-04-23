@@ -1,0 +1,18 @@
+{
+  "compare_mode": "shape",
+  "name": "sessions_list",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Sessions"
+  },
+  "response": {
+    "body": {
+      "Items": [],
+      "StartIndex": 0,
+      "TotalRecordCount": 0
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}
