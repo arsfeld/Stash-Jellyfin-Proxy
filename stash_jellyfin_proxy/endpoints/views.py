@@ -256,22 +256,40 @@ _EPISODE_FIELDS = (
 
 
 async def endpoint_shows_episodes(request):
-    """`GET /Shows/{seriesId}/Episodes` — episodes for a Series, optionally
-    filtered by seasonId. Swiftfin uses this to populate Season detail."""
-    series_id = request.path_params.get("series_id", "")
-    if not series_id.startswith("series-"):
+    """`GET /Shows/{id}/Episodes` — episodes for a Series, optionally
+    filtered by seasonId. Swiftfin uses this two ways:
+      - /Shows/series-{id}/Episodes?seasonId=season-{id}-{n}
+      - /Shows/season-{id}-{n}/Episodes  (season id in the path, no query)
+    Accept either."""
+    path_id = request.path_params.get("series_id", "")
+    series_id = ""
+    studio_id = ""
+    want_season: Optional[int] = None
+
+    if path_id.startswith("series-"):
+        series_id = path_id
+        studio_id = path_id.replace("series-", "")
+    elif path_id.startswith("season-"):
+        rest = path_id.replace("season-", "", 1)
+        try:
+            studio_id, season_str = rest.rsplit("-", 1)
+            want_season = int(season_str)
+            series_id = f"series-{studio_id}"
+        except (ValueError, IndexError):
+            return JSONResponse({"Items": [], "TotalRecordCount": 0})
+    else:
         return JSONResponse({"Items": [], "TotalRecordCount": 0})
-    studio_id = series_id.replace("series-", "")
 
     season_id = request.query_params.get("seasonId") or request.query_params.get("SeasonId")
-    want_season: Optional[int] = None
-    if season_id and season_id.startswith("season-"):
+    if season_id and season_id.startswith("season-") and want_season is None:
         try:
             _studio, _snum = season_id.replace("season-", "", 1).rsplit("-", 1)
             if _studio == studio_id:
                 want_season = int(_snum)
         except (ValueError, IndexError):
             pass
+    elif want_season is not None and not season_id:
+        season_id = path_id
 
     q = f"""query FindSeriesEpisodes($sid: [ID!]) {{
         findScenes(
