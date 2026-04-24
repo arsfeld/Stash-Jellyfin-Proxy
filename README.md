@@ -1,8 +1,8 @@
 # Stash-Jellyfin Proxy
 
-**Version 6.02**
+**Version 7.0.0**
 
-A single-file Python proxy server that enables Jellyfin-compatible media players to connect to [Stash](https://stashapp.cc/) by emulating the Jellyfin API.
+A Python proxy server that enables Jellyfin-compatible media players to connect to [Stash](https://stashapp.cc/) by emulating the Jellyfin API.
 
 ## Supported Clients
 
@@ -43,7 +43,11 @@ A single-file Python proxy server that enables Jellyfin-compatible media players
 
 3. Run:
    ```bash
-   python stash_jellyfin_proxy.py
+   python -m stash_jellyfin_proxy
+   ```
+   Or, after `pip install -e .`, the console script:
+   ```bash
+   stash-jellyfin-proxy
    ```
 
 4. Open Web UI at `http://localhost:8097`
@@ -148,6 +152,12 @@ Access the configuration dashboard at `http://your-server:8097`:
 - Scene and group favorites require `FAVORITE_TAG` to be configured
 
 ## Changelog
+
+### v7.0.0
+
+- **Full Web UI overhaul (Phase 5B)**: the single "Configuration / Dashboard / Logs" page is replaced with the 8-tab sidebar-nav layout from design §11 — Dashboard, Connection, Libraries, Players, Playback, Search, System, Logs. Every config key is reachable in the UI (no more hand-editing the conf file). New capabilities include a live Test Connection probe, a per-client Player Profiles editor with a live User-Agent feed, a client-side Series-Episode regex tester, and a real-time dashboard with active streams and top-played scenes.
+- **Package entry point**: the project is now a plain Python package. Run with `python -m stash_jellyfin_proxy` or the `stash-jellyfin-proxy` console script (after `pip install -e .`). The top-level `stash_jellyfin_proxy.py` launcher has been removed — Dockerfile, compose, and CI all invoke the package directly.
+- **Breaking change for Docker users**: the `CMD` in the image changed from `python /app/stash_jellyfin_proxy.py` to `python -m stash_jellyfin_proxy`. No action needed if you use the published image; if you pin the CMD in your own compose, update it.
 
 ### v6.02
 - **Home-screen banner for SenPlayer**: SenPlayer fetches a `SortBy=...Random...` + `IncludeItemTypes=Movie` query to populate the server's rotating banner. The proxy now detects that signature and returns randomized **scenes** (with screenshots) instead of the default newest Groups, so the banner has real visual variety. Two selectable modes, both exposed in the Web UI under a new **Home-Screen Banner** card:

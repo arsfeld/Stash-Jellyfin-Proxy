@@ -1,6 +1,6 @@
 [project]
 name = "stash-jellyfin-proxy"
-version = "6.02"
+version = "7.0.0"
 description = "Proxy that lets Jellyfin clients (Infuse, Findroid, etc.) browse and stream a Stash library."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -28,7 +28,7 @@ build-backend = "hatchling.build"
 packages = ["stash_jellyfin_proxy"]
 
 [tool.uv]
-# `uv run stash_jellyfin_proxy.py` resolves dependencies from [project].
+# `uv run python -m stash_jellyfin_proxy` resolves dependencies from [project].
 # `uv sync` creates a .venv matching this lockfile.
 
 [tool.pytest.ini_options]

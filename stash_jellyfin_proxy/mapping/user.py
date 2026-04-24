@@ -86,7 +86,7 @@ def build_user_dto(username=None) -> dict:
 
 
 def _user_id() -> str:
-    """Derive the stable per-user UUID the monolith sets at boot."""
+    """Derive the stable per-user UUID from SERVER_ID + SJS_USER."""
     import uuid
     base = runtime.SERVER_ID.replace("-", "").ljust(32, "0")[:32]
     return str(uuid.uuid5(uuid.UUID(base), runtime.SJS_USER or "user"))

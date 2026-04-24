@@ -7,8 +7,9 @@ Grammar:
     [section.name]             # opens a section scope
     key = value                # scoped into the current section
 
-Pure function, no module-level state. Callers in the monolith hold the
-loaded dicts and coordinate the local-override merge.
+Pure function, no module-level state. `config.bootstrap.run_bootstrap()`
+calls this, holds the returned dicts, and coordinates the
+local-override merge.
 """
 import os
 import sys

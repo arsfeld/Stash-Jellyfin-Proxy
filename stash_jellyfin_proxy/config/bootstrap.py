@@ -1,7 +1,7 @@
 """Config bootstrap — load, migrate, merge, apply env overrides, publish.
 
 `run_bootstrap(config_file, local_config_file)` is called once at startup
-from `stash_jellyfin_proxy.py`. It:
+from `stash_jellyfin_proxy/__main__.py::main()`. It:
 
   1. Loads the base config file
   2. Runs v1→v2 migration (in-place on disk if needed)
@@ -13,8 +13,7 @@ from `stash_jellyfin_proxy.py`. It:
   8. Publishes all derived values to `stash_jellyfin_proxy.runtime`
 
 After this call, `stash_jellyfin_proxy.runtime` is the single authoritative source of
-truth for all config values. The callee can optionally read specific
-values from `stash_jellyfin_proxy.runtime` if it needs them locally.
+truth for all config values.
 """
 import os
 import uuid

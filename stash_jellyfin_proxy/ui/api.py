@@ -1,10 +1,11 @@
 """Web UI handlers — the shell HTML and the /api/* JSON endpoints the
 dashboard polls.
 
-Most handlers read or mutate state that already lives in stash_jellyfin_proxy.runtime
-or stash_jellyfin_proxy.state. The one remaining holdout is ui_api_config, which still
-sits in the monolith because it mutates ~40 module-level config names
-live; that one will move once the monolith retires.
+Handlers read or mutate state on stash_jellyfin_proxy.runtime and
+stash_jellyfin_proxy.state. ui_api_config is the only handler that
+writes runtime attributes live (it mutates ~40 module-level config
+names on save); every other handler is read-only or side-effects
+through dedicated helpers (cache clear, stats reset, profile rewrite).
 """
 import asyncio
 import logging
@@ -42,7 +43,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - start_time) if start_time else 0
     return JSONResponse({
         "running": runtime.PROXY_RUNNING,
-        "version": "v6.02",
+        "version": "v7.0.0",
         "proxyBind": runtime.PROXY_BIND,
         "proxyPort": runtime.PROXY_PORT,
         "uptime": uptime_seconds,
@@ -469,7 +470,7 @@ async def ui_api_auth_config(request):
         return JSONResponse({"success": False, "error": str(e)})
 
 
-# --- Config read/write endpoint (extracted from monolith) ---
+# --- Config read/write endpoint ---
 import json as _json_mod  # already imported above, but explicit here for clarity
 from stash_jellyfin_proxy.config.helpers import normalize_path
 

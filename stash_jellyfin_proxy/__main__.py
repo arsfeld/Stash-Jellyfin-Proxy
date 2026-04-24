@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Entry point for stash-jellyfin-stash_jellyfin_proxy.
+"""Entry point for stash-jellyfin-proxy.
 
-All stash_jellyfin_proxy.* imports are deferred inside main() so _prescan_config_args can
-inject CLI config paths into env vars before the bootstrap machinery reads
-them at import time (bootstrap runs on stash_jellyfin_proxy.runtime's first import).
+Run with `python -m stash_jellyfin_proxy`. All stash_jellyfin_proxy.*
+imports are deferred inside main() so _prescan_config_args can inject
+CLI config paths into env vars before the bootstrap machinery reads
+them at import time (bootstrap runs on stash_jellyfin_proxy.runtime's
+first import).
 """
 import os
 import sys
@@ -124,7 +126,7 @@ def main():
     logging.getLogger("hypercorn.error").addFilter(SuppressDisconnectFilter())
     logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 
-    logger.info("--- Stash-Jellyfin Proxy v6.02 ---")
+    logger.info("--- Stash-Jellyfin Proxy v7.0.0 ---")
 
     if not check_stash_connection():
         logger.warning("Could not connect to Stash. Proxy will start but streaming will not work until Stash is reachable.")

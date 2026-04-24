@@ -10,7 +10,6 @@ services:
       - "18096:8096"
       - "18097:8097"
     volumes:
-      - ./stash_jellyfin_proxy.py:/app/stash_jellyfin_proxy.py:ro
       - ./stash_jellyfin_proxy:/app/stash_jellyfin_proxy:ro
       - ./dev-data:/config
     environment:

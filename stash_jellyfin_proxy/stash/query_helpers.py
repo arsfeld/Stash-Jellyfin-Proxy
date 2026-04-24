@@ -1,7 +1,7 @@
 """Small Stash-query helper functions used by list and search endpoints.
 
-The larger `transform_saved_filter_to_graphql` (240 lines) still lives in
-the monolith until endpoint_items extracts — it's only called from there.
+The larger `transform_saved_filter_to_graphql` (240 lines) lives in
+`endpoints/items.py` — it's the only caller.
 """
 import logging
 from typing import Tuple

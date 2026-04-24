@@ -1,7 +1,19 @@
-"""Extracted helper package. Invariants:
-- Every module here is a pure leaf — no imports from the monolith.
-- Adding a module here does not change runtime behavior; the monolith
-  imports from here and wires it in as the existing call sites did.
-- This package will eventually be renamed to stash_jellyfin_proxy and
-  replace the single-file monolith (plan §4.6 Phase 0.6 completion).
+"""Stash-Jellyfin Proxy — Jellyfin-API emulation in front of a Stash
+media server. Entry point is `python -m stash_jellyfin_proxy`, which
+invokes `__main__.main()`.
+
+Subpackage layout (see CLAUDE.md §Architecture for details):
+
+    config/     — config file loading, migration, bootstrap
+    endpoints/  — Jellyfin API handlers (items, stream, images, ...)
+    mapping/    — Stash → Jellyfin data shape conversion
+    middleware/ — auth, request logging, path canonicalization
+    players/    — per-client Profile dataclass + UA matcher
+    stash/      — GraphQL client + query helpers
+    state/      — runtime-only in-process state (streams, stats)
+    ui/         — Web UI HTML + /api/* handlers
+    util/       — small helpers (ids, images, series parser)
+
+runtime.py holds all shared config + mutable state (single source of
+truth; see its docstring).
 """

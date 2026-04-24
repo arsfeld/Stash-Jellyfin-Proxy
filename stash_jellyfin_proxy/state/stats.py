@@ -6,10 +6,10 @@ Module-level state:
     _stats_last_save   : monotonic timestamp of last disk write
     _play_cooldowns    : in-memory (scene_id, client_ip) → cooldown timestamp
 
-Callers in the monolith import this module and access state via
-attribute syntax (`stats._proxy_stats["total_streams"] += 1`) so every
-reader sees the current value even after hot-path writes. Reassigning
-_proxy_stats would break that — use `reset_stats()` to clear in place.
+Callers import this module and access state via attribute syntax
+(`stats._proxy_stats["total_streams"] += 1`) so every reader sees the
+current value even after hot-path writes. Reassigning _proxy_stats
+would break that — use `reset_stats()` to clear in place.
 """
 import json
 import logging

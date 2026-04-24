@@ -1,5 +1,5 @@
 """Shared runtime state — the single source of truth for config and
-per-process state that extracted modules need to read.
+per-process state every module reads from.
 
 **Usage pattern:**
 
@@ -10,17 +10,10 @@ Never `from stash_jellyfin_proxy.runtime import STASH_URL` — that captures the
 import time. Always reach attributes through the module object so reads
 see current values (config can change via the Web UI hot-reload).
 
-**Ownership during the Phase 0.6 refactor window:**
-
-The monolith `stash_jellyfin_proxy.py` reads the on-disk config and writes
-every derived value into this module. Extracted modules read only — they
-never write runtime state themselves (that'd undercut the single-source
-rule). When extraction completes and the monolith is retired, init will
-move into `stash_jellyfin_proxy.app.bootstrap()` or equivalent and this file becomes the
-primary store.
-
-Until then the monolith keeps its own module-level copies too (dual-write
-during transition) so code still in the monolith keeps working unchanged.
+**Write ownership:** only `config.bootstrap.run_bootstrap()` (at startup)
+and `ui.api.ui_api_config` (at Web UI save) mutate these attributes. Every
+other module is read-only. Keeping writes pinned to those two call sites
+is what makes hot-reload predictable.
 """
 from typing import Any, Dict, List, Optional, Set
 
@@ -179,7 +172,7 @@ SAVED_FILTERS_DEFAULT_SORT: str = "PlayCount"
 
 
 def publish(**kwargs):
-    """Bulk-set attributes. Used by the monolith bootstrap to copy its
-    module-level config values into this shared namespace in one pass."""
+    """Bulk-set attributes. Called by config.bootstrap at startup to
+    push every derived config value into this namespace in one pass."""
     for k, v in kwargs.items():
         globals()[k] = v

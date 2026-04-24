@@ -16,4 +16,4 @@ WORKDIR /app
 
 EXPOSE 8096 8097
 
-CMD ["python", "-u", "/app/stash_jellyfin_proxy.py"]
+CMD ["python", "-u", "-m", "stash_jellyfin_proxy"]
