@@ -213,20 +213,22 @@ async def endpoint_image(request):
         return Response(content=img_data, media_type=content_type, headers=_ICON_CACHE_HEADERS)
 
     if item_id.startswith("tag-"):
-        # TAG_GROUPS card: try a scene from that tag, fall back to the
-        # generated text-icon below.
+        # TAG_GROUPS card: scene screenshot from that tag as backdrop,
+        # dimmed 50%, with the tag name overlaid. Same poster-style
+        # treatment as root-* libraries. Falls back to a plain text
+        # card if no tag-scoped scene is available.
         tag_slug = item_id[4:]
         tag_name = None
         for t in runtime.TAG_GROUPS:
             if t.lower().replace(' ', '-') == tag_slug:
                 tag_name = t
                 break
+        display_name = tag_name if tag_name else tag_slug.replace('-', ' ').title()
         if tag_name:
             art = await _tag_card_artwork(tag_name)
             if art is not None:
-                data, ct = art
+                data, ct = compose_library_card(art[0], display_name)
                 return Response(content=data, media_type=ct, headers=_IMAGE_CACHE_HEADERS)
-        display_name = tag_name if tag_name else tag_slug.replace('-', ' ').title()
         img_data, content_type = generate_text_icon(display_name)
         logger.debug(f"Serving text icon for tag folder: {display_name}")
         return Response(content=img_data, media_type=content_type, headers=_ICON_CACHE_HEADERS)
