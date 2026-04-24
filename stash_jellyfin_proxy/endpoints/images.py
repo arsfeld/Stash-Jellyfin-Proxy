@@ -170,13 +170,15 @@ async def endpoint_image(request):
         needs_portrait_resize = not is_landscape_type
     elif item_id.startswith("season-"):
         # season-<studio_id>-<season_num> — reuse the series/studio image.
+        # Swiftfin renders Season cards as 16:9 landscape (same template as
+        # Episodes), so never portrait-crop Season images.
         rest = item_id.replace("season-", "", 1)
         try:
             numeric_id, _ = rest.rsplit("-", 1)
         except ValueError:
             numeric_id = rest
         stash_img_url = f"{runtime.STASH_URL}/studio/{numeric_id}/image"
-        needs_portrait_resize = not is_landscape_type
+        needs_portrait_resize = False
     elif item_id.startswith("performer-") or item_id.startswith("person-"):
         if item_id.startswith("person-performer-"):
             numeric_id = item_id.replace("person-performer-", "")

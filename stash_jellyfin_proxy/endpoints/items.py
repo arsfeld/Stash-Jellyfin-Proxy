@@ -1740,7 +1740,9 @@ async def _fetch_studio_packet(studio_id: str) -> Optional[Dict[str, Any]]:
     out: Dict[str, Any] = {}
 
     # Overview — details + aliases. Homepage goes to ExternalUrls only so
-    # it doesn't pollute the description text.
+    # it doesn't pollute the description text. When Stash has no details
+    # and no aliases, fall back to a synthesized one-liner from the counts
+    # + year range so Swiftfin's About panel isn't empty.
     overview_parts = []
     if studio.get("details"):
         overview_parts.append(studio["details"].strip())
@@ -1800,6 +1802,31 @@ async def _fetch_studio_packet(studio_id: str) -> Optional[Dict[str, Any]]:
     stash_ids = studio.get("stash_ids") or []
     if stash_ids and stash_ids[0].get("stash_id"):
         out["ProviderIds"] = {"StashDb": stash_ids[0]["stash_id"]}
+
+    # Synthesize a fallback Overview when Stash has none, so Swiftfin's
+    # About panel has something to render. Uses whatever packet data we
+    # already extracted (year range, scene count, parent).
+    if "Overview" not in out:
+        scene_count = int(studio.get("scene_count") or 0)
+        start_year = out.get("ProductionYear")
+        end_year = None
+        if out.get("EndDate"):
+            try:
+                end_year = int(out["EndDate"][:4])
+            except (ValueError, TypeError):
+                pass
+        bits = []
+        if scene_count:
+            bits.append(f"{scene_count} title{'s' if scene_count != 1 else ''}")
+        if start_year and end_year and end_year != start_year:
+            bits.append(f"{start_year}–{end_year}")
+        elif start_year:
+            bits.append(f"{start_year}")
+        parent = studio.get("parent_studio") or {}
+        if parent.get("name"):
+            bits.append(f"part of the {parent['name']} network")
+        if bits:
+            out["Overview"] = f"{studio.get('name') or 'This collection'} — " + ", ".join(bits) + "."
 
     # Core counts + favorite state — callers merge these into the envelope.
     out["_favorite"] = bool(studio.get("favorite"))
@@ -1930,6 +1957,17 @@ async def endpoint_item_details(request):
             },
         }
         out.update(packet)
+        # Status — if the most recent scene is within the last 18 months,
+        # call it "Continuing"; older than that → "Ended". Swiftfin renders
+        # this on the Series About screen.
+        if packet.get("EndDate"):
+            import datetime as _dt
+            try:
+                end_dt = _dt.datetime.fromisoformat(packet["EndDate"].replace("Z", "+00:00")[:19] + "+00:00")
+                now = _dt.datetime.now(_dt.timezone.utc)
+                out["Status"] = "Continuing" if (now - end_dt).days <= 540 else "Ended"
+            except (ValueError, TypeError):
+                pass
         return JSONResponse(out)
 
     elif item_id.startswith("season-"):
