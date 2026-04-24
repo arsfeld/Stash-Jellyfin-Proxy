@@ -275,6 +275,17 @@ async function saveSection(card) {
 }
 
 /* ============================================================ */
+/* Search tab                                                   */
+/* ============================================================ */
+window.init_search = async function () {
+  try { await loadConfig(); } catch {}
+  bindFormFromConfig(pageRoot("search"));
+};
+window.show_search = async function () {
+  try { await loadConfig(); bindFormFromConfig(pageRoot("search")); } catch {}
+};
+
+/* ============================================================ */
 /* Playback tab                                                 */
 /* ============================================================ */
 const SORT_OPTIONS = [

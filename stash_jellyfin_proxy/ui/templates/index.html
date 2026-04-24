@@ -337,7 +337,83 @@
         <div class="page-title">Search</div>
         <div class="page-subtitle">Search scope and filter-panel behavior</div>
       </div>
-      <div class="page-content"><em class="section-note">Search — coming in Phase 5B pass 6</em></div>
+      <div class="page-content" id="search-content">
+
+        <!-- Search Scope -->
+        <div class="card" data-section="search-scope">
+          <div class="card-header"><div class="card-title">Search Scope <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Include Scenes <span class="badge live">✓ Live</span></div>
+                <div class="th">Scenes appear in search results.</div>
+              </div>
+              <div class="toggle" data-key="SEARCH_INCLUDE_SCENES"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Include Performers <span class="badge live">✓ Live</span></div>
+                <div class="th">Performers appear in search results as People (Swiftfin) or Collections (other clients).</div>
+              </div>
+              <div class="toggle" data-key="SEARCH_INCLUDE_PERFORMERS"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Include Studios <span class="badge live">✓ Live</span></div>
+                <div class="th">Studios appear in search results as Collections.</div>
+              </div>
+              <div class="toggle" data-key="SEARCH_INCLUDE_STUDIOS"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Include Groups <span class="badge live">✓ Live</span></div>
+                <div class="th">Groups appear in search results as Collections.</div>
+              </div>
+              <div class="toggle" data-key="SEARCH_INCLUDE_GROUPS"></div>
+            </div>
+          </div>
+          <div class="card-footer"><button class="btn primary" data-save="search-scope">Save</button></div>
+        </div>
+
+        <!-- Filter Panel -->
+        <div class="card" data-section="filter-panel">
+          <div class="card-header"><div class="card-title">Filter Panel <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Maximum Tags in Filter <span class="badge live">✓ Live</span></div>
+              <input type="number" data-key="FILTER_TAGS_MAX" min="1" max="500">
+              <div class="field-help">Maximum number of genre and tag options shown in the client filter panel. Tags are ordered by scene count, most-used first. Applies to both Genres and Tags dimensions.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Multi-Select Filter Logic <span class="badge live">✓ Live</span></div>
+              <div class="radio-group" data-key="GENRE_FILTER_LOGIC" data-radio>
+                <label><input type="radio" name="filter-logic" value="AND"> <strong>AND</strong> <em>(default)</em></label>
+                <label><input type="radio" name="filter-logic" value="OR"> OR</label>
+              </div>
+              <div class="field-help">When multiple genres are selected in the filter panel: <strong>AND</strong> = scene must have all selected tags; <strong>OR</strong> = scene must have any. Standard Jellyfin behavior is OR — AND is a proxy-specific enhancement.</div>
+            </div>
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Walk Tag Hierarchy <span class="badge live">✓ Live</span></div>
+                <div class="th">When filtering by a tag, also include scenes tagged with any of its descendants in Stash.</div>
+              </div>
+              <div class="toggle" data-key="FILTER_TAGS_WALK_HIERARCHY"></div>
+            </div>
+          </div>
+          <div class="card-footer"><button class="btn primary" data-save="filter-panel">Save</button></div>
+        </div>
+
+        <!-- Genre Hierarchy Note (static info) -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Genre Hierarchy</div></div>
+          <div class="card-body">
+            <div class="field-help">
+              Genre definitions (configured in <em>Libraries → Genre Configuration</em>) are flat — only direct children of your genre parent tag are used as genres. <strong>Walk Tag Hierarchy</strong> applies at search/filter query time only: when a user selects a genre in the filter panel, scenes tagged with that genre's descendants in Stash are included in results.
+            </div>
+          </div>
+        </div>
+
+      </div>
     </section>
 
     <!-- ================ SYSTEM ================ -->
