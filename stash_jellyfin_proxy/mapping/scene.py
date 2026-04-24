@@ -14,6 +14,7 @@ import os
 from typing import Any, Dict, Optional
 
 from stash_jellyfin_proxy import runtime
+from stash_jellyfin_proxy.mapping.genre import compute_genres
 from stash_jellyfin_proxy.util.series import parse_episode
 
 
@@ -50,7 +51,14 @@ def is_group_favorite(group: Dict[str, Any]) -> bool:
     return runtime.FAVORITE_TAG in tag_names
 
 
-def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") -> Dict[str, Any]:
+_GENRE_UNSET = object()
+
+
+def format_jellyfin_item(
+    scene: Dict[str, Any],
+    parent_id: str = "root-scenes",
+    genre_allowed=_GENRE_UNSET,
+) -> Dict[str, Any]:
     """Build a Jellyfin Item dict from a Stash scene object."""
     raw_id = str(scene.get("id"))
     item_id = f"scene-{raw_id}"
@@ -160,8 +168,16 @@ def format_jellyfin_item(scene: Dict[str, Any], parent_id: str = "root-scenes") 
         item["Overview"] = "\n\n".join(overview_parts)
 
     if tags:
-        item["Tags"] = [t.get("name") for t in tags if t.get("name")]
-        item["Genres"] = item["Tags"][:5]
+        tag_names = [t.get("name") for t in tags if t.get("name")]
+        if genre_allowed is _GENRE_UNSET:
+            genres, residual = compute_genres(tag_names)
+        else:
+            genres, residual = compute_genres(tag_names, genre_allowed)
+        # Always populate both. Clients that filter by Tags vs Genres see
+        # the split; clients that only look at Tags get the residual
+        # (non-genre, non-system) list.
+        item["Genres"] = genres
+        item["Tags"] = residual
 
     if performers:
         people_list = []

@@ -145,9 +145,7 @@
           "CanDownload": true,
           "Container": "avi",
           "Etag": "6bee51fe7c8d6a32",
-          "Genres": [
-            "Christmas"
-          ],
+          "Genres": [],
           "HasSubtitles": false,
           "Id": "scene-1426",
           "ImageBlurHashes": {
@@ -538,9 +536,7 @@
           "CanDownload": true,
           "Container": "avi",
           "Etag": "46210c9afe913aa9",
-          "Genres": [
-            "Spring Break"
-          ],
+          "Genres": [],
           "HasSubtitles": false,
           "Id": "scene-1423",
           "ImageBlurHashes": {
@@ -931,9 +927,7 @@
           "CanDownload": true,
           "Container": "avi",
           "Etag": "bb9c02df363ef987",
-          "Genres": [
-            "Remaster"
-          ],
+          "Genres": [],
           "HasSubtitles": false,
           "Id": "scene-1420",
           "ImageBlurHashes": {
@@ -1066,9 +1060,7 @@
           "CanDownload": true,
           "Container": "avi",
           "Etag": "f5feaba6bc0cd5a7",
-          "Genres": [
-            "Hotel"
-          ],
+          "Genres": [],
           "HasSubtitles": false,
           "Id": "scene-1419",
           "ImageBlurHashes": {
@@ -1201,9 +1193,7 @@
           "CanDownload": true,
           "Container": "avi",
           "Etag": "81e396363c7f6805",
-          "Genres": [
-            "Spring Break"
-          ],
+          "Genres": [],
           "HasSubtitles": false,
           "Id": "scene-1418",
           "ImageBlurHashes": {
@@ -1336,9 +1326,7 @@
           "CanDownload": true,
           "Container": "avi",
           "Etag": "bb70ce1fe27901d4",
-          "Genres": [
-            "Bathroom"
-          ],
+          "Genres": [],
           "HasSubtitles": false,
           "Id": "scene-1417",
           "ImageBlurHashes": {
@@ -1600,10 +1588,7 @@
           "CanDownload": true,
           "Container": "avi",
           "Etag": "9e7cbad75293a471",
-          "Genres": [
-            "Dirty",
-            "Spring Break"
-          ],
+          "Genres": [],
           "HasSubtitles": false,
           "Id": "scene-1415",
           "ImageBlurHashes": {
@@ -1995,9 +1980,7 @@
           "CanDownload": true,
           "Container": "avi",
           "Etag": "2cfb3f7ca3ad16bd",
-          "Genres": [
-            "Spring Break"
-          ],
+          "Genres": [],
           "HasSubtitles": false,
           "Id": "scene-1412",
           "ImageBlurHashes": {

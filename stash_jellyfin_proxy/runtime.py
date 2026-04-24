@@ -130,6 +130,12 @@ PLAYER_PROFILES: List[Any] = []
 # --- Image policy (Phase 3) ---
 POSTER_CROP_ANCHOR: str = "center"
 
+# --- Genre policy (Phase 3 §7.1) ---
+# Mode: "all_tags" | "parent_tag" | "top_n"
+GENRE_MODE: str = "parent_tag"
+GENRE_PARENT_TAG: str = "GENRE"
+GENRE_TOP_N: int = 25
+
 
 def publish(**kwargs):
     """Bulk-set attributes. Used by the monolith bootstrap to copy its

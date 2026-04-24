@@ -16,9 +16,7 @@
           "CanDownload": true,
           "Container": "mp4",
           "Etag": "040f1fc37cb17d89",
-          "Genres": [
-            "!8. Movie"
-          ],
+          "Genres": [],
           "HasSubtitles": false,
           "Id": "scene-29747",
           "ImageBlurHashes": {
@@ -419,9 +417,7 @@
           "CanDownload": true,
           "Container": "mp4",
           "Etag": "4765bb571f7d0577",
-          "Genres": [
-            "!8. Movie"
-          ],
+          "Genres": [],
           "HasSubtitles": false,
           "Id": "scene-29758",
           "ImageBlurHashes": {
@@ -710,9 +706,7 @@
           "CanDownload": true,
           "Container": "mp4",
           "Etag": "7941576be2ecef2c",
-          "Genres": [
-            "!8. Movie"
-          ],
+          "Genres": [],
           "HasSubtitles": false,
           "Id": "scene-29748",
           "ImageBlurHashes": {

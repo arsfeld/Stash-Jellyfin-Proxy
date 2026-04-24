@@ -436,6 +436,12 @@ def transform_saved_filter_to_graphql(object_filter, filter_mode="SCENES"):
 
 
 async def endpoint_items(request):
+    # Refresh the genre allow-list snapshot — format_jellyfin_item reads
+    # it sync on each scene. Cached 5 min in mapping.genre so this is a
+    # dict lookup on the hot path.
+    from stash_jellyfin_proxy.mapping.genre import genre_allowed_names
+    await genre_allowed_names()
+
     user_id = request.path_params.get("user_id")
     # Handle both ParentId and parentId (Infuse uses lowercase)
     parent_id = request.query_params.get("ParentId") or request.query_params.get("parentId")
@@ -2032,6 +2038,8 @@ async def _fetch_studio_packet(studio_id: str) -> Optional[Dict[str, Any]]:
 
 
 async def endpoint_item_details(request):
+    from stash_jellyfin_proxy.mapping.genre import genre_allowed_names
+    await genre_allowed_names()
     item_id = request.path_params.get("item_id")
 
     # Full scene fields for queries (include performer image_path for People images, captions for subtitles)

@@ -242,10 +242,18 @@ async def endpoint_virtual_folders(request):
 
 # --- Home-tab rails ---
 
+async def _warm_genre_snapshot() -> None:
+    """Prefetch the genre allow-list so sync format_jellyfin_item calls
+    in this request see a current snapshot."""
+    from stash_jellyfin_proxy.mapping.genre import genre_allowed_names
+    await genre_allowed_names()
+
+
 async def endpoint_shows_nextup(request):
     """`GET /Shows/NextUp` — Swiftfin's home-page Next Up row. Stash has
     no notion of episode succession, so return random suggestions. Phase
     4 will replace this with a proper SERIES-aware algorithm."""
+    await _warm_genre_snapshot()
     limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 20)
     q = f"""query FindScenes($page: Int!, $per_page: Int!) {{
         findScenes(filter: {{page: $page, per_page: $per_page, sort: "random", direction: DESC}}) {{
@@ -340,6 +348,7 @@ async def endpoint_shows_episodes(request):
       - /Shows/series-{id}/Episodes?seasonId=season-{id}-{n}
       - /Shows/season-{id}-{n}/Episodes  (season id in the path, no query)
     Accept either."""
+    await _warm_genre_snapshot()
     path_id = request.path_params.get("series_id", "")
     series_id = ""
     studio_id = ""
@@ -395,6 +404,7 @@ async def endpoint_shows_episodes(request):
 async def endpoint_latest_items(request):
     """`GET /Users/{user_id}/Items/Latest` — Recently Added row per
     library. Respects LATEST_GROUPS (if configured, only listed names appear)."""
+    await _warm_genre_snapshot()
     parent_id = request.query_params.get("ParentId") or request.query_params.get("parentId")
     limit = int(request.query_params.get("limit") or request.query_params.get("Limit") or 16)
     logger.debug(f"Latest items request - ParentId: {parent_id}, Limit: {limit}")
@@ -560,6 +570,7 @@ async def endpoint_user_items_resume(request):
     resume position. Stash keeps resume_time set even after completion,
     so filter out ≥90%-watched scenes so the Continue Watching row
     doesn't fill with already-finished videos."""
+    await _warm_genre_snapshot()
     RESUME_COMPLETE_THRESHOLD = 0.90
     try:
         limit = int(request.query_params.get("Limit", "24"))

@@ -31,6 +31,8 @@ _SCENE_FIELDS = (
 
 async def endpoint_user_favorites(request):
     """`GET /Users/{user_id}/FavoriteItems` — scenes tagged with FAVORITE_TAG."""
+    from stash_jellyfin_proxy.mapping.genre import genre_allowed_names
+    await genre_allowed_names()
     if not runtime.FAVORITE_TAG:
         return JSONResponse({"Items": [], "TotalRecordCount": 0, "StartIndex": 0})
     try:
