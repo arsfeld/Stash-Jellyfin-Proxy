@@ -16,6 +16,7 @@ import time
 from starlette.responses import Response
 
 from stash_jellyfin_proxy import runtime
+from stash_jellyfin_proxy.mapping.image_policy import scene_poster_format
 from stash_jellyfin_proxy.stash.client import fetch_from_stash, stash_query
 from stash_jellyfin_proxy.util.ids import get_numeric_id
 from stash_jellyfin_proxy.util.images import (
@@ -173,13 +174,14 @@ async def endpoint_image(request):
     elif item_id.startswith("scene-"):
         numeric_id = item_id.replace("scene-", "")
         stash_img_url = f"{runtime.STASH_URL}/scene/{numeric_id}/screenshot"
+        needs_portrait_resize = scene_poster_format(request) == "portrait"
     else:
         numeric_id = get_numeric_id(item_id)
         stash_img_url = f"{runtime.STASH_URL}/scene/{numeric_id}/screenshot"
 
     logger.debug(f"Proxying image for {item_id} from {stash_img_url}")
 
-    cache_key = (item_id, "portrait" if needs_portrait_resize else "original")
+    cache_key = (item_id, scene_poster_format(request) if item_id.startswith("scene-") else ("portrait" if needs_portrait_resize else "original"))
     if cache_key in runtime.IMAGE_CACHE:
         cached_data, cached_type = runtime.IMAGE_CACHE[cache_key]
         logger.debug(f"Cache hit for {item_id}")

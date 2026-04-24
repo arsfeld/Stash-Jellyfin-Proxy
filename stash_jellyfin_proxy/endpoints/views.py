@@ -24,7 +24,7 @@ _SCENE_FIELDS = (
 
 # --- User views / virtual folders ---
 
-def _make_library(name: str, lib_id: str) -> dict:
+def _make_library(name: str, lib_id: str, collection_type: str = "movies") -> dict:
     return {
         "Name": name,
         "Id": lib_id,
@@ -43,7 +43,7 @@ def _make_library(name: str, lib_id: str) -> dict:
         "RemoteTrailers": [],
         "ProviderIds": {},
         "Type": "CollectionFolder",
-        "CollectionType": "movies",
+        "CollectionType": collection_type,
         "IsFolder": True,
         "PrimaryImageAspectRatio": 1.0,
         "DisplayPreferencesId": hashlib.md5(lib_id.encode()).hexdigest()[:32],
@@ -72,16 +72,16 @@ async def endpoint_user_views(request):
     """`GET /Users/{user_id}/Views` — the root library list shown as the
     sidebar/top-level entries in every client."""
     items = [
-        _make_library("Scenes", "root-scenes"),
-        _make_library("Studios", "root-studios"),
-        _make_library("Performers", "root-performers"),
-        _make_library("Groups", "root-groups"),
+        _make_library("Scenes",     "root-scenes",     "movies"),
+        _make_library("Studios",    "root-studios",    "movies"),
+        _make_library("Performers", "root-performers", ""),
+        _make_library("Groups",     "root-groups",     "movies"),
     ]
     if runtime.ENABLE_TAG_FILTERS:
-        items.append(_make_library("Tags", "root-tags"))
+        items.append(_make_library("Tags", "root-tags", ""))
     for tag_name in sorted(runtime.TAG_GROUPS, key=str.lower):
         tag_id = f"tag-{tag_name.lower().replace(' ', '-')}"
-        items.append(_make_library(tag_name, tag_id))
+        items.append(_make_library(tag_name, tag_id, "movies"))
     return JSONResponse({"Items": items, "TotalRecordCount": len(items)})
 
 
@@ -89,13 +89,13 @@ async def endpoint_virtual_folders(request):
     """`GET /Library/VirtualFolders` — same tree as /Views but in
     Jellyfin's admin-facing shape. Infuse uses this."""
     folders = [
-        {"Name": "Scenes", "Locations": [], "CollectionType": "movies", "ItemId": "root-scenes"},
-        {"Name": "Studios", "Locations": [], "CollectionType": "movies", "ItemId": "root-studios"},
-        {"Name": "Performers", "Locations": [], "CollectionType": "movies", "ItemId": "root-performers"},
-        {"Name": "Groups", "Locations": [], "CollectionType": "movies", "ItemId": "root-groups"},
+        {"Name": "Scenes",     "Locations": [], "CollectionType": "movies", "ItemId": "root-scenes"},
+        {"Name": "Studios",    "Locations": [], "CollectionType": "movies", "ItemId": "root-studios"},
+        {"Name": "Performers", "Locations": [], "CollectionType": "",       "ItemId": "root-performers"},
+        {"Name": "Groups",     "Locations": [], "CollectionType": "movies", "ItemId": "root-groups"},
     ]
     if runtime.ENABLE_TAG_FILTERS:
-        folders.append({"Name": "Tags", "Locations": [], "CollectionType": "movies", "ItemId": "root-tags"})
+        folders.append({"Name": "Tags", "Locations": [], "CollectionType": "", "ItemId": "root-tags"})
     for tag_name in sorted(runtime.TAG_GROUPS, key=str.lower):
         tag_id = f"tag-{tag_name.lower().replace(' ', '-')}"
         folders.append({"Name": tag_name, "Locations": [], "CollectionType": "movies", "ItemId": tag_id})

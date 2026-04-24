@@ -3,11 +3,13 @@
 Includes the counts/filters reporting + genres/persons/studios browse
 + the unified /Search/Hints endpoint Swiftfin uses.
 """
+import asyncio
 import logging
 
 from starlette.responses import JSONResponse
 
 from stash_jellyfin_proxy import runtime
+from stash_jellyfin_proxy.mapping.image_policy import performer_item_type
 from stash_jellyfin_proxy.stash.client import stash_query
 from stash_jellyfin_proxy.stash.query_helpers import get_stash_sort_params, scene_filter_clause_for_parent
 
@@ -45,24 +47,51 @@ async def endpoint_items_counts(request):
 
 
 async def endpoint_items_filters(request):
-    """`GET /Items/Filters` — filter-panel options pulled from Stash tags
-    and studios. Phase 3 will replace this with genre-mode-aware output."""
+    """`GET /Items/Filters` — filter-panel options for Swiftfin's filter drawer.
+
+    Returns top Stash tags as Genres (by scene count), the full year range
+    of scenes, and a hardcoded NC-17 rating. Phase 3 replaces this with
+    the configurable genre_mode logic and per-parent scoping."""
     try:
-        tags_q = """query { findTags(filter: {per_page: 200, sort: "name", direction: ASC}) { tags { name } } }"""
-        studios_q = """query { findStudios(filter: {per_page: 200, sort: "name", direction: ASC}) { studios { name } } }"""
-        tags_res = await stash_query(tags_q)
-        studios_res = await stash_query(studios_q)
-        tag_names = [t["name"] for t in tags_res.get("data", {}).get("findTags", {}).get("tags", [])]
-        studio_names = [s["name"] for s in studios_res.get("data", {}).get("findStudios", {}).get("studios", [])]
+        # Top 50 tags alphabetically → Genres (Phase 3 will sort by scene_count and split into Genres vs Tags)
+        tags_q = """query {
+            findTags(filter: {per_page: 50, sort: "name", direction: ASC}) {
+                tags { name scene_count }
+            }
+        }"""
+        # Oldest and newest scene dates → year range
+        oldest_q = """query { findScenes(filter: {per_page: 1, sort: "date", direction: ASC})  { scenes { date } } }"""
+        newest_q = """query { findScenes(filter: {per_page: 1, sort: "date", direction: DESC}) { scenes { date } } }"""
+
+        tags_res, oldest_res, newest_res = await asyncio.gather(
+            stash_query(tags_q),
+            stash_query(oldest_q),
+            stash_query(newest_q),
+        )
+
+        tags = (tags_res.get("data", {}).get("findTags") or {}).get("tags", [])
+        genre_names = [t["name"] for t in tags if t.get("scene_count", 0) > 0]
+
+        oldest_scenes = (oldest_res.get("data", {}).get("findScenes") or {}).get("scenes", [])
+        newest_scenes = (newest_res.get("data", {}).get("findScenes") or {}).get("scenes", [])
+        years = []
+        if oldest_scenes and newest_scenes:
+            try:
+                oldest_year = int((oldest_scenes[0].get("date") or "2000")[:4])
+                newest_year = int((newest_scenes[0].get("date") or "2025")[:4])
+                years = list(range(newest_year, oldest_year - 1, -1))
+            except (ValueError, IndexError):
+                pass
+
         return JSONResponse({
-            "Genres": studio_names,
-            "Tags": tag_names,
-            "OfficialRatings": [],
-            "Years": [],
+            "Genres": genre_names,
+            "Tags": [],
+            "OfficialRatings": ["NC-17"],
+            "Years": years,
         })
     except Exception as e:
         logger.error(f"Failed to fetch filters: {e}")
-        return JSONResponse({"Genres": [], "Tags": [], "OfficialRatings": [], "Years": []})
+        return JSONResponse({"Genres": [], "Tags": [], "OfficialRatings": ["NC-17"], "Years": []})
 
 
 async def endpoint_genres(request):
@@ -166,17 +195,21 @@ async def endpoint_persons(request):
             res = await stash_query(q, {"page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
 
         performers = res.get("data", {}).get("findPerformers", {}).get("performers", [])
+        item_type = performer_item_type(request)
         items = []
         for p in performers:
-            items.append({
+            item = {
                 "Name": p["name"],
                 "Id": f"performer-{p['id']}",
                 "ServerId": runtime.SERVER_ID,
-                "Type": "Person",
+                "Type": item_type,
                 "ImageTags": {"Primary": "img"},
                 "ImageBlurHashes": {"Primary": {"img": "000000"}},
                 "BackdropImageTags": [],
-            })
+            }
+            if p.get("scene_count") is not None:
+                item["ChildCount"] = p["scene_count"]
+            items.append(item)
         return JSONResponse({"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index})
     except Exception as e:
         logger.error(f"Error getting persons: {e}")
@@ -311,7 +344,7 @@ async def endpoint_search_hints(request):
                     "Name": p["name"],
                     "Id": f"performer-{p['id']}",
                     "ServerId": runtime.SERVER_ID,
-                    "Type": "Person",
+                    "Type": performer_item_type(request),
                     "MediaType": "",
                 }
                 if p.get("image_path"):
