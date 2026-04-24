@@ -844,7 +844,6 @@ async def endpoint_items(request):
 
     elif parent_id == "root-series":
         # Series library root → list of SERIES-tagged studios, typed as Series.
-        from stash_jellyfin_proxy.stash.tags import get_or_create_tag
         series_tag_id = await get_or_create_tag(runtime.SERIES_TAG) if runtime.SERIES_TAG else None
         if not series_tag_id:
             logger.debug("root-series requested but SERIES_TAG not resolvable; returning empty")
@@ -1585,29 +1584,36 @@ async def endpoint_items(request):
             # Movie type only → return Groups (BoxSets), not scenes
             folder_sort, folder_dir = get_stash_sort_params(request, context="folders")
             if filter_favorites and runtime.FAVORITE_TAG:
-                # Return only groups tagged with runtime.FAVORITE_TAG (same technique as scenes)
+                # User-favorites (toggled via /Users/.../FavoriteItems) tag SCENES
+                # with FAVORITE_TAG — not Groups. Return scenes as Type: Movie so
+                # SenPlayer's Movie+IsFavorite query populates correctly. The
+                # empty `movies = []` below is because scenes are emitted via
+                # format_jellyfin_item and appended directly; the Groups loop
+                # below it gets no input and is skipped.
                 fav_tag_id = await get_or_create_tag(runtime.FAVORITE_TAG)
                 if fav_tag_id:
-                    count_q = """query CountFavGroups($tid: [ID!]) {
-                        findMovies(movie_filter: {tags: {value: $tid, modifier: INCLUDES}}) { count }
+                    count_q = """query CountFavScenes($tid: [ID!]) {
+                        findScenes(scene_filter: {tags: {value: $tid, modifier: INCLUDES}}) { count }
                     }"""
                     count_res = await stash_query(count_q, {"tid": [fav_tag_id]})
-                    total_count = count_res.get("data", {}).get("findMovies", {}).get("count", 0)
+                    total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
                     page = (start_index // limit) + 1
-                    q = """query FindFavGroups($tid: [ID!], $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
-                        findMovies(
-                            movie_filter: {tags: {value: $tid, modifier: INCLUDES}},
-                            filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}
-                        ) {
-                            movies { id name scene_count tags { name } }
-                        }
-                    }"""
-                    res = await stash_query(q, {"tid": [fav_tag_id], "page": page, "per_page": limit, "sort": folder_sort, "direction": folder_dir})
-                    movies = res.get("data", {}).get("findMovies", {}).get("movies", [])
-                    logger.debug(f"Favorite groups query returned {len(movies)} groups (page {page}, total {total_count})")
+                    q = f"""query FindFavScenesMovie($tid: [ID!], $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{
+                        findScenes(
+                            scene_filter: {{tags: {{value: $tid, modifier: INCLUDES}}}},
+                            filter: {{page: $page, per_page: $per_page, sort: $sort, direction: $direction}}
+                        ) {{
+                            scenes {{ {scene_fields} }}
+                        }}
+                    }}"""
+                    res = await stash_query(q, {"tid": [fav_tag_id], "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
+                    scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+                    logger.debug(f"Movie+IsFavorite returned {len(scenes)} favorited scenes (page {page}, total {total_count})")
+                    for s in scenes:
+                        items.append(format_jellyfin_item(s))
                 else:
                     logger.warning(f"IsFavorite filter requested but could not resolve runtime.FAVORITE_TAG '{runtime.FAVORITE_TAG}'")
-                    movies = []
+                movies = []
             elif filter_favorites and not runtime.FAVORITE_TAG:
                 logger.debug("Movie+IsFavorite: runtime.FAVORITE_TAG not configured - returning empty")
                 movies = []
@@ -1762,7 +1768,6 @@ async def endpoint_item_details(request):
                 })
 
     if item_id == "root-series":
-        from stash_jellyfin_proxy.stash.tags import get_or_create_tag
         total_count = 0
         if runtime.SERIES_TAG:
             tag_id = await get_or_create_tag(runtime.SERIES_TAG)
