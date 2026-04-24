@@ -488,18 +488,26 @@ async def _resolve_tag_ids(tag_names):
     return ids
 
 
-async def _filter_clause(request, filter_favorites: bool):
-    """Build the extra scene_filter: {...} body (as a string) plus its
-    variables dict for genre / tag / year filter params on the request.
+async def _filter_clause(request, filter_favorites: bool = False,
+                         filter_played: bool = False,
+                         filter_unplayed: bool = False):
+    """Build scene_filter clause parts + variables for all client filter
+    params. Handles:
 
-    Returns (clause_parts, vars_dict). clause_parts is a list of
-    "key: {...}" strings; callers stitch them together inside the
-    scene_filter block. Empty list means no extra filter applies.
+      Genres / Tags       → tags filter (INCLUDES or INCLUDES_ALL per
+                            runtime.GENRE_FILTER_LOGIC; depth -1 if
+                            runtime.FILTER_TAGS_WALK_HIERARCHY)
+      Years (multi)       → single-year BETWEEN for the first parseable
+                            entry. Multi-year OR isn't trivially expressible
+                            in Stash's scene_filter so it's collapsed.
+      IsFavorite          → tags filter with runtime.FAVORITE_TAG
+      IsPlayed            → play_count > 0
+      IsUnplayed          → play_count == 0
 
-    Respects runtime.GENRE_FILTER_LOGIC (AND→INCLUDES_ALL, OR→INCLUDES)
-    and runtime.FILTER_TAGS_WALK_HIERARCHY (depth: -1 when true).
-    Years filter currently applies single-year; multi-year OR is a
-    future enhancement."""
+    Returns (clause_parts, vars_dict). Empty list means no filters apply.
+    Callers stitch parts together inside the scene_filter block. Favorites
+    and Played/Unplayed can combine with Genres/Tags/Years — the proxy
+    ANDs them via adjacent scene_filter fields."""
     genres, tags, years = _parse_filter_params(request)
     all_names = list(dict.fromkeys(genres + tags))
 
@@ -515,8 +523,6 @@ async def _filter_clause(request, filter_favorites: bool):
             vars_["_filter_tag_ids"] = tag_ids
 
     if years:
-        # Take the first parseable year; Swiftfin / Infuse send a single
-        # value here, multi-year OR is outside Stash's scene_filter scope.
         for y in years:
             try:
                 yr = int(y)
@@ -527,7 +533,36 @@ async def _filter_clause(request, filter_favorites: bool):
             except ValueError:
                 continue
 
+    if filter_favorites and runtime.FAVORITE_TAG:
+        fav_tag_id = await get_or_create_tag(runtime.FAVORITE_TAG)
+        if fav_tag_id:
+            parts.append("tags: {value: $_filter_fav_id, modifier: INCLUDES, depth: -1}")
+            vars_["_filter_fav_id"] = [fav_tag_id]
+
+    # Stash's int_criterion_input uses modifier GREATER_THAN / EQUALS
+    # with a single integer value.
+    if filter_played:
+        parts.append("play_count: {value: 0, modifier: GREATER_THAN}")
+    elif filter_unplayed:
+        parts.append("play_count: {value: 0, modifier: EQUALS}")
+
     return parts, vars_
+
+
+def _filter_var_defs(filter_vars: dict) -> tuple:
+    """Helper to build the "$_filter_tag_ids: [ID!]" piece of a query and
+    its positional args. Returns (defs_fragment, args_fragment) both as
+    strings ready to splice into an f-string query template."""
+    defs = []
+    args = []
+    if "_filter_tag_ids" in filter_vars:
+        defs.append("$_filter_tag_ids: [ID!]")
+        args.append("_filter_tag_ids")
+    if "_filter_fav_id" in filter_vars:
+        defs.append("$_filter_fav_id: [ID!]")
+        args.append("_filter_fav_id")
+    return (", " + ", ".join(defs) if defs else "",
+            ", " + ", ".join(args) if args else "")
 
 
 async def _hero_pool(scene_fields: str, tag_ids_override: list) -> list:
@@ -645,9 +680,16 @@ async def endpoint_items(request):
     # Check for searchTerm parameter (Infuse search functionality)
     search_term = request.query_params.get("searchTerm") or request.query_params.get("SearchTerm")
 
-    # Check for Filters parameter (e.g. Filters=IsFavorite used by SenPlayer/Swiftfin Favorites tab)
-    filters_param = request.query_params.get("Filters") or request.query_params.get("filters") or ""
-    filter_favorites = "isfavorite" in filters_param.lower()
+    # Check for Filters parameter. Jellyfin's `Filters=` is a comma-
+    # separated enum set: IsFavorite, IsNotFavorite, IsPlayed, IsUnplayed,
+    # IsResumable, Likes, Dislikes, etc. Swiftfin uses it for its filter
+    # drawer and Favorites/Liked/Played toggles; SenPlayer uses it for
+    # Favorites. We honor the four most common — everything else is
+    # ignored silently rather than returning an empty list.
+    filters_param = (request.query_params.get("Filters") or request.query_params.get("filters") or "").lower()
+    filter_favorites = "isfavorite" in filters_param
+    filter_played = "isplayed" in filters_param and "isunplayed" not in filters_param
+    filter_unplayed = "isunplayed" in filters_param
 
     # Check includeItemTypes - handle both repeated params (includeItemTypes=Movie&includeItemTypes=Series)
     # and comma-separated values (includeItemTypes=Movie,Series)
@@ -733,25 +775,39 @@ async def endpoint_items(request):
         elif not runtime.SEARCH_INCLUDE_SCENES:
             logger.debug("Search scenes skipped (search_include_scenes=false)")
         else:
-            # Get count of matching scenes
-            count_q = """query CountScenes($q: String!) {
-                findScenes(filter: {q: $q}) { count }
-            }"""
-            count_res = await stash_query(count_q, {"q": clean_search})
+            # Honour filter-drawer params (Years, Genres, Tags, IsFavorite,
+            # IsPlayed, IsUnplayed) on top of the text search. Stash's
+            # findScenes accepts `q` (text) and `scene_filter` (predicates)
+            # in the same call — they AND together.
+            filter_parts, filter_vars = await _filter_clause(
+                request,
+                filter_favorites=filter_favorites,
+                filter_played=filter_played,
+                filter_unplayed=filter_unplayed,
+            )
+            filter_body = ", ".join(filter_parts) if filter_parts else ""
+            scene_filter_arg = f", scene_filter: {{{filter_body}}}" if filter_body else ""
+            var_defs, _ = _filter_var_defs(filter_vars)
+
+            count_q = f"""query CountScenes($q: String!{var_defs}) {{
+                findScenes(filter: {{q: $q}}{scene_filter_arg}) {{ count }}
+            }}"""
+            count_vars = {"q": clean_search}
+            count_vars.update(filter_vars)
+            count_res = await stash_query(count_q, count_vars)
             total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
 
-            # Calculate page
             page = (start_index // limit) + 1
-
-            # Query Stash with the search term
-            q = f"""query FindScenes($q: String!, $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{
-                findScenes(filter: {{q: $q, page: $page, per_page: $per_page, sort: $sort, direction: $direction}}) {{
+            q = f"""query FindScenes($q: String!, $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!{var_defs}) {{
+                findScenes(filter: {{q: $q, page: $page, per_page: $per_page, sort: $sort, direction: $direction}}{scene_filter_arg}) {{
                     scenes {{ {scene_fields} }}
                 }}
             }}"""
-            res = await stash_query(q, {"q": clean_search, "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
+            qvars = {"q": clean_search, "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction}
+            qvars.update(filter_vars)
+            res = await stash_query(q, qvars)
             scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-            logger.debug(f"Search '{clean_search}' returned {len(scenes)} scenes (page {page}, total {total_count})")
+            logger.debug(f"Search '{clean_search}' + filters={bool(filter_body)} returned {len(scenes)} scenes (page {page}, total {total_count})")
             for s in scenes:
                 items.append(format_jellyfin_item(s))
 
@@ -1190,16 +1246,20 @@ async def endpoint_items(request):
             total_count = 0
 
     elif parent_id == "root-scenes":
-        # Filter-panel params: Genres, Tags, Years → scene_filter clause.
-        filter_parts, filter_vars = await _filter_clause(request, filter_favorites)
+        # Filter-panel params: Genres, Tags, Years, IsFavorite, IsPlayed,
+        # IsUnplayed → scene_filter clause.
+        filter_parts, filter_vars = await _filter_clause(
+            request,
+            filter_favorites=filter_favorites,
+            filter_played=filter_played,
+            filter_unplayed=filter_unplayed,
+        )
         filter_body = ""
         filter_var_defs = ""
         filter_var_args = ""
         if filter_parts:
             filter_body = ", ".join(filter_parts)
-            if "_filter_tag_ids" in filter_vars:
-                filter_var_defs = ", $_filter_tag_ids: [ID!]"
-                filter_var_args = ", _filter_tag_ids"
+            filter_var_defs, filter_var_args = _filter_var_defs(filter_vars)
 
         # Count (filtered or total)
         if filter_body:
@@ -1838,40 +1898,53 @@ async def endpoint_items(request):
                     "StartIndex": start_index,
                 })
 
-            # Movie type only → return Groups (BoxSets), not scenes
+            # Movie type only → return Groups (BoxSets), not scenes.
+            # When any scene-level filter is active (Years, Genres, Tags,
+            # IsFavorite, IsPlayed, IsUnplayed) we route through findScenes
+            # instead and return the matching scenes typed as Movie — none
+            # of those filters exist on Stash's Group/Movie object.
             folder_sort, folder_dir = get_stash_sort_params(request, context="folders")
-            if filter_favorites and runtime.FAVORITE_TAG:
-                # User-favorites (toggled via /Users/.../FavoriteItems) tag SCENES
-                # with FAVORITE_TAG — not Groups. Return scenes as Type: Movie so
-                # SenPlayer's Movie+IsFavorite query populates correctly. The
-                # empty `movies = []` below is because scenes are emitted via
-                # format_jellyfin_item and appended directly; the Groups loop
-                # below it gets no input and is skipped.
-                fav_tag_id = await get_or_create_tag(runtime.FAVORITE_TAG)
-                if fav_tag_id:
-                    count_q = """query CountFavScenes($tid: [ID!]) {
-                        findScenes(scene_filter: {tags: {value: $tid, modifier: INCLUDES}}) { count }
-                    }"""
-                    count_res = await stash_query(count_q, {"tid": [fav_tag_id]})
-                    total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
-                    page = (start_index // limit) + 1
-                    q = f"""query FindFavScenesMovie($tid: [ID!], $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{
-                        findScenes(
-                            scene_filter: {{tags: {{value: $tid, modifier: INCLUDES}}}},
-                            filter: {{page: $page, per_page: $per_page, sort: $sort, direction: $direction}}
-                        ) {{
-                            scenes {{ {scene_fields} }}
-                        }}
-                    }}"""
-                    res = await stash_query(q, {"tid": [fav_tag_id], "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
-                    scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-                    logger.debug(f"Movie+IsFavorite returned {len(scenes)} favorited scenes (page {page}, total {total_count})")
-                    for s in scenes:
-                        items.append(format_jellyfin_item(s))
-                else:
-                    logger.warning(f"IsFavorite filter requested but could not resolve runtime.FAVORITE_TAG '{runtime.FAVORITE_TAG}'")
+            filter_parts, filter_vars = await _filter_clause(
+                request,
+                filter_favorites=filter_favorites,
+                filter_played=filter_played,
+                filter_unplayed=filter_unplayed,
+            )
+            if filter_parts:
+                filter_body = ", ".join(filter_parts)
+                var_defs, _ = _filter_var_defs(filter_vars)
+                # The var-defs fragment starts with ", " when non-empty so it
+                # can be dropped directly after another operation variable.
+                # For count_q we have no base args, so strip the leading comma.
+                count_defs_inner = var_defs.lstrip(", ")
+                count_header = f"({count_defs_inner})" if count_defs_inner else ""
+                count_q = f"""query CountFilteredScenes{count_header} {{
+                    findScenes(scene_filter: {{{filter_body}}}) {{ count }}
+                }}"""
+                count_res = await stash_query(count_q, filter_vars)
+                total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
+                page = (start_index // limit) + 1
+                q = f"""query FindFilteredScenes($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!{var_defs}) {{
+                    findScenes(
+                        scene_filter: {{{filter_body}}},
+                        filter: {{page: $page, per_page: $per_page, sort: $sort, direction: $direction}}
+                    ) {{ scenes {{ {scene_fields} }} }}
+                }}"""
+                qvars = {"page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction}
+                qvars.update(filter_vars)
+                res = await stash_query(q, qvars)
+                scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+                active = [f for f in ("IsFavorite" if filter_favorites else None,
+                                      "IsPlayed" if filter_played else None,
+                                      "IsUnplayed" if filter_unplayed else None) if f]
+                logger.debug(f"Movie+filter ({', '.join(active) or 'scene-filter'}): {len(scenes)} scenes (page {page}, total {total_count})")
+                for s in scenes:
+                    items.append(format_jellyfin_item(s))
                 movies = []
             elif filter_favorites and not runtime.FAVORITE_TAG:
+                # User asked for IsFavorite but no FAVORITE_TAG is configured
+                # — can't match anything. Return empty rather than silently
+                # returning all groups.
                 logger.debug("Movie+IsFavorite: runtime.FAVORITE_TAG not configured - returning empty")
                 movies = []
                 total_count = 0
@@ -1912,48 +1985,56 @@ async def endpoint_items(request):
                 logger.debug("Video-only favorites query suppressed to avoid Movies/Videos duplication")
                 total_count = 0
             # Video type (or no type filter) → return Scenes
-            elif filter_favorites and runtime.FAVORITE_TAG:
-                fav_tag_id = await get_or_create_tag(runtime.FAVORITE_TAG)
-                if fav_tag_id:
-                    count_q = """query CountFavScenes($tid: [ID!]) {
-                        findScenes(scene_filter: {tags: {value: $tid, modifier: INCLUDES}}) { count }
-                    }"""
-                    count_res = await stash_query(count_q, {"tid": [fav_tag_id]})
+            else:
+                filter_parts, filter_vars = await _filter_clause(
+                    request,
+                    filter_favorites=filter_favorites,
+                    filter_played=filter_played,
+                    filter_unplayed=filter_unplayed,
+                )
+                if filter_favorites and not runtime.FAVORITE_TAG:
+                    # User asked for IsFavorite but no FAVORITE_TAG configured
+                    logger.debug("IsFavorite filter requested but runtime.FAVORITE_TAG not configured - returning empty")
+                    total_count = 0
+                elif filter_parts:
+                    filter_body = ", ".join(filter_parts)
+                    var_defs, _ = _filter_var_defs(filter_vars)
+                    count_defs_inner = var_defs.lstrip(", ")
+                    count_header = f"({count_defs_inner})" if count_defs_inner else ""
+                    count_q = f"""query CountFilteredScenes{count_header} {{
+                        findScenes(scene_filter: {{{filter_body}}}) {{ count }}
+                    }}"""
+                    count_res = await stash_query(count_q, filter_vars)
                     total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
                     page = (start_index // limit) + 1
-                    q = f"""query FindFavScenes($tid: [ID!], $page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{
+                    q = f"""query FindFilteredScenes($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!{var_defs}) {{
                         findScenes(
-                            scene_filter: {{tags: {{value: $tid, modifier: INCLUDES}}}},
+                            scene_filter: {{{filter_body}}},
                             filter: {{page: $page, per_page: $per_page, sort: $sort, direction: $direction}}
-                        ) {{
-                            scenes {{ {scene_fields} }}
-                        }}
+                        ) {{ scenes {{ {scene_fields} }} }}
                     }}"""
-                    res = await stash_query(q, {"tid": [fav_tag_id], "page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
+                    qvars = {"page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction}
+                    qvars.update(filter_vars)
+                    res = await stash_query(q, qvars)
                     scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-                    logger.debug(f"Favorites query returned {len(scenes)} scenes (page {page}, total {total_count})")
+                    logger.debug(f"Video+filter returned {len(scenes)} scenes (page {page}, total {total_count})")
                     for s in scenes:
                         items.append(format_jellyfin_item(s))
                 else:
-                    logger.warning(f"IsFavorite filter requested but could not resolve runtime.FAVORITE_TAG '{runtime.FAVORITE_TAG}'")
-            elif filter_favorites and not runtime.FAVORITE_TAG:
-                logger.debug("IsFavorite filter requested but runtime.FAVORITE_TAG not configured - returning empty")
-                total_count = 0
-            else:
-                count_q = "query { findScenes { count } }"
-                count_res = await stash_query(count_q)
-                total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
-                page = (start_index // limit) + 1
-                q = f"""query FindScenes($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{
-                    findScenes(filter: {{page: $page, per_page: $per_page, sort: $sort, direction: $direction}}) {{
-                        scenes {{ {scene_fields} }}
-                    }}
-                }}"""
-                res = await stash_query(q, {"page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
-                scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
-                logger.debug(f"Global query returned {len(scenes)} scenes (page {page}, total {total_count})")
-                for s in scenes:
-                    items.append(format_jellyfin_item(s))
+                    count_q = "query { findScenes { count } }"
+                    count_res = await stash_query(count_q)
+                    total_count = count_res.get("data", {}).get("findScenes", {}).get("count", 0)
+                    page = (start_index // limit) + 1
+                    q = f"""query FindScenes($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {{
+                        findScenes(filter: {{page: $page, per_page: $per_page, sort: $sort, direction: $direction}}) {{
+                            scenes {{ {scene_fields} }}
+                        }}
+                    }}"""
+                    res = await stash_query(q, {"page": page, "per_page": limit, "sort": sort_field, "direction": sort_direction})
+                    scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+                    logger.debug(f"Global query returned {len(scenes)} scenes (page {page}, total {total_count})")
+                    for s in scenes:
+                        items.append(format_jellyfin_item(s))
 
     # Log pagination info for debugging
     logger.debug(f"Items response: returning {len(items)} items, TotalRecordCount={total_count}, StartIndex={start_index}")
