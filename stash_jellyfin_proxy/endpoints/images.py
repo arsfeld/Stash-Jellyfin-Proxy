@@ -257,6 +257,34 @@ async def endpoint_image(request):
         runtime.IMAGE_CACHE[cache_key] = (img_data, ct)
         return img_data, ct
 
+    async def _parent_studio_logo(studio_numeric_id: str):
+        """Fetch the parent studio's image (network logo) when the studio
+        itself has no real image. E.g. NF Busty falls back to the Nubiles
+        Porn Network logo. Returns (bytes, content_type) or None."""
+        try:
+            res = await stash_query(
+                """query ParentStudioImage($id: ID!) {
+                    findStudio(id: $id) { parent_studio { id } }
+                }""",
+                {"id": studio_numeric_id},
+            )
+            parent = ((res.get("data") or {}).get("findStudio") or {}).get("parent_studio") or {}
+            parent_id = parent.get("id")
+            if not parent_id:
+                return None
+            parent_url = f"{runtime.STASH_URL}/studio/{parent_id}/image"
+            p_data, p_ct, _ = await fetch_from_stash(parent_url, extra_headers=image_headers, timeout=30)
+            # Reject SVG placeholders and too-small blobs — same test the
+            # caller uses for the main image.
+            if (not p_data or len(p_data) < 500
+                or not (p_ct or "").startswith("image/")
+                or p_ct == "image/svg+xml"):
+                return None
+            return p_data, p_ct
+        except Exception as e:
+            logger.debug(f"parent-studio fallback failed for studio-{studio_numeric_id}: {e}")
+            return None
+
     async def _studio_scene_fallback(studio_numeric_id: str):
         """When a studio/series/season has no valid Stash image, borrow a
         scene screenshot from that studio so Swiftfin's hero banners and tile
@@ -296,19 +324,24 @@ async def endpoint_image(request):
                 or content_type == "image/svg+xml"
             )
             if is_invalid:
-                # For studios / series / seasons with no Stash image, fall back
-                # to a random scene screenshot from that studio before the text
-                # icon. Gives Swiftfin a real hero/tile instead of a blank card.
+                # For studios / series / seasons with no Stash image, try the
+                # parent studio's logo first (e.g. NF Busty → Nubiles Porn
+                # Network), then a random scene screenshot, then the text
+                # icon. Gives Swiftfin a real logo whenever possible.
                 if item_id.startswith(("studio-", "series-", "season-")):
-                    fallback = await _studio_scene_fallback(numeric_id)
-                    if fallback is not None:
-                        data, content_type = fallback
-                        logger.debug(f"Used scene-screenshot fallback for {item_id}")
-                        # fall through to the resize / cache / return path below
+                    parent_logo = await _parent_studio_logo(numeric_id)
+                    if parent_logo is not None:
+                        data, content_type = parent_logo
+                        logger.debug(f"Used parent-studio logo fallback for {item_id}")
                     else:
-                        logger.debug(f"No scene fallback for {item_id}, generating text icon")
-                        img_data, ct = await _name_text_icon(item_id, numeric_id)
-                        return Response(content=img_data, media_type=ct, headers=_IMAGE_CACHE_HEADERS)
+                        scene_fb = await _studio_scene_fallback(numeric_id)
+                        if scene_fb is not None:
+                            data, content_type = scene_fb
+                            logger.debug(f"Used scene-screenshot fallback for {item_id}")
+                        else:
+                            logger.debug(f"No fallback for {item_id}, generating text icon")
+                            img_data, ct = await _name_text_icon(item_id, numeric_id)
+                            return Response(content=img_data, media_type=ct, headers=_IMAGE_CACHE_HEADERS)
                 else:
                     logger.debug(f"No valid image for {item_id}, generating text icon")
                     img_data, ct = await _name_text_icon(item_id, numeric_id)
