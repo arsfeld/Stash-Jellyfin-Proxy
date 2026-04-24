@@ -1647,8 +1647,15 @@ async def endpoint_items(request):
                     "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": is_group_favorite(m), "Played": False, "Key": f"group-{m['id']}"}
                 })
         elif video_requested:
+            # Jellyfin Web's Favorites tab queries separately for each type
+            # (Movie, Video, Episode, …) and renders a rail per hit. Our scenes
+            # are typed Movie, so a bare Video-only favorites query would
+            # duplicate them into a "Videos" rail next to "Movies". Skip.
+            if filter_favorites and "video" in include_types_lower and "movie" not in include_types_lower:
+                logger.debug("Video-only favorites query suppressed to avoid Movies/Videos duplication")
+                total_count = 0
             # Video type (or no type filter) → return Scenes
-            if filter_favorites and runtime.FAVORITE_TAG:
+            elif filter_favorites and runtime.FAVORITE_TAG:
                 fav_tag_id = await get_or_create_tag(runtime.FAVORITE_TAG)
                 if fav_tag_id:
                     count_q = """query CountFavScenes($tid: [ID!]) {

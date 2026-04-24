@@ -50,6 +50,9 @@ async def endpoint_image(request):
     generated PNG icons; scene/performer/studio/group ids proxy to Stash
     with fallback to a text icon or placeholder on any failure."""
     item_id = request.path_params.get("item_id")
+    # Backdrop must always be landscape (design §7.4), regardless of per-client
+    # poster_format. Skip portrait cropping for Backdrop and Thumb requests.
+    is_landscape_type = "/Backdrop" in request.url.path or "/Thumb" in request.url.path
 
     if item_id in MENU_ICONS:
         img_data, content_type = generate_menu_icon(item_id)
@@ -158,12 +161,12 @@ async def endpoint_image(request):
     if item_id.startswith("studio-"):
         numeric_id = item_id.replace("studio-", "")
         stash_img_url = f"{runtime.STASH_URL}/studio/{numeric_id}/image"
-        needs_portrait_resize = True
+        needs_portrait_resize = not is_landscape_type
     elif item_id.startswith("series-"):
         # A Series id wraps a studio id — fetch the studio's image.
         numeric_id = item_id.replace("series-", "")
         stash_img_url = f"{runtime.STASH_URL}/studio/{numeric_id}/image"
-        needs_portrait_resize = True
+        needs_portrait_resize = not is_landscape_type
     elif item_id.startswith("season-"):
         # season-<studio_id>-<season_num> — reuse the series/studio image.
         rest = item_id.replace("season-", "", 1)
@@ -172,7 +175,7 @@ async def endpoint_image(request):
         except ValueError:
             numeric_id = rest
         stash_img_url = f"{runtime.STASH_URL}/studio/{numeric_id}/image"
-        needs_portrait_resize = True
+        needs_portrait_resize = not is_landscape_type
     elif item_id.startswith("performer-") or item_id.startswith("person-"):
         if item_id.startswith("person-performer-"):
             numeric_id = item_id.replace("person-performer-", "")
@@ -188,14 +191,18 @@ async def endpoint_image(request):
     elif item_id.startswith("scene-"):
         numeric_id = item_id.replace("scene-", "")
         stash_img_url = f"{runtime.STASH_URL}/scene/{numeric_id}/screenshot"
-        needs_portrait_resize = scene_poster_format(request) == "portrait"
+        needs_portrait_resize = (not is_landscape_type) and scene_poster_format(request) == "portrait"
     else:
         numeric_id = get_numeric_id(item_id)
         stash_img_url = f"{runtime.STASH_URL}/scene/{numeric_id}/screenshot"
 
     logger.debug(f"Proxying image for {item_id} from {stash_img_url}")
 
-    cache_key = (item_id, scene_poster_format(request) if item_id.startswith("scene-") else ("portrait" if needs_portrait_resize else "original"))
+    format_key = "landscape" if is_landscape_type else (
+        scene_poster_format(request) if item_id.startswith("scene-")
+        else ("portrait" if needs_portrait_resize else "original")
+    )
+    cache_key = (item_id, format_key)
     if cache_key in runtime.IMAGE_CACHE:
         cached_data, cached_type = runtime.IMAGE_CACHE[cache_key]
         logger.debug(f"Cache hit for {item_id}")
