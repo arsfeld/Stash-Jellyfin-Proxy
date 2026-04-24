@@ -286,6 +286,39 @@
     border: 1px solid rgba(0, 164, 220, 0.3);
   }
 
+  /* Save-behavior badges — show how edits in this card apply (live vs restart)
+     Placed in the card footer just left of the Save button. Native tooltip
+     via title attribute explains each state. */
+  .save-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-right: auto;              /* pushes Save button to the right */
+    padding: 5px 11px;
+    border-radius: 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: help;
+    user-select: none;
+  }
+  .save-badge .sb-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: 0 0 8px;
+  }
+  .save-badge.live           { color: var(--live); }
+  .save-badge.live .sb-dot   { background: var(--live); box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.15); }
+  .save-badge.restart        { color: var(--warning); }
+  .save-badge.restart .sb-dot{ background: var(--warning); box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15); }
+  .save-badge.mixed          { color: var(--warning); }
+  .save-badge.mixed .sb-dot  {
+    background: linear-gradient(90deg, var(--live) 50%, var(--warning) 50%);
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.12);
+  }
+
   /* Buttons */
   .btn {
     padding: 7px 14px;

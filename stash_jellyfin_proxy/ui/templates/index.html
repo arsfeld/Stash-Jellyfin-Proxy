@@ -13,7 +13,7 @@
   <aside class="sidebar">
     <div class="brand">
       <div class="logo"><span class="hex">⬡</span> SJP</div>
-      <div class="ver" id="brand-version">v7.00</div>
+      <div class="ver" id="brand-version">v7.0.0</div>
     </div>
     <nav class="nav" id="nav">
       <div class="nav-item active" data-page="dashboard"><span class="dot"></span>Dashboard</div>
@@ -174,35 +174,35 @@
           </div>
           <div class="card-body">
             <div class="field">
-              <div class="field-label">Stash URL <span class="badge restart">⚠ Requires restart</span></div>
+              <div class="field-label">Stash URL</div>
               <input type="text" data-key="STASH_URL" placeholder="http://localhost:9999">
               <div class="field-help">Full URL including port. Use <code>host.docker.internal</code> if Stash is on the Docker host.</div>
             </div>
             <div class="field">
-              <div class="field-label">API Key <span class="badge restart">⚠ Requires restart</span></div>
+              <div class="field-label">API Key</div>
               <input type="password" data-key="STASH_API_KEY" autocomplete="off" placeholder="(unchanged)">
               <div class="field-help">From Stash → Settings → Security → API Key. Required for images to load. Leave blank to keep the current value.</div>
             </div>
             <div class="field-row">
               <div class="field">
-                <div class="field-label">GraphQL Path <span class="badge restart">⚠</span></div>
+                <div class="field-label">GraphQL Path</div>
                 <input type="text" data-key="STASH_GRAPHQL_PATH" placeholder="/graphql">
                 <div class="field-help">Advanced: override for reverse-proxy setups.</div>
               </div>
               <div class="field">
-                <div class="field-label">Request Timeout (seconds) <span class="badge restart">⚠</span></div>
+                <div class="field-label">Request Timeout (seconds)</div>
                 <input type="number" data-key="STASH_TIMEOUT" min="1" max="300">
               </div>
             </div>
             <div class="field-row">
               <div class="field">
-                <div class="field-label">Retry Attempts <span class="badge restart">⚠</span></div>
+                <div class="field-label">Retry Attempts</div>
                 <input type="number" data-key="STASH_RETRIES" min="0" max="10">
               </div>
               <div class="field">
                 <div class="toggle-row">
                   <div class="info">
-                    <div class="tl">Verify TLS Certificate <span class="badge restart">⚠</span></div>
+                    <div class="tl">Verify TLS Certificate</div>
                     <div class="th">Disable for self-signed certificates.</div>
                   </div>
                   <div class="toggle" data-key="STASH_VERIFY_TLS"></div>
@@ -216,6 +216,9 @@
             </div>
           </div>
           <div class="card-footer">
+            <span class="save-badge restart" title="Every field in this card requires a proxy restart before the new value takes effect. Save writes to the config file; restart applies it.">
+              <span class="sb-dot"></span>Restart required
+            </span>
             <button class="btn primary" data-save="stash-server">Save</button>
           </div>
         </div>
@@ -227,17 +230,20 @@
           </div>
           <div class="card-body">
             <div class="field">
-              <div class="field-label">Username <span class="badge restart">⚠ Requires restart</span></div>
+              <div class="field-label">Username</div>
               <input type="text" data-key="SJS_USER" autocomplete="off">
               <div class="field-help">The username Jellyfin clients use to connect to this proxy.</div>
             </div>
             <div class="field">
-              <div class="field-label">Password <span class="badge restart">⚠ Requires restart</span></div>
+              <div class="field-label">Password</div>
               <input type="password" data-key="SJS_PASSWORD" autocomplete="new-password" placeholder="(unchanged)">
               <div class="field-help">Leave blank to keep the current password.</div>
             </div>
           </div>
           <div class="card-footer">
+            <span class="save-badge restart" title="Username and password are only applied at startup. Save writes them to the config file; restart picks them up.">
+              <span class="sb-dot"></span>Restart required
+            </span>
             <button class="btn primary" data-save="credentials">Save</button>
           </div>
         </div>
@@ -258,31 +264,36 @@
           <div class="card-header"><div class="card-title">Tag Groups <span class="unsaved-dot hide"></span></div></div>
           <div class="card-body">
             <div class="field">
-              <div class="field-label">Tag Groups <span class="badge restart">⚠ Requires restart</span></div>
+              <div class="field-label">Tag Groups</div>
               <input type="text" data-key="TAG_GROUPS" placeholder="Tit Worship, JOI, Gooning">
               <div class="field-help">Comma-separated list of Stash tags to expose as top-level library folders. Each tag becomes a movies library.</div>
             </div>
             <div class="field">
-              <div class="field-label">Favorite Tag <span class="badge restart">⚠</span></div>
+              <div class="field-label">Favorite Tag</div>
               <input type="text" data-key="FAVORITE_TAG" placeholder="FAVORITE">
               <div class="field-help">Stash tag name used for scene favorites. Toggling favorite in a client adds/removes this tag.</div>
             </div>
             <div class="toggle-row">
               <div class="info">
-                <div class="tl">Show Tags Library <span class="badge restart">⚠</span></div>
+                <div class="tl">Show Tags Library</div>
                 <div class="th">Expose a Tags folder with tag-based navigation.</div>
               </div>
               <div class="toggle" data-key="ENABLE_TAG_FILTERS"></div>
             </div>
             <div class="toggle-row">
               <div class="info">
-                <div class="tl">Show All Tags Subfolder <span class="badge restart">⚠</span></div>
+                <div class="tl">Show All Tags Subfolder</div>
                 <div class="th">Include an "All Tags" subfolder (can be large). Only meaningful if Tags Library is enabled.</div>
               </div>
               <div class="toggle" data-key="ENABLE_ALL_TAGS"></div>
             </div>
           </div>
-          <div class="card-footer"><button class="btn primary" data-save="tag-groups">Save</button></div>
+          <div class="card-footer">
+            <span class="save-badge restart" title="Library structure changes need a restart so all clients see a consistent folder layout.">
+              <span class="sb-dot"></span>Restart required
+            </span>
+            <button class="btn primary" data-save="tag-groups">Save</button>
+          </div>
         </div>
 
         <!-- Genre Configuration -->
@@ -290,7 +301,7 @@
           <div class="card-header"><div class="card-title">Genre Configuration <span class="unsaved-dot hide"></span></div></div>
           <div class="card-body">
             <div class="field">
-              <div class="field-label">Genre Mode <span class="badge restart">⚠</span></div>
+              <div class="field-label">Genre Mode</div>
               <div class="radio-group" data-key="GENRE_MODE" data-radio>
                 <label><input type="radio" name="genre-mode" value="all_tags"> All Tags</label>
                 <label><input type="radio" name="genre-mode" value="parent_tag"> Parent Tag <em>(default)</em></label>
@@ -299,17 +310,22 @@
               <div id="genre-mode-note" class="field-help" style="margin-top: 6px;"></div>
             </div>
             <div class="field" data-shows-for="parent_tag">
-              <div class="field-label">Genre Parent Tag <span class="badge restart">⚠</span></div>
+              <div class="field-label">Genre Parent Tag</div>
               <input type="text" data-key="GENRE_PARENT_TAG" placeholder="GENRE">
               <div class="field-help">Create this tag in Stash and attach your genre tags as direct children. Only one level deep — no nesting.</div>
             </div>
             <div class="field" data-shows-for="top_n">
-              <div class="field-label">Top N Count <span class="badge restart">⚠</span></div>
+              <div class="field-label">Top N Count</div>
               <input type="number" data-key="GENRE_TOP_N" min="1" max="500">
               <div class="field-help">Number of tags (by scene count, descending) to use as genres. No Stash-side setup required.</div>
             </div>
           </div>
-          <div class="card-footer"><button class="btn primary" data-save="genre">Save</button></div>
+          <div class="card-footer">
+            <span class="save-badge restart" title="Genre resolution is cached at startup. Changing the mode or source tag needs a restart to rebuild the cache.">
+              <span class="sb-dot"></span>Restart required
+            </span>
+            <button class="btn primary" data-save="genre">Save</button>
+          </div>
         </div>
 
         <!-- Series Detection -->
@@ -317,12 +333,12 @@
           <div class="card-header"><div class="card-title">Series Detection <span class="unsaved-dot hide"></span></div></div>
           <div class="card-body">
             <div class="field">
-              <div class="field-label">Series Tag <span class="badge restart">⚠</span></div>
+              <div class="field-label">Series Tag</div>
               <input type="text" data-key="SERIES_TAG" placeholder="Series">
               <div class="field-help">Apply this tag to a Studio in Stash to expose it as a TV Series. Scenes get Season/Episode navigation from title parsing.</div>
             </div>
             <div class="field">
-              <div class="field-label">Episode Pattern List <span class="badge live">✓ Live</span></div>
+              <div class="field-label">Episode Pattern List</div>
               <textarea data-key="SERIES_EPISODE_PATTERNS" data-lines rows="5" style="font-family: monospace; font-size: 13px;"></textarea>
               <div class="field-help">One regex per line. Each must capture two groups: (season, episode). First match wins. No match → Season 0, auto-numbered.</div>
             </div>
@@ -335,7 +351,12 @@
               <div id="series-pattern-test-result" class="field-help" style="margin-top: 6px;"></div>
             </div>
           </div>
-          <div class="card-footer"><button class="btn primary" data-save="series">Save</button></div>
+          <div class="card-footer">
+            <span class="save-badge mixed" title="Episode patterns apply immediately on save. The Series Tag change requires a restart (studio classification is cached at startup).">
+              <span class="sb-dot"></span>Mixed
+            </span>
+            <button class="btn primary" data-save="series">Save</button>
+          </div>
         </div>
 
       </div>
@@ -393,17 +414,17 @@
         </div>
         <div class="modal-body">
           <div class="field">
-            <div class="field-label">Profile Name <span class="badge restart">⚠ Requires restart</span></div>
+            <div class="field-label">Profile Name</div>
             <input type="text" id="profile-editor-name" autocomplete="off">
             <div class="field-help">Lowercase, no spaces. Used as the config section name (<code>[player.&lt;name&gt;]</code>).</div>
           </div>
           <div class="field">
-            <div class="field-label">User-Agent Match <span class="badge restart">⚠</span></div>
+            <div class="field-label">User-Agent Match</div>
             <input type="text" id="profile-editor-ua" autocomplete="off">
             <div class="field-help">Case-insensitive substring. Regex not supported. Leave empty for the default profile only.</div>
           </div>
           <div class="field">
-            <div class="field-label">Performer Display Type <span class="badge live">✓ Live</span></div>
+            <div class="field-label">Performer Display Type</div>
             <div class="radio-group">
               <label><input type="radio" name="profile-perf" value="Person"> Person</label>
               <label><input type="radio" name="profile-perf" value="BoxSet"> BoxSet</label>
@@ -411,7 +432,7 @@
             <div class="field-help">Person: native bio + filmography (Swiftfin). BoxSet: safe fallback (Infuse, SenPlayer).</div>
           </div>
           <div class="field">
-            <div class="field-label">Poster Image Format <span class="badge live">✓ Live</span></div>
+            <div class="field-label">Poster Image Format</div>
             <div class="radio-group">
               <label><input type="radio" name="profile-poster" value="portrait"> Portrait (2:3 crop)</label>
               <label><input type="radio" name="profile-poster" value="landscape"> Landscape (original 16:9)</label>
@@ -439,7 +460,7 @@
           <div class="card-header"><div class="card-title">Poster Images <span class="unsaved-dot hide"></span></div></div>
           <div class="card-body">
             <div class="field">
-              <div class="field-label">Portrait Crop Anchor <span class="badge restart">⚠</span></div>
+              <div class="field-label">Portrait Crop Anchor</div>
               <select data-key="POSTER_CROP_ANCHOR">
                 <option value="center">Center (default)</option>
                 <option value="left">Left</option>
@@ -449,7 +470,12 @@
             </div>
             <div class="field-help" style="margin-top: 10px;"><em>Per-client poster format (portrait vs landscape) is configured in the Players tab.</em></div>
           </div>
-          <div class="card-footer"><button class="btn primary" data-save="poster">Save</button></div>
+          <div class="card-footer">
+            <span class="save-badge restart" title="The crop anchor is baked into cached artwork. Restart clears the image cache so new posters use the new anchor.">
+              <span class="sb-dot"></span>Restart required
+            </span>
+            <button class="btn primary" data-save="poster">Save</button>
+          </div>
         </div>
 
         <!-- Sort Defaults -->
@@ -460,7 +486,7 @@
               <thead>
                 <tr style="text-align: left; color: var(--text-dim);">
                   <th style="padding: 8px 0;">Library Type</th>
-                  <th style="padding: 8px 0;">Default Sort <span class="badge live">✓ Live</span></th>
+                  <th style="padding: 8px 0;">Default Sort</th>
                 </tr>
               </thead>
               <tbody id="sort-defaults-tbody">
@@ -474,7 +500,12 @@
             </table>
             <div class="field-help" style="margin-top: 10px;">This sort is applied when the client sends no sort preference.</div>
           </div>
-          <div class="card-footer"><button class="btn primary" data-save="sort-defaults">Save</button></div>
+          <div class="card-footer">
+            <span class="save-badge live" title="Applied immediately on save. The next library browse that doesn't send an explicit sort preference will use the new default.">
+              <span class="sb-dot"></span>Live
+            </span>
+            <button class="btn primary" data-save="sort-defaults">Save</button>
+          </div>
         </div>
 
         <!-- Sort Name -->
@@ -482,12 +513,17 @@
           <div class="card-header"><div class="card-title">Sort Name <span class="unsaved-dot hide"></span></div></div>
           <div class="card-body">
             <div class="field">
-              <div class="field-label">Strip Leading Articles <span class="badge live">✓ Live</span></div>
+              <div class="field-label">Strip Leading Articles</div>
               <input type="text" data-key="SORT_STRIP_ARTICLES" placeholder="The, A, An">
               <div class="field-help">Comma-separated. Titles beginning with these words sort by the remainder. Leave empty to disable.</div>
             </div>
           </div>
-          <div class="card-footer"><button class="btn primary" data-save="sort-name">Save</button></div>
+          <div class="card-footer">
+            <span class="save-badge live" title="Applied immediately on save. Next listing that sorts by SortName uses the new article list.">
+              <span class="sb-dot"></span>Live
+            </span>
+            <button class="btn primary" data-save="sort-name">Save</button>
+          </div>
         </div>
 
         <!-- Home Tab Hero Image -->
@@ -495,7 +531,7 @@
           <div class="card-header"><div class="card-title">Home Tab Hero Image <span class="unsaved-dot hide"></span></div></div>
           <div class="card-body">
             <div class="field">
-              <div class="field-label">Hero Image Source <span class="badge restart">⚠</span></div>
+              <div class="field-label">Hero Image Source</div>
               <select data-key="HERO_SOURCE">
                 <option value="recent">Recent (default)</option>
                 <option value="random">Random</option>
@@ -506,12 +542,17 @@
               <div class="field-help">Source pool for the cinematic header image on clients' Home tab.</div>
             </div>
             <div class="field" data-shows-for-hero="top_rated">
-              <div class="field-label">Minimum Rating <span class="badge restart">⚠</span></div>
+              <div class="field-label">Minimum Rating</div>
               <input type="number" data-key="HERO_MIN_RATING" min="0" max="100">
               <div class="field-help">Scenes with a Stash rating at or above this threshold are eligible. Only applies when "Top Rated" is selected.</div>
             </div>
           </div>
-          <div class="card-footer"><button class="btn primary" data-save="hero">Save</button></div>
+          <div class="card-footer">
+            <span class="save-badge restart" title="The hero image pool is built once at startup. Restart rebuilds it with the new source.">
+              <span class="sb-dot"></span>Restart required
+            </span>
+            <button class="btn primary" data-save="hero">Save</button>
+          </div>
         </div>
 
       </div>
@@ -531,34 +572,39 @@
           <div class="card-body">
             <div class="toggle-row">
               <div class="info">
-                <div class="tl">Include Scenes <span class="badge live">✓ Live</span></div>
+                <div class="tl">Include Scenes</div>
                 <div class="th">Scenes appear in search results.</div>
               </div>
               <div class="toggle" data-key="SEARCH_INCLUDE_SCENES"></div>
             </div>
             <div class="toggle-row">
               <div class="info">
-                <div class="tl">Include Performers <span class="badge live">✓ Live</span></div>
+                <div class="tl">Include Performers</div>
                 <div class="th">Performers appear in search results as People (Swiftfin) or Collections (other clients).</div>
               </div>
               <div class="toggle" data-key="SEARCH_INCLUDE_PERFORMERS"></div>
             </div>
             <div class="toggle-row">
               <div class="info">
-                <div class="tl">Include Studios <span class="badge live">✓ Live</span></div>
+                <div class="tl">Include Studios</div>
                 <div class="th">Studios appear in search results as Collections.</div>
               </div>
               <div class="toggle" data-key="SEARCH_INCLUDE_STUDIOS"></div>
             </div>
             <div class="toggle-row">
               <div class="info">
-                <div class="tl">Include Groups <span class="badge live">✓ Live</span></div>
+                <div class="tl">Include Groups</div>
                 <div class="th">Groups appear in search results as Collections.</div>
               </div>
               <div class="toggle" data-key="SEARCH_INCLUDE_GROUPS"></div>
             </div>
           </div>
-          <div class="card-footer"><button class="btn primary" data-save="search-scope">Save</button></div>
+          <div class="card-footer">
+            <span class="save-badge live" title="Applied immediately on save. Next client search uses the updated scope.">
+              <span class="sb-dot"></span>Live
+            </span>
+            <button class="btn primary" data-save="search-scope">Save</button>
+          </div>
         </div>
 
         <!-- Filter Panel -->
@@ -566,12 +612,12 @@
           <div class="card-header"><div class="card-title">Filter Panel <span class="unsaved-dot hide"></span></div></div>
           <div class="card-body">
             <div class="field">
-              <div class="field-label">Maximum Tags in Filter <span class="badge live">✓ Live</span></div>
+              <div class="field-label">Maximum Tags in Filter</div>
               <input type="number" data-key="FILTER_TAGS_MAX" min="1" max="500">
               <div class="field-help">Maximum number of genre and tag options shown in the client filter panel. Tags are ordered by scene count, most-used first. Applies to both Genres and Tags dimensions.</div>
             </div>
             <div class="field">
-              <div class="field-label">Multi-Select Filter Logic <span class="badge live">✓ Live</span></div>
+              <div class="field-label">Multi-Select Filter Logic</div>
               <div class="radio-group" data-key="GENRE_FILTER_LOGIC" data-radio>
                 <label><input type="radio" name="filter-logic" value="AND"> <strong>AND</strong> <em>(default)</em></label>
                 <label><input type="radio" name="filter-logic" value="OR"> OR</label>
@@ -580,13 +626,18 @@
             </div>
             <div class="toggle-row">
               <div class="info">
-                <div class="tl">Walk Tag Hierarchy <span class="badge live">✓ Live</span></div>
+                <div class="tl">Walk Tag Hierarchy</div>
                 <div class="th">When filtering by a tag, also include scenes tagged with any of its descendants in Stash.</div>
               </div>
               <div class="toggle" data-key="FILTER_TAGS_WALK_HIERARCHY"></div>
             </div>
           </div>
-          <div class="card-footer"><button class="btn primary" data-save="filter-panel">Save</button></div>
+          <div class="card-footer">
+            <span class="save-badge live" title="Applied immediately on save. The filter panel cache is cleared so the next /Items/Filters response uses the new settings.">
+              <span class="sb-dot"></span>Live
+            </span>
+            <button class="btn primary" data-save="filter-panel">Save</button>
+          </div>
         </div>
 
         <!-- Genre Hierarchy Note (static info) -->
@@ -617,7 +668,7 @@
           </div>
           <div class="card-body">
             <div class="field">
-              <div class="field-label">Server Name <span class="badge restart">⚠ Requires restart</span></div>
+              <div class="field-label">Server Name</div>
               <input type="text" data-key="SERVER_NAME">
               <div class="field-help">Display name shown in client server lists.</div>
             </div>
@@ -628,6 +679,9 @@
             </div>
           </div>
           <div class="card-footer">
+            <span class="save-badge restart" title="Server Name is included in the handshake response every client caches on first connection. Restart makes all clients re-read it.">
+              <span class="sb-dot"></span>Restart required
+            </span>
             <button class="btn primary" data-save="identity">Save</button>
           </div>
         </div>
@@ -640,26 +694,29 @@
           <div class="card-body">
             <div class="field-row">
               <div class="field">
-                <div class="field-label">Default Page Size <span class="badge restart">⚠</span></div>
+                <div class="field-label">Default Page Size</div>
                 <input type="number" data-key="DEFAULT_PAGE_SIZE" min="1" max="500">
               </div>
               <div class="field">
-                <div class="field-label">Max Page Size <span class="badge restart">⚠</span></div>
+                <div class="field-label">Max Page Size</div>
                 <input type="number" data-key="MAX_PAGE_SIZE" min="1" max="1000">
               </div>
             </div>
             <div class="field-row">
               <div class="field">
-                <div class="field-label">Stash Timeout (seconds) <span class="badge live">✓ Live</span></div>
+                <div class="field-label">Stash Timeout (seconds)</div>
                 <input type="number" data-key="STASH_TIMEOUT" min="1" max="300">
               </div>
               <div class="field">
-                <div class="field-label">Stash Retries <span class="badge live">✓ Live</span></div>
+                <div class="field-label">Stash Retries</div>
                 <input type="number" data-key="STASH_RETRIES" min="0" max="10">
               </div>
             </div>
           </div>
           <div class="card-footer">
+            <span class="save-badge restart" title="Page-size limits and the Stash HTTP client are built once at startup. Restart rebuilds them with the new values.">
+              <span class="sb-dot"></span>Restart required
+            </span>
             <button class="btn primary" data-save="performance">Save</button>
           </div>
         </div>
@@ -672,7 +729,7 @@
           <div class="card-body">
             <div class="field-row">
               <div class="field">
-                <div class="field-label">Log Level <span class="badge live">✓ Live</span></div>
+                <div class="field-label">Log Level</div>
                 <select data-key="LOG_LEVEL">
                   <option value="DEBUG">DEBUG</option>
                   <option value="INFO">INFO</option>
@@ -681,22 +738,25 @@
                 </select>
               </div>
               <div class="field">
-                <div class="field-label">Log Directory <span class="badge restart">⚠</span></div>
+                <div class="field-label">Log Directory</div>
                 <input type="text" data-key="LOG_DIR">
               </div>
             </div>
             <div class="field-row">
               <div class="field">
-                <div class="field-label">Max Log File Size (MB) <span class="badge restart">⚠</span></div>
+                <div class="field-label">Max Log File Size (MB)</div>
                 <input type="number" data-key="LOG_MAX_SIZE_MB" min="1" max="1000">
               </div>
               <div class="field">
-                <div class="field-label">Log Backup Count <span class="badge restart">⚠</span></div>
+                <div class="field-label">Log Backup Count</div>
                 <input type="number" data-key="LOG_BACKUP_COUNT" min="0" max="50">
               </div>
             </div>
           </div>
           <div class="card-footer">
+            <span class="save-badge mixed" title="Log Level applies immediately on save. Log Directory, file size, and backup count require a restart (the rotating file handler is bound once at startup).">
+              <span class="sb-dot"></span>Mixed
+            </span>
             <button class="btn primary" data-save="logging">Save</button>
           </div>
         </div>
@@ -709,29 +769,32 @@
           <div class="card-body">
             <div class="toggle-row">
               <div class="info">
-                <div class="tl">Require Auth for Config UI <span class="badge live">✓ Live</span></div>
+                <div class="tl">Require Auth for Config UI</div>
                 <div class="th">Prompt for the client password before allowing config changes.</div>
               </div>
               <div class="toggle" data-key="REQUIRE_AUTH_FOR_CONFIG"></div>
             </div>
             <div class="field-row">
               <div class="field">
-                <div class="field-label">IP Ban Threshold <span class="badge live">✓ Live</span></div>
+                <div class="field-label">IP Ban Threshold</div>
                 <input type="number" data-key="BAN_THRESHOLD" min="1" max="100">
                 <div class="field-help">Failed auth attempts before an IP is banned.</div>
               </div>
               <div class="field">
-                <div class="field-label">Ban Window (minutes) <span class="badge live">✓ Live</span></div>
+                <div class="field-label">Ban Window (minutes)</div>
                 <input type="number" data-key="BAN_WINDOW_MINUTES" min="1" max="1440">
               </div>
             </div>
             <div class="field">
-              <div class="field-label">Banned IPs <span class="badge live">✓ Live</span></div>
+              <div class="field-label">Banned IPs</div>
               <input type="text" data-key="BANNED_IPS" placeholder="comma-separated; leave empty to clear">
               <div class="field-help">Comma-separated list. Edit to unban an IP. Saved immediately.</div>
             </div>
           </div>
           <div class="card-footer">
+            <span class="save-badge live" title="Applied immediately on save. Ban threshold, window, and the current banned-IP list are read fresh on every auth attempt.">
+              <span class="sb-dot"></span>Live
+            </span>
             <button class="btn primary" data-save="security">Save</button>
           </div>
         </div>
