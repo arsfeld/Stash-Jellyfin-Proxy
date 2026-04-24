@@ -73,7 +73,9 @@ from stash_jellyfin_proxy.endpoints.users import (
 from stash_jellyfin_proxy.endpoints.views import (
     endpoint_user_views,
     endpoint_virtual_folders,
+    endpoint_shows_episodes,
     endpoint_shows_nextup,
+    endpoint_shows_seasons,
     endpoint_latest_items,
     endpoint_user_items_resume,
     endpoint_sessions,
@@ -129,6 +131,8 @@ routes = [
     Route("/Library/VirtualFolders", endpoint_virtual_folders),
     Route("/DisplayPreferences/{prefs_id}", endpoint_display_preferences, methods=["GET", "POST"]),
     Route("/Shows/NextUp", endpoint_shows_nextup),
+    Route("/Shows/{series_id}/Seasons", endpoint_shows_seasons),
+    Route("/Shows/{series_id}/Episodes", endpoint_shows_episodes),
     Route("/Users/{user_id}/Items", endpoint_items),
     Route("/Users/{user_id}/Items/{item_id}", endpoint_item_details),
     Route("/Items", endpoint_items),

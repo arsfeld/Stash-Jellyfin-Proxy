@@ -890,59 +890,72 @@ async def endpoint_items(request):
                 })
 
     elif parent_id and parent_id.startswith("series-"):
-        # Series detail → list of Seasons. Seasons are synthetic: derived
-        # from the distinct ParentIndexNumber values we'd emit for this
-        # studio's scenes. One GraphQL query for all scenes, reduce locally.
+        # Series detail. If the caller asks specifically for Episode types
+        # (Swiftfin does this to build the series overview), return all
+        # the series' episodes. Otherwise return the synthetic Seasons.
         studio_id = parent_id.replace("series-", "")
-        q = """query FindSeriesScenes($sid: [ID!], $one: ID!) {
-            findStudio(id: $one) { id name image_path }
-            findScenes(
-                scene_filter: {studios: {value: $sid, modifier: INCLUDES}},
-                filter: {per_page: -1, sort: "date", direction: ASC}
-            ) {
-                scenes { id title }
-            }
-        }"""
-        res = await stash_query(q, {"sid": [studio_id], "one": studio_id})
-        studio = res.get("data", {}).get("findStudio") or {}
-        series_name = studio.get("name") or f"Series {studio_id}"
-        series_image = studio.get("image_path")
-        scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+        want_episodes = "episode" in include_types_lower and "season" not in include_types_lower
 
-        from stash_jellyfin_proxy.util.series import parse_episode
-        seasons_seen = {}
-        for scene in scenes:
-            parsed = parse_episode(scene.get("title") or "")
-            season_num = parsed[0] if parsed else 0
-            seasons_seen.setdefault(season_num, 0)
-            seasons_seen[season_num] += 1
+        if want_episodes:
+            q = f"""query FindSeriesEps($sid: [ID!]) {{
+                findScenes(
+                    scene_filter: {{studios: {{value: $sid, modifier: INCLUDES}}}},
+                    filter: {{per_page: -1, sort: "date", direction: ASC}}
+                ) {{ scenes {{ {scene_fields} }} }}
+            }}"""
+            res = await stash_query(q, {"sid": [studio_id]})
+            scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+            total_count = len(scenes)
+            for scene in scenes[start_index:start_index + limit]:
+                items.append(format_jellyfin_item(scene, parent_id=parent_id))
+        else:
+            q = """query FindSeriesScenes($sid: [ID!], $one: ID!) {
+                findStudio(id: $one) { id name image_path }
+                findScenes(
+                    scene_filter: {studios: {value: $sid, modifier: INCLUDES}},
+                    filter: {per_page: -1, sort: "date", direction: ASC}
+                ) { scenes { id title } }
+            }"""
+            res = await stash_query(q, {"sid": [studio_id], "one": studio_id})
+            studio = res.get("data", {}).get("findStudio") or {}
+            series_name = studio.get("name") or f"Series {studio_id}"
+            series_image = studio.get("image_path")
+            scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
 
-        for season_num in sorted(seasons_seen.keys()):
-            season_id = f"season-{studio_id}-{season_num}"
-            season_label = f"Season {season_num}" if season_num else "Specials"
-            items.append({
-                "Name": season_label,
-                "SortName": f"{season_num:04d}",
-                "Id": season_id,
-                "ServerId": runtime.SERVER_ID,
-                "Type": "Season",
-                "IsFolder": True,
-                "ParentId": parent_id,
-                "SeriesId": parent_id,
-                "SeriesName": series_name,
-                "IndexNumber": season_num,
-                "ChildCount": seasons_seen[season_num],
-                "RecursiveItemCount": seasons_seen[season_num],
-                "ImageTags": {"Primary": "img"} if series_image else {},
-                "ImageBlurHashes": {"Primary": {"img": "000000"}} if series_image else {},
-                "BackdropImageTags": [],
-                "UserData": {
-                    "PlaybackPositionTicks": 0, "PlayCount": 0,
-                    "IsFavorite": False, "Played": False,
-                    "Key": season_id,
-                },
-            })
-        total_count = len(items)
+            from stash_jellyfin_proxy.util.series import parse_episode
+            seasons_seen = {}
+            for scene in scenes:
+                parsed = parse_episode(scene.get("title") or "")
+                season_num = parsed[0] if parsed else 0
+                seasons_seen.setdefault(season_num, 0)
+                seasons_seen[season_num] += 1
+
+            for season_num in sorted(seasons_seen.keys()):
+                season_id = f"season-{studio_id}-{season_num}"
+                season_label = f"Season {season_num}" if season_num else "Specials"
+                items.append({
+                    "Name": season_label,
+                    "SortName": f"{season_num:04d}",
+                    "Id": season_id,
+                    "ServerId": runtime.SERVER_ID,
+                    "Type": "Season",
+                    "IsFolder": True,
+                    "ParentId": parent_id,
+                    "SeriesId": parent_id,
+                    "SeriesName": series_name,
+                    "IndexNumber": season_num,
+                    "ChildCount": seasons_seen[season_num],
+                    "RecursiveItemCount": seasons_seen[season_num],
+                    "ImageTags": {"Primary": "img"} if series_image else {},
+                    "ImageBlurHashes": {"Primary": {"img": "000000"}} if series_image else {},
+                    "BackdropImageTags": [],
+                    "UserData": {
+                        "PlaybackPositionTicks": 0, "PlayCount": 0,
+                        "IsFavorite": False, "Played": False,
+                        "Key": season_id,
+                    },
+                })
+            total_count = len(items)
 
     elif parent_id and parent_id.startswith("season-"):
         # season-<studio_id>-<season_num> → all scenes from that studio whose

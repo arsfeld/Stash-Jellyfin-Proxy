@@ -2,6 +2,7 @@
 Next Up, Latest, Resume, and the Sessions scrobble receiver."""
 import hashlib
 import logging
+from typing import Dict, Optional
 
 from starlette.responses import JSONResponse
 
@@ -166,6 +167,117 @@ async def endpoint_shows_nextup(request):
     except Exception as e:
         logger.warning(f"NextUp query failed: {e}")
         return JSONResponse({"Items": [], "TotalRecordCount": 0})
+
+
+async def endpoint_shows_seasons(request):
+    """`GET /Shows/{seriesId}/Seasons` — list Seasons for a Series.
+
+    Seasons are synthetic: we group this studio's scenes by parsed
+    ParentIndexNumber (from title regex patterns). Scenes whose titles
+    don't parse land in Season 0 ("Specials")."""
+    series_id = request.path_params.get("series_id", "")
+    if not series_id.startswith("series-"):
+        return JSONResponse({"Items": [], "TotalRecordCount": 0})
+    studio_id = series_id.replace("series-", "")
+
+    q = """query FindSeriesForSeasons($one: ID!, $sid: [ID!]) {
+        findStudio(id: $one) { id name image_path }
+        findScenes(
+            scene_filter: {studios: {value: $sid, modifier: INCLUDES}},
+            filter: {per_page: -1, sort: "date", direction: ASC}
+        ) { scenes { id title } }
+    }"""
+    res = await stash_query(q, {"one": studio_id, "sid": [studio_id]})
+    studio = res.get("data", {}).get("findStudio") or {}
+    series_name = studio.get("name") or f"Series {studio_id}"
+    series_image = studio.get("image_path")
+    scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+
+    from stash_jellyfin_proxy.util.series import parse_episode
+    seasons_seen: Dict[int, int] = {}
+    for scene in scenes:
+        parsed = parse_episode(scene.get("title") or "")
+        season_num = parsed[0] if parsed else 0
+        seasons_seen[season_num] = seasons_seen.get(season_num, 0) + 1
+
+    items = []
+    for season_num in sorted(seasons_seen.keys()):
+        season_id = f"season-{studio_id}-{season_num}"
+        season_label = f"Season {season_num}" if season_num else "Specials"
+        items.append({
+            "Name": season_label,
+            "SortName": f"{season_num:04d}",
+            "Id": season_id,
+            "ServerId": runtime.SERVER_ID,
+            "Type": "Season",
+            "IsFolder": True,
+            "ParentId": series_id,
+            "SeriesId": series_id,
+            "SeriesName": series_name,
+            "IndexNumber": season_num,
+            "ChildCount": seasons_seen[season_num],
+            "RecursiveItemCount": seasons_seen[season_num],
+            "ImageTags": {"Primary": "img"} if series_image else {},
+            "ImageBlurHashes": {"Primary": {"img": "000000"}} if series_image else {},
+            "BackdropImageTags": [],
+            "UserData": {
+                "PlaybackPositionTicks": 0, "PlayCount": 0,
+                "IsFavorite": False, "Played": False,
+                "Key": season_id,
+            },
+        })
+    return JSONResponse({"Items": items, "TotalRecordCount": len(items)})
+
+
+# Only the fields format_jellyfin_item actually reads. Keep short — this
+# endpoint can fetch hundreds of scenes at once for a big series.
+_EPISODE_FIELDS = (
+    "id title code date details play_count resume_time last_played_at "
+    "files { path basename duration size video_codec audio_codec width height frame_rate bit_rate } "
+    "studio { id name tags { name } parent_studio { id name tags { name } } } "
+    "tags { name } performers { name id image_path } "
+    "captions { language_code caption_type }"
+)
+
+
+async def endpoint_shows_episodes(request):
+    """`GET /Shows/{seriesId}/Episodes` — episodes for a Series, optionally
+    filtered by seasonId. Swiftfin uses this to populate Season detail."""
+    series_id = request.path_params.get("series_id", "")
+    if not series_id.startswith("series-"):
+        return JSONResponse({"Items": [], "TotalRecordCount": 0})
+    studio_id = series_id.replace("series-", "")
+
+    season_id = request.query_params.get("seasonId") or request.query_params.get("SeasonId")
+    want_season: Optional[int] = None
+    if season_id and season_id.startswith("season-"):
+        try:
+            _studio, _snum = season_id.replace("season-", "", 1).rsplit("-", 1)
+            if _studio == studio_id:
+                want_season = int(_snum)
+        except (ValueError, IndexError):
+            pass
+
+    q = f"""query FindSeriesEpisodes($sid: [ID!]) {{
+        findScenes(
+            scene_filter: {{studios: {{value: $sid, modifier: INCLUDES}}}},
+            filter: {{per_page: -1, sort: "date", direction: ASC}}
+        ) {{ scenes {{ {_EPISODE_FIELDS} }} }}
+    }}"""
+    res = await stash_query(q, {"sid": [studio_id]})
+    scenes = res.get("data", {}).get("findScenes", {}).get("scenes", [])
+
+    from stash_jellyfin_proxy.util.series import parse_episode
+    items = []
+    for scene in scenes:
+        if want_season is not None:
+            parsed = parse_episode(scene.get("title") or "")
+            s_num = parsed[0] if parsed else 0
+            if s_num != want_season:
+                continue
+        parent_id_for_item = season_id if want_season is not None else series_id
+        items.append(format_jellyfin_item(scene, parent_id=parent_id_for_item))
+    return JSONResponse({"Items": items, "TotalRecordCount": len(items)})
 
 
 async def endpoint_latest_items(request):

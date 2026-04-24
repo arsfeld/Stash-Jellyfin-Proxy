@@ -159,6 +159,20 @@ async def endpoint_image(request):
         numeric_id = item_id.replace("studio-", "")
         stash_img_url = f"{runtime.STASH_URL}/studio/{numeric_id}/image"
         needs_portrait_resize = True
+    elif item_id.startswith("series-"):
+        # A Series id wraps a studio id — fetch the studio's image.
+        numeric_id = item_id.replace("series-", "")
+        stash_img_url = f"{runtime.STASH_URL}/studio/{numeric_id}/image"
+        needs_portrait_resize = True
+    elif item_id.startswith("season-"):
+        # season-<studio_id>-<season_num> — reuse the series/studio image.
+        rest = item_id.replace("season-", "", 1)
+        try:
+            numeric_id, _ = rest.rsplit("-", 1)
+        except ValueError:
+            numeric_id = rest
+        stash_img_url = f"{runtime.STASH_URL}/studio/{numeric_id}/image"
+        needs_portrait_resize = True
     elif item_id.startswith("performer-") or item_id.startswith("person-"):
         if item_id.startswith("person-performer-"):
             numeric_id = item_id.replace("person-performer-", "")
@@ -197,7 +211,7 @@ async def endpoint_image(request):
             if iid.startswith("performer-") or iid.startswith("person-"):
                 res = await stash_query("query($id: ID!) { findPerformer(id: $id) { name } }", {"id": nid})
                 name = (res.get("data", {}).get("findPerformer") or {}).get("name")
-            elif iid.startswith("studio-"):
+            elif iid.startswith("studio-") or iid.startswith("series-") or iid.startswith("season-"):
                 res = await stash_query("query($id: ID!) { findStudio(id: $id) { name } }", {"id": nid})
                 name = (res.get("data", {}).get("findStudio") or {}).get("name")
             elif iid.startswith("scene-"):
@@ -212,7 +226,7 @@ async def endpoint_image(request):
     try:
         data, content_type, _ = await fetch_from_stash(stash_img_url, extra_headers=image_headers, timeout=30)
 
-        if item_id.startswith(("performer-", "person-", "studio-", "scene-")):
+        if item_id.startswith(("performer-", "person-", "studio-", "scene-", "series-", "season-")):
             is_invalid = (
                 not data or len(data) < 500
                 or (content_type and not content_type.startswith("image/"))
@@ -280,7 +294,7 @@ async def endpoint_image(request):
         if item_id.startswith("group-"):
             img_data, ct = generate_placeholder_icon("group")
             return Response(content=img_data, media_type=ct, headers=_IMAGE_CACHE_HEADERS)
-        if item_id.startswith(("performer-", "person-", "studio-", "scene-")):
+        if item_id.startswith(("performer-", "person-", "studio-", "scene-", "series-", "season-")):
             img_data, ct = await _name_text_icon(item_id, numeric_id)
             return Response(content=img_data, media_type=ct, headers=_IMAGE_CACHE_HEADERS)
         from stash_jellyfin_proxy.util.images import placeholder_png
