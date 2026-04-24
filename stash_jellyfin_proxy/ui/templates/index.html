@@ -237,8 +237,84 @@
         <div class="page-title">Players</div>
         <div class="page-subtitle">Per-client rendering profiles and live User-Agent feed</div>
       </div>
-      <div class="page-content"><em class="section-note">Players — coming in Phase 5B pass 7</em></div>
+      <div class="page-content" id="players-content">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+
+          <!-- Connected Players (left) -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Connected Players</div>
+              <div style="color: var(--text-dim); font-size: 12px;">Last 7 days · auto-refresh 30s</div>
+            </div>
+            <div class="card-body" id="players-ua-list" style="max-height: 480px; overflow-y: auto;">
+              <div class="field-help">Loading…</div>
+            </div>
+          </div>
+
+          <!-- Player Profiles (right) -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">Player Profiles</div></div>
+            <div class="card-body" id="players-profile-list">
+              <div class="field-help">Loading…</div>
+            </div>
+            <div class="card-footer">
+              <button class="btn primary" id="players-add-btn">+ Add Profile</button>
+            </div>
+          </div>
+
+        </div>
+
+        <details style="margin-top: 16px; color: var(--text-dim);">
+          <summary style="cursor: pointer; padding: 6px 0;">How to use</summary>
+          <div style="padding: 8px 0; line-height: 1.5;">
+            To add a new client: connect it to the proxy, wait for it to appear in <em>Connected Players</em>, copy its User-Agent string, click <strong>+ Add Profile</strong>, paste the string into <em>User-Agent Match</em>, and configure rendering options.
+          </div>
+        </details>
+
+      </div>
     </section>
+
+    <!-- Profile Editor Modal -->
+    <div id="profile-editor-modal" class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <div id="profile-editor-title">Edit Player Profile</div>
+          <button class="icon-btn" id="profile-editor-close" aria-label="Close" style="font-size: 20px; line-height: 1;">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <div class="field-label">Profile Name <span class="badge restart">⚠ Requires restart</span></div>
+            <input type="text" id="profile-editor-name" autocomplete="off">
+            <div class="field-help">Lowercase, no spaces. Used as the config section name (<code>[player.&lt;name&gt;]</code>).</div>
+          </div>
+          <div class="field">
+            <div class="field-label">User-Agent Match <span class="badge restart">⚠</span></div>
+            <input type="text" id="profile-editor-ua" autocomplete="off">
+            <div class="field-help">Case-insensitive substring. Regex not supported. Leave empty for the default profile only.</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Performer Display Type <span class="badge live">✓ Live</span></div>
+            <div class="radio-group">
+              <label><input type="radio" name="profile-perf" value="Person"> Person</label>
+              <label><input type="radio" name="profile-perf" value="BoxSet"> BoxSet</label>
+            </div>
+            <div class="field-help">Person: native bio + filmography (Swiftfin). BoxSet: safe fallback (Infuse, SenPlayer).</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Poster Image Format <span class="badge live">✓ Live</span></div>
+            <div class="radio-group">
+              <label><input type="radio" name="profile-poster" value="portrait"> Portrait (2:3 crop)</label>
+              <label><input type="radio" name="profile-poster" value="landscape"> Landscape (original 16:9)</label>
+              <label><input type="radio" name="profile-poster" value="original"> Original (no processing)</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="profile-editor-cancel">Cancel</button>
+          <button class="btn primary" id="profile-editor-save">Save</button>
+        </div>
+      </div>
+    </div>
 
     <!-- ================ PLAYBACK ================ -->
     <section class="page" data-page="playback">

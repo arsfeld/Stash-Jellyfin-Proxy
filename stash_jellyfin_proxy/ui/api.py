@@ -236,6 +236,196 @@ async def ui_api_stash_test(request):
     return JSONResponse(result)
 
 
+async def ui_api_players_ua_log(request):
+    """Return the UA log snapshot for the Players tab. Adds a computed
+    last_seen_age seconds value and the resolved profile name."""
+    from stash_jellyfin_proxy.players.matcher import ua_log_snapshot, resolve_profile
+    snap = ua_log_snapshot()
+    now = time.time()
+    cutoff = now - 7 * 24 * 60 * 60   # last 7 days per design
+    out = []
+    for ua, info in snap.items():
+        last_seen = info.get("last_seen", 0) or 0
+        if last_seen < cutoff:
+            continue
+        profile = info.get("profile") or resolve_profile(ua).name
+        out.append({
+            "userAgent": ua,
+            "firstSeen": info.get("first_seen", 0),
+            "lastSeen": last_seen,
+            "ageSeconds": max(0, int(now - last_seen)),
+            "profile": profile,
+        })
+    out.sort(key=lambda e: -e["lastSeen"])
+    return JSONResponse({"entries": out, "now": int(now)})
+
+
+def _profile_dict(p):
+    return {
+        "name": p.name,
+        "userAgentMatch": getattr(p, "user_agent_match", ""),
+        "performerType": getattr(p, "performer_type", "BoxSet"),
+        "posterFormat": getattr(p, "poster_format", "landscape"),
+        "isDefault": p.name == "default",
+    }
+
+
+async def ui_api_players_profiles(request):
+    """List current [player.*] profiles. The list is computed at bootstrap
+    and re-derived by _reload_player_profiles() after any edit."""
+    profiles = list(getattr(runtime, "PLAYER_PROFILES", []) or [])
+    # Pin 'default' last for display parity with matching order.
+    profiles.sort(key=lambda p: (p.name == "default", p.name))
+    return JSONResponse({"profiles": [_profile_dict(p) for p in profiles]})
+
+
+def _reload_player_profiles():
+    """Rebuild runtime.PLAYER_PROFILES from runtime.config_sections. Called
+    after a profile create/update/delete writes the config file and updates
+    the in-memory sections dict."""
+    from stash_jellyfin_proxy.players.profiles import load_profiles
+    runtime.PLAYER_PROFILES = load_profiles(runtime.config_sections or {})
+
+
+def _rewrite_player_sections(updated_sections):
+    """Rewrite the [player.*] portion of runtime.CONFIG_FILE with the
+    supplied dict of section_name → body(dict). Non-player lines are
+    preserved in place; the player block is replaced wholesale at the
+    first [player.*] line found (or appended if none exist)."""
+    path = runtime.CONFIG_FILE
+    if not path or not os.path.isfile(path):
+        raise RuntimeError("CONFIG_FILE is not set or does not exist")
+    with open(path, "r") as f:
+        lines = f.readlines()
+
+    out = []
+    in_player = False
+    first_player_idx = None
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith("[player."):
+            if first_player_idx is None:
+                first_player_idx = len(out)
+            in_player = True
+            continue  # drop the header; we'll rewrite all player blocks at first_player_idx
+        if in_player:
+            if stripped.startswith("[") and stripped.endswith("]"):
+                # Entering a non-player section — stop skipping.
+                in_player = False
+                out.append(line)
+                continue
+            if stripped == "" or stripped.startswith("#"):
+                continue   # drop blanks/comments inside player blocks
+            if "=" in stripped:
+                continue   # drop key=value inside player blocks
+            in_player = False
+            out.append(line)
+        else:
+            out.append(line)
+
+    # Compose the new player block.
+    block = []
+    if first_player_idx is None:
+        block.append("\n# ==== Player profiles ====\n")
+    # Ensure stable ordering: non-default profiles alphabetically, then default last.
+    names = sorted([n for n in updated_sections.keys() if n != "player.default"])
+    if "player.default" in updated_sections:
+        names.append("player.default")
+    for section in names:
+        block.append(f"[{section}]\n")
+        body = updated_sections[section]
+        for key in ("user_agent_match", "performer_type", "poster_format"):
+            if key in body and body[key] != "":
+                block.append(f"{key} = {body[key]}\n")
+        block.append("\n")
+
+    if first_player_idx is None:
+        out.extend(block)
+    else:
+        out[first_player_idx:first_player_idx] = block
+
+    with open(path, "w") as f:
+        f.writelines(out)
+
+    # Mirror into the in-memory sections dict and reload profiles.
+    # Drop every current [player.*] section, then apply the new ones.
+    sections = runtime.config_sections or {}
+    for k in list(sections.keys()):
+        if k.startswith("player."):
+            del sections[k]
+    for k, v in updated_sections.items():
+        sections[k] = dict(v)
+    runtime.config_sections = sections
+    _reload_player_profiles()
+
+
+async def ui_api_players_save_profile(request):
+    """Create or update a player profile. Body: {name, userAgentMatch,
+    performerType, posterFormat}. The profile name is validated and
+    lowercased; the [player.default] entry cannot be renamed."""
+    if request.method != "POST":
+        return JSONResponse({"error": "Method not allowed"}, status_code=405)
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"error": "invalid JSON"}, status_code=400)
+
+    name = str(body.get("name", "")).strip().lower()
+    if not name or not all(c.isalnum() or c == "_" for c in name):
+        return JSONResponse({"error": "Profile name must be lowercase alphanumerics/underscore"}, status_code=400)
+
+    ua_match = str(body.get("userAgentMatch", "")).strip()
+    perf_type = str(body.get("performerType", "BoxSet")).strip()
+    poster = str(body.get("posterFormat", "landscape")).strip()
+    if perf_type not in ("Person", "BoxSet"):
+        perf_type = "BoxSet"
+    if poster not in ("portrait", "landscape", "original"):
+        poster = "landscape"
+
+    # Compose the new section set: existing + this one (overwritten).
+    current_sections = runtime.config_sections or {}
+    updated = {k: dict(v) for k, v in current_sections.items() if k.startswith("player.")}
+    updated[f"player.{name}"] = {
+        "user_agent_match": ua_match if name != "default" else "",
+        "performer_type": perf_type,
+        "poster_format": poster,
+    }
+    try:
+        await asyncio.to_thread(_rewrite_player_sections, updated)
+    except Exception as e:
+        logger.exception("Failed to save player profile")
+        return JSONResponse({"error": str(e)}, status_code=500)
+    logger.info(f"Player profile saved via Web UI: {name}")
+    return JSONResponse({"success": True, "name": name})
+
+
+async def ui_api_players_delete_profile(request):
+    """Delete a player profile. The 'default' profile cannot be deleted."""
+    if request.method != "POST":
+        return JSONResponse({"error": "Method not allowed"}, status_code=405)
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"error": "invalid JSON"}, status_code=400)
+    name = str(body.get("name", "")).strip().lower()
+    if name == "default" or not name:
+        return JSONResponse({"error": "cannot delete default profile"}, status_code=400)
+
+    current_sections = runtime.config_sections or {}
+    updated = {k: dict(v) for k, v in current_sections.items() if k.startswith("player.")}
+    key = f"player.{name}"
+    if key not in updated:
+        return JSONResponse({"error": "profile not found"}, status_code=404)
+    del updated[key]
+    try:
+        await asyncio.to_thread(_rewrite_player_sections, updated)
+    except Exception as e:
+        logger.exception("Failed to delete player profile")
+        return JSONResponse({"error": str(e)}, status_code=500)
+    logger.info(f"Player profile deleted via Web UI: {name}")
+    return JSONResponse({"success": True})
+
+
 async def ui_api_restart(request):
     """Request a proxy restart. Sets runtime-level flag + event; the
     bootstrap loop picks those up and exits for the supervisor to relaunch."""

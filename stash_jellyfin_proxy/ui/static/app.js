@@ -275,6 +275,169 @@ async function saveSection(card) {
 }
 
 /* ============================================================ */
+/* Players tab                                                  */
+/* ============================================================ */
+const playersState = {
+  profiles: [],
+  uaRefresh: null,
+  editingName: null,    // profile name currently open in the editor (null → create)
+};
+
+function relativeTime(ageSec) {
+  if (ageSec < 60) return `${ageSec}s ago`;
+  if (ageSec < 3600) return `${Math.floor(ageSec / 60)}m ago`;
+  if (ageSec < 86400) return `${Math.floor(ageSec / 3600)}h ago`;
+  return `${Math.floor(ageSec / 86400)}d ago`;
+}
+
+function profileBadgeClass(name) {
+  return /^(swiftfin|infuse|senplayer|default)$/.test(name) ? name : "default";
+}
+
+async function renderUaList() {
+  const list = qs("#players-ua-list");
+  try {
+    const data = await apiGet("/api/players/ua-log");
+    if (!data.entries.length) {
+      list.innerHTML = `<div class="field-help">No clients have connected yet.</div>`;
+      return;
+    }
+    list.innerHTML = data.entries.map((e) => `
+      <div class="profile-row" style="flex-direction: column; align-items: stretch; gap: 6px;">
+        <div class="profile-name" style="word-break: break-all;">${escapeHtml(e.userAgent)}</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; color: var(--text-dim); font-size: 12px;">
+          <span>Last seen: ${relativeTime(e.ageSeconds)}</span>
+          <span>Profile: <span class="profile-badge ${profileBadgeClass(e.profile)}">${escapeHtml(e.profile)}</span></span>
+          <button class="icon-btn" data-copy="${encodeURIComponent(e.userAgent)}" title="Copy User-Agent">⧉</button>
+        </div>
+      </div>
+    `).join("");
+    qsa("[data-copy]", list).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        navigator.clipboard.writeText(decodeURIComponent(btn.dataset.copy));
+        toast("User-Agent copied to clipboard", "success");
+      });
+    });
+  } catch (e) {
+    list.innerHTML = `<div class="field-help" style="color: var(--err, #e86464);">Failed to load: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function renderProfileList() {
+  const list = qs("#players-profile-list");
+  try {
+    const data = await apiGet("/api/players/profiles");
+    playersState.profiles = data.profiles;
+    if (!data.profiles.length) {
+      list.innerHTML = `<div class="field-help">No profiles configured.</div>`;
+      return;
+    }
+    list.innerHTML = data.profiles.map((p) => `
+      <div class="profile-row">
+        <div>
+          <div class="profile-name">[${escapeHtml(p.name)}]</div>
+          <div style="color: var(--text-dim); font-size: 12px;">
+            ${p.isDefault ? "— default —" : `match: ${escapeHtml(p.userAgentMatch || "(empty)")}`}
+            · ${escapeHtml(p.performerType)} · ${escapeHtml(p.posterFormat)}
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button class="icon-btn" data-edit="${escapeHtml(p.name)}" title="Edit">✎</button>
+          ${p.isDefault ? "" : `<button class="icon-btn danger" data-delete="${escapeHtml(p.name)}" title="Delete">🗑</button>`}
+        </div>
+      </div>
+    `).join("");
+    qsa("[data-edit]", list).forEach((btn) => btn.addEventListener("click", () => openProfileEditor(btn.dataset.edit)));
+    qsa("[data-delete]", list).forEach((btn) => btn.addEventListener("click", () => confirmDeleteProfile(btn.dataset.delete)));
+  } catch (e) {
+    list.innerHTML = `<div class="field-help" style="color: var(--err, #e86464);">Failed to load: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function openProfileEditor(name) {
+  const modal = qs("#profile-editor-modal");
+  const existing = playersState.profiles.find((p) => p.name === name);
+  playersState.editingName = existing ? existing.name : null;
+
+  qs("#profile-editor-title").textContent = existing
+    ? `Edit Player Profile: ${existing.name}`
+    : "Add Player Profile";
+  const nameInput = qs("#profile-editor-name");
+  nameInput.value = existing ? existing.name : "";
+  nameInput.disabled = !!(existing && existing.isDefault);
+  qs("#profile-editor-ua").value = existing ? existing.userAgentMatch : "";
+  qs("#profile-editor-ua").disabled = !!(existing && existing.isDefault);
+
+  const perf = existing ? existing.performerType : "BoxSet";
+  qsa('input[name=profile-perf]').forEach((r) => r.checked = r.value === perf);
+
+  const poster = existing ? existing.posterFormat : "landscape";
+  qsa('input[name=profile-poster]').forEach((r) => r.checked = r.value === poster);
+
+  modal.classList.add("open");
+}
+
+function closeProfileEditor() {
+  qs("#profile-editor-modal").classList.remove("open");
+  playersState.editingName = null;
+}
+
+async function saveProfileEditor() {
+  const name = qs("#profile-editor-name").value.trim().toLowerCase();
+  const ua = qs("#profile-editor-ua").value.trim();
+  const perfRadio = qs('input[name=profile-perf]:checked');
+  const posterRadio = qs('input[name=profile-poster]:checked');
+  if (!name || !/^[a-z0-9_]+$/.test(name)) {
+    toast("Profile name must be lowercase letters/digits/underscore", "error");
+    return;
+  }
+  try {
+    await apiPost("/api/players/profile", {
+      name,
+      userAgentMatch: ua,
+      performerType: perfRadio ? perfRadio.value : "BoxSet",
+      posterFormat: posterRadio ? posterRadio.value : "landscape",
+    });
+    toast(`Profile ${name} saved.`, "success");
+    closeProfileEditor();
+    await renderProfileList();
+  } catch (e) {
+    toast(`Save failed: ${e.message}`, "error");
+  }
+}
+
+async function confirmDeleteProfile(name) {
+  const existing = playersState.profiles.find((p) => p.name === name);
+  const ua = existing ? existing.userAgentMatch : "";
+  const msg = `Delete profile [${name}]? Clients matching '${ua || "(empty)"}' will fall back to [default].`;
+  if (!confirm(msg)) return;
+  try {
+    await apiPost("/api/players/profile/delete", { name });
+    toast(`Profile ${name} deleted.`, "success");
+    await renderProfileList();
+  } catch (e) {
+    toast(`Delete failed: ${e.message}`, "error");
+  }
+}
+
+window.init_players = async function () {
+  await Promise.all([renderUaList(), renderProfileList()]);
+  qs("#players-add-btn").addEventListener("click", () => openProfileEditor(null));
+  qs("#profile-editor-close").addEventListener("click", closeProfileEditor);
+  qs("#profile-editor-cancel").addEventListener("click", closeProfileEditor);
+  qs("#profile-editor-save").addEventListener("click", saveProfileEditor);
+  qs("#profile-editor-modal").addEventListener("click", (e) => {
+    if (e.target.id === "profile-editor-modal") closeProfileEditor();   // click-outside
+  });
+};
+
+window.show_players = async function () {
+  await Promise.all([renderUaList(), renderProfileList()]);
+  if (playersState.uaRefresh) clearInterval(playersState.uaRefresh);
+  playersState.uaRefresh = setInterval(renderUaList, 30000);
+};
+
+/* ============================================================ */
 /* Search tab                                                   */
 /* ============================================================ */
 window.init_search = async function () {
