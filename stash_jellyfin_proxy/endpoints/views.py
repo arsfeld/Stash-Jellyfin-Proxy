@@ -232,9 +232,9 @@ async def endpoint_shows_seasons(request):
             "IndexNumber": season_num,
             "ChildCount": seasons_seen[season_num],
             "RecursiveItemCount": seasons_seen[season_num],
-            "ImageTags": {"Primary": "img"} if series_image else {},
-            "ImageBlurHashes": {"Primary": {"img": "000000"}} if series_image else {},
-            "BackdropImageTags": [],
+            "ImageTags": {"Primary": "img"},
+            "ImageBlurHashes": {"Primary": {"img": "000000"}, "Backdrop": {"img": "000000"}},
+            "BackdropImageTags": ["img"],
             "UserData": {
                 "PlaybackPositionTicks": 0, "PlayCount": 0,
                 "IsFavorite": False, "Played": False,

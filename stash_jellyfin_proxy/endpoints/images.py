@@ -230,6 +230,35 @@ async def endpoint_image(request):
         runtime.IMAGE_CACHE[cache_key] = (img_data, ct)
         return img_data, ct
 
+    async def _studio_scene_fallback(studio_numeric_id: str):
+        """When a studio/series/season has no valid Stash image, borrow a
+        scene screenshot from that studio so Swiftfin's hero banners and tile
+        posters aren't empty text cards. Returns (bytes, content_type) or None."""
+        try:
+            res = await stash_query(
+                """query PickStudioScene($sid: [ID!]) {
+                    findScenes(
+                        scene_filter: {studios: {value: $sid, modifier: INCLUDES}},
+                        filter: {page: 1, per_page: 1, sort: "random"}
+                    ) { scenes { id } }
+                }""",
+                {"sid": [studio_numeric_id]},
+            )
+            scenes = res.get("data", {}).get("findScenes", {}).get("scenes", []) or []
+            if not scenes:
+                return None
+            scene_id = scenes[0].get("id")
+            if not scene_id:
+                return None
+            scene_url = f"{runtime.STASH_URL}/scene/{scene_id}/screenshot"
+            s_data, s_ct, _ = await fetch_from_stash(scene_url, extra_headers=image_headers, timeout=30)
+            if not s_data or len(s_data) < 500 or not (s_ct or "").startswith("image/"):
+                return None
+            return s_data, s_ct
+        except Exception as e:
+            logger.debug(f"studio-scene fallback failed for studio-{studio_numeric_id}: {e}")
+            return None
+
     try:
         data, content_type, _ = await fetch_from_stash(stash_img_url, extra_headers=image_headers, timeout=30)
 
@@ -240,9 +269,23 @@ async def endpoint_image(request):
                 or content_type == "image/svg+xml"
             )
             if is_invalid:
-                logger.debug(f"No valid image for {item_id}, generating text icon")
-                img_data, ct = await _name_text_icon(item_id, numeric_id)
-                return Response(content=img_data, media_type=ct, headers=_IMAGE_CACHE_HEADERS)
+                # For studios / series / seasons with no Stash image, fall back
+                # to a random scene screenshot from that studio before the text
+                # icon. Gives Swiftfin a real hero/tile instead of a blank card.
+                if item_id.startswith(("studio-", "series-", "season-")):
+                    fallback = await _studio_scene_fallback(numeric_id)
+                    if fallback is not None:
+                        data, content_type = fallback
+                        logger.debug(f"Used scene-screenshot fallback for {item_id}")
+                        # fall through to the resize / cache / return path below
+                    else:
+                        logger.debug(f"No scene fallback for {item_id}, generating text icon")
+                        img_data, ct = await _name_text_icon(item_id, numeric_id)
+                        return Response(content=img_data, media_type=ct, headers=_IMAGE_CACHE_HEADERS)
+                else:
+                    logger.debug(f"No valid image for {item_id}, generating text icon")
+                    img_data, ct = await _name_text_icon(item_id, numeric_id)
+                    return Response(content=img_data, media_type=ct, headers=_IMAGE_CACHE_HEADERS)
 
         if not data or len(data) < 100:
             if item_id.startswith("group-"):

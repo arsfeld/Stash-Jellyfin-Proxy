@@ -878,9 +878,9 @@ async def endpoint_items(request):
                     "ChildCount": s.get("scene_count", 0),
                     "RecursiveItemCount": s.get("scene_count", 0),
                     "PrimaryImageAspectRatio": 0.6667,
-                    "ImageTags": {"Primary": "img"} if s.get("image_path") else {},
-                    "ImageBlurHashes": {"Primary": {"img": "000000"}} if s.get("image_path") else {},
-                    "BackdropImageTags": [],
+                    "ImageTags": {"Primary": "img"},
+                    "ImageBlurHashes": {"Primary": {"img": "000000"}, "Backdrop": {"img": "000000"}},
+                    "BackdropImageTags": ["img"],
                     "UserData": {
                         "PlaybackPositionTicks": 0, "PlayCount": 0,
                         "IsFavorite": False, "Played": False,
@@ -945,9 +945,9 @@ async def endpoint_items(request):
                     "IndexNumber": season_num,
                     "ChildCount": seasons_seen[season_num],
                     "RecursiveItemCount": seasons_seen[season_num],
-                    "ImageTags": {"Primary": "img"} if series_image else {},
-                    "ImageBlurHashes": {"Primary": {"img": "000000"}} if series_image else {},
-                    "BackdropImageTags": [],
+                    "ImageTags": {"Primary": "img"},
+                    "ImageBlurHashes": {"Primary": {"img": "000000"}, "Backdrop": {"img": "000000"}},
+                    "BackdropImageTags": ["img"],
                     "UserData": {
                         "PlaybackPositionTicks": 0, "PlayCount": 0,
                         "IsFavorite": False, "Played": False,
@@ -1819,9 +1819,9 @@ async def endpoint_item_details(request):
             "ChildCount": studio.get("scene_count", 0),
             "RecursiveItemCount": studio.get("scene_count", 0),
             "PrimaryImageAspectRatio": 0.6667,
-            "ImageTags": {"Primary": "img"} if studio.get("image_path") else {},
-            "ImageBlurHashes": {"Primary": {"img": "000000"}} if studio.get("image_path") else {},
-            "BackdropImageTags": [],
+            "ImageTags": {"Primary": "img"},
+            "ImageBlurHashes": {"Primary": {"img": "000000"}, "Backdrop": {"img": "000000"}},
+            "BackdropImageTags": ["img"],
             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": item_id},
         }
         if studio.get("details"):
@@ -1852,9 +1852,9 @@ async def endpoint_item_details(request):
             "SeriesId": f"series-{studio_id}",
             "SeriesName": studio["name"],
             "IndexNumber": season_num,
-            "ImageTags": {"Primary": "img"} if studio.get("image_path") else {},
-            "ImageBlurHashes": {"Primary": {"img": "000000"}} if studio.get("image_path") else {},
-            "BackdropImageTags": [],
+            "ImageTags": {"Primary": "img"},
+            "ImageBlurHashes": {"Primary": {"img": "000000"}, "Backdrop": {"img": "000000"}},
+            "BackdropImageTags": ["img"],
             "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": item_id},
         })
 
