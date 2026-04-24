@@ -141,7 +141,94 @@
         <div class="page-title">Libraries</div>
         <div class="page-subtitle">Tag groups, genre mapping, series detection</div>
       </div>
-      <div class="page-content"><em class="section-note">Libraries — coming in Phase 5B pass 4</em></div>
+      <div class="page-content" id="libraries-content">
+
+        <!-- Tag Groups -->
+        <div class="card" data-section="tag-groups">
+          <div class="card-header"><div class="card-title">Tag Groups <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Tag Groups <span class="badge restart">⚠ Requires restart</span></div>
+              <input type="text" data-key="TAG_GROUPS" placeholder="Tit Worship, JOI, Gooning">
+              <div class="field-help">Comma-separated list of Stash tags to expose as top-level library folders. Each tag becomes a movies library.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Favorite Tag <span class="badge restart">⚠</span></div>
+              <input type="text" data-key="FAVORITE_TAG" placeholder="FAVORITE">
+              <div class="field-help">Stash tag name used for scene favorites. Toggling favorite in a client adds/removes this tag.</div>
+            </div>
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Show Tags Library <span class="badge restart">⚠</span></div>
+                <div class="th">Expose a Tags folder with tag-based navigation.</div>
+              </div>
+              <div class="toggle" data-key="ENABLE_TAG_FILTERS"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Show All Tags Subfolder <span class="badge restart">⚠</span></div>
+                <div class="th">Include an "All Tags" subfolder (can be large). Only meaningful if Tags Library is enabled.</div>
+              </div>
+              <div class="toggle" data-key="ENABLE_ALL_TAGS"></div>
+            </div>
+          </div>
+          <div class="card-footer"><button class="btn primary" data-save="tag-groups">Save</button></div>
+        </div>
+
+        <!-- Genre Configuration -->
+        <div class="card" data-section="genre">
+          <div class="card-header"><div class="card-title">Genre Configuration <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Genre Mode <span class="badge restart">⚠</span></div>
+              <div class="radio-group" data-key="GENRE_MODE" data-radio>
+                <label><input type="radio" name="genre-mode" value="all_tags"> All Tags</label>
+                <label><input type="radio" name="genre-mode" value="parent_tag"> Parent Tag <em>(default)</em></label>
+                <label><input type="radio" name="genre-mode" value="top_n"> Top N</label>
+              </div>
+              <div id="genre-mode-note" class="field-help" style="margin-top: 6px;"></div>
+            </div>
+            <div class="field" data-shows-for="parent_tag">
+              <div class="field-label">Genre Parent Tag <span class="badge restart">⚠</span></div>
+              <input type="text" data-key="GENRE_PARENT_TAG" placeholder="GENRE">
+              <div class="field-help">Create this tag in Stash and attach your genre tags as direct children. Only one level deep — no nesting.</div>
+            </div>
+            <div class="field" data-shows-for="top_n">
+              <div class="field-label">Top N Count <span class="badge restart">⚠</span></div>
+              <input type="number" data-key="GENRE_TOP_N" min="1" max="500">
+              <div class="field-help">Number of tags (by scene count, descending) to use as genres. No Stash-side setup required.</div>
+            </div>
+          </div>
+          <div class="card-footer"><button class="btn primary" data-save="genre">Save</button></div>
+        </div>
+
+        <!-- Series Detection -->
+        <div class="card" data-section="series">
+          <div class="card-header"><div class="card-title">Series Detection <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Series Tag <span class="badge restart">⚠</span></div>
+              <input type="text" data-key="SERIES_TAG" placeholder="Series">
+              <div class="field-help">Apply this tag to a Studio in Stash to expose it as a TV Series. Scenes get Season/Episode navigation from title parsing.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Episode Pattern List <span class="badge live">✓ Live</span></div>
+              <textarea data-key="SERIES_EPISODE_PATTERNS" data-lines rows="5" style="font-family: monospace; font-size: 13px;"></textarea>
+              <div class="field-help">One regex per line. Each must capture two groups: (season, episode). First match wins. No match → Season 0, auto-numbered.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Test a Scene Title</div>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="series-pattern-test-input" placeholder="S02:E05 — Some Episode" style="flex: 1;">
+                <button class="btn" id="series-pattern-test-btn">Test</button>
+              </div>
+              <div id="series-pattern-test-result" class="field-help" style="margin-top: 6px;"></div>
+            </div>
+          </div>
+          <div class="card-footer"><button class="btn primary" data-save="series">Save</button></div>
+        </div>
+
+      </div>
     </section>
 
     <!-- ================ PLAYERS ================ -->

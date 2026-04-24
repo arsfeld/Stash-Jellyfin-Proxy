@@ -168,7 +168,13 @@ function bindFormFromConfig(root) {
   qsa("[data-key]", root).forEach((el) => {
     const key = el.dataset.key;
     const val = cfg[key];
-    if (el.classList.contains("toggle")) {
+    if (el.hasAttribute("data-radio")) {
+      /* Radio group container: [data-key] on the wrapper, type=radio
+         inputs inside. Select the input whose value matches. */
+      qsa("input[type=radio]", el).forEach((r) => {
+        r.checked = String(r.value) === (val == null ? "" : String(val));
+      });
+    } else if (el.classList.contains("toggle")) {
       setToggleValue(el, !!val);
     } else if (el.tagName === "SELECT") {
       el.value = val == null ? "" : String(val);
@@ -181,6 +187,11 @@ function bindFormFromConfig(root) {
          placeholder) means the user must retype to change it; otherwise
          readSectionValues skips the key on save. */
       el.value = "";
+    } else if (el.tagName === "TEXTAREA" && el.hasAttribute("data-lines")) {
+      /* Stored comma-separated in config; one entry per line in the UI.
+         Leading/trailing whitespace stripped per entry. */
+      const parts = Array.isArray(val) ? val : (val == null ? "" : String(val)).split(",");
+      el.value = parts.map((s) => String(s).trim()).filter(Boolean).join("\n");
     } else if (Array.isArray(val)) {
       el.value = val.join(", ");
     } else {
@@ -200,7 +211,9 @@ function bindFormFromConfig(root) {
         const dot = qs(".unsaved-dot", card);
         if (dot) dot.classList.remove("hide");
       };
-      if (el.classList.contains("toggle")) {
+      if (el.hasAttribute("data-radio")) {
+        qsa("input[type=radio]", el).forEach((r) => r.addEventListener("change", fire));
+      } else if (el.classList.contains("toggle")) {
         el.addEventListener("click", () => {
           el.classList.toggle("on");
           fire();
@@ -225,7 +238,10 @@ function readSectionValues(card) {
   qsa("[data-key]", card).forEach((el) => {
     if (el.hasAttribute("readonly") || el.hasAttribute("disabled")) return;
     const key = el.dataset.key;
-    if (el.classList.contains("toggle")) {
+    if (el.hasAttribute("data-radio")) {
+      const checked = qs("input[type=radio]:checked", el);
+      if (checked) out[key] = checked.value;
+    } else if (el.classList.contains("toggle")) {
       out[key] = el.classList.contains("on");
     } else if (el.tagName === "SELECT") {
       out[key] = el.value;
@@ -237,6 +253,9 @@ function readSectionValues(card) {
       if (el.value !== "") out[key] = el.value;
     } else if (el.type === "number") {
       out[key] = el.value === "" ? "" : Number(el.value);
+    } else if (el.tagName === "TEXTAREA" && el.hasAttribute("data-lines")) {
+      /* One entry per line; comma-join for the config file. */
+      out[key] = el.value.split("\n").map((s) => s.trim()).filter(Boolean).join(", ");
     } else {
       out[key] = el.value;
     }
@@ -254,6 +273,68 @@ async function saveSection(card) {
     toast(`Save failed: ${e.message}`, "error");
   }
 }
+
+/* ============================================================ */
+/* Libraries tab                                                */
+/* ============================================================ */
+const GENRE_MODE_NOTES = {
+  all_tags: "Every tag on a scene becomes a genre. Best for small, curated tag sets.",
+  parent_tag: "Only tags that are direct children of your GENRE parent tag become genres. Recommended for large collections.",
+  top_n: "The tags with the most scenes become genres automatically. No Stash-side setup required.",
+};
+
+function updateGenreModeVisibility() {
+  const root = pageRoot("libraries");
+  if (!root) return;
+  const checked = qs('[data-key=GENRE_MODE] input[type=radio]:checked', root);
+  const mode = checked ? checked.value : "";
+  qsa("[data-shows-for]", root).forEach((el) => {
+    el.style.display = (el.dataset.showsFor === mode) ? "" : "none";
+  });
+  const note = qs("#genre-mode-note", root);
+  if (note) note.textContent = GENRE_MODE_NOTES[mode] || "";
+}
+
+window.init_libraries = async function () {
+  try { await loadConfig(); } catch {}
+  bindFormFromConfig(pageRoot("libraries"));
+  updateGenreModeVisibility();
+
+  /* React to radio clicks so the conditional fields show/hide live. */
+  qsa('[data-key=GENRE_MODE] input[type=radio]', pageRoot("libraries")).forEach((r) => {
+    r.addEventListener("change", updateGenreModeVisibility);
+  });
+
+  /* Pattern-test widget — runs the current textarea patterns client-side. */
+  qs("#series-pattern-test-btn").addEventListener("click", () => {
+    const title = qs("#series-pattern-test-input").value;
+    const pats = qs('[data-key=SERIES_EPISODE_PATTERNS]').value
+      .split("\n").map((s) => s.trim()).filter(Boolean);
+    const result = qs("#series-pattern-test-result");
+    if (!title) { result.textContent = "Enter a title to test."; result.style.color = ""; return; }
+    for (let i = 0; i < pats.length; i++) {
+      try {
+        const re = new RegExp(pats[i], "i");
+        const m = title.match(re);
+        if (m && m.length >= 3) {
+          result.textContent = `✓ Matched pattern ${i + 1}: Season ${m[1]}, Episode ${m[2]}`;
+          result.style.color = "var(--ok, #36c563)";
+          return;
+        }
+      } catch (e) {
+        result.textContent = `✗ Pattern ${i + 1} invalid: ${e.message}`;
+        result.style.color = "var(--err, #e86464)";
+        return;
+      }
+    }
+    result.textContent = "✗ No match — would go to Season 0";
+    result.style.color = "var(--warn, #e8a864)";
+  });
+};
+
+window.show_libraries = async function () {
+  try { await loadConfig(); bindFormFromConfig(pageRoot("libraries")); updateGenreModeVisibility(); } catch {}
+};
 
 /* ============================================================ */
 /* Connection tab                                               */

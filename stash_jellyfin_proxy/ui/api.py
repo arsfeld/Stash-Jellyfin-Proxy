@@ -280,6 +280,111 @@ async def ui_api_auth_config(request):
 # --- Config read/write endpoint (extracted from monolith) ---
 import json as _json_mod  # already imported above, but explicit here for clarity
 from stash_jellyfin_proxy.config.helpers import normalize_path
+
+# Table-driven extension for new Phase 5B keys. Each tuple:
+#   (config_key, runtime_attr, kind, default, live)
+# kind:  "str" | "int" | "bool" | "list"
+# live:  True  → applied immediately from the config write
+#        False → runtime only updates on restart; the file is written now
+#
+# The existing per-key if/elif chain in the POST handler covers every
+# pre-P5B key. This table extends that with P5B pass 4-6 keys (Libraries,
+# Playback, Search) without duplicating boilerplate.
+_P5B_KEYS = [
+    # --- Libraries (pass 4) ---
+    ("GENRE_MODE",            "GENRE_MODE",            "str",  "parent_tag", False),
+    ("GENRE_PARENT_TAG",      "GENRE_PARENT_TAG",      "str",  "GENRE",      False),
+    ("GENRE_TOP_N",           "GENRE_TOP_N",           "int",  25,           False),
+    ("SERIES_TAG",            "SERIES_TAG",            "str",  "Series",     False),
+    ("SERIES_EPISODE_PATTERNS","SERIES_EPISODE_PATTERNS","str", "",           True),
+    # --- Playback (pass 5) ---
+    ("POSTER_CROP_ANCHOR",    "POSTER_CROP_ANCHOR",    "str",  "center",     False),
+    ("SCENES_DEFAULT_SORT",   "SCENES_DEFAULT_SORT",   "str",  "DateCreated",True),
+    ("STUDIOS_DEFAULT_SORT",  "STUDIOS_DEFAULT_SORT",  "str",  "SortName",   True),
+    ("PERFORMERS_DEFAULT_SORT","PERFORMERS_DEFAULT_SORT","str", "SortName",   True),
+    ("GROUPS_DEFAULT_SORT",   "GROUPS_DEFAULT_SORT",   "str",  "SortName",   True),
+    ("TAG_GROUPS_DEFAULT_SORT","TAG_GROUPS_DEFAULT_SORT","str", "PlayCount",  True),
+    ("SAVED_FILTERS_DEFAULT_SORT","SAVED_FILTERS_DEFAULT_SORT","str","PlayCount", True),
+    ("SORT_STRIP_ARTICLES",   "SORT_STRIP_ARTICLES",   "list", ["The","A","An"], True),
+    ("HERO_SOURCE",           "HERO_SOURCE",           "str",  "recent",     False),
+    ("HERO_MIN_RATING",       "HERO_MIN_RATING",       "int",  75,           False),
+    # --- Search (pass 6) ---
+    ("SEARCH_INCLUDE_SCENES",     "SEARCH_INCLUDE_SCENES",     "bool", True, True),
+    ("SEARCH_INCLUDE_PERFORMERS", "SEARCH_INCLUDE_PERFORMERS", "bool", True, True),
+    ("SEARCH_INCLUDE_STUDIOS",    "SEARCH_INCLUDE_STUDIOS",    "bool", True, True),
+    ("SEARCH_INCLUDE_GROUPS",     "SEARCH_INCLUDE_GROUPS",     "bool", True, True),
+    ("FILTER_TAGS_MAX",           "FILTER_TAGS_MAX",           "int",  50,   True),
+    ("GENRE_FILTER_LOGIC",        "GENRE_FILTER_LOGIC",        "str",  "AND", True),
+    ("FILTER_TAGS_WALK_HIERARCHY","FILTER_TAGS_WALK_HIERARCHY","bool", True, True),
+]
+
+
+def _p5b_get_value(cfg_key: str):
+    """Fetch current runtime value for a P5B key in JSON-friendly form."""
+    for k, attr, kind, default, _live in _P5B_KEYS:
+        if k == cfg_key:
+            val = getattr(runtime, attr, default)
+            if kind == "list" and not isinstance(val, list):
+                val = [s.strip() for s in str(val).split(",") if s.strip()]
+            return val
+    return None
+
+
+def _p5b_coerce(kind, raw):
+    """Coerce incoming JSON value → runtime-native type."""
+    if kind == "bool":
+        if isinstance(raw, bool):
+            return raw
+        return str(raw).strip().lower() in ("true", "yes", "1", "on")
+    if kind == "int":
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return None
+    if kind == "list":
+        if isinstance(raw, list):
+            return [str(s).strip() for s in raw if str(s).strip()]
+        return [s.strip() for s in str(raw).split(",") if s.strip()]
+    return str(raw) if raw is not None else ""
+
+
+def _p5b_stringify(kind, val):
+    """Coerce runtime value → string for config-file storage / comparison."""
+    if kind == "bool":
+        return "true" if val else "false"
+    if kind == "list":
+        return ", ".join(str(s) for s in (val or []))
+    return str(val)
+
+
+def _p5b_apply_update(cfg_key: str, raw_value):
+    """Apply a P5B key from the updates dict. Returns True if live (runtime
+    was mutated now) or False if the file was written but runtime won't
+    see it until restart."""
+    for k, attr, kind, _default, live in _P5B_KEYS:
+        if k != cfg_key:
+            continue
+        coerced = _p5b_coerce(kind, raw_value)
+        if coerced is None:
+            return False
+        if live:
+            setattr(runtime, attr, coerced)
+        return live
+    return False
+
+
+def _p5b_apply_default(cfg_key: str):
+    """Reset a P5B key to its declared default (for commented-out lines)."""
+    for k, attr, kind, default, live in _P5B_KEYS:
+        if k != cfg_key:
+            continue
+        val = list(default) if kind == "list" and isinstance(default, list) else default
+        if live:
+            setattr(runtime, attr, val)
+        return live
+    return False
+
+
 async def ui_api_config(request):
     """Get or set configuration."""
     # Declare globals at top of function (required before any reference)
@@ -321,7 +426,8 @@ async def ui_api_config(request):
                 "LOG_BACKUP_COUNT": runtime.LOG_BACKUP_COUNT,
                 "BAN_THRESHOLD": runtime.BAN_THRESHOLD,
                 "BAN_WINDOW_MINUTES": runtime.BAN_WINDOW_MINUTES,
-                "BANNED_IPS": ", ".join(sorted(runtime.BANNED_IPS)) if runtime.BANNED_IPS else ""
+                "BANNED_IPS": ", ".join(sorted(runtime.BANNED_IPS)) if runtime.BANNED_IPS else "",
+                **{k: _p5b_get_value(k) for k, *_ in _P5B_KEYS},
             },
             "env_fields": runtime.env_overrides,
             "defined_fields": sorted(list(runtime.config_defined_keys))
@@ -339,7 +445,8 @@ async def ui_api_config(request):
                 "ENABLE_FILTERS", "ENABLE_IMAGE_RESIZE", "ENABLE_TAG_FILTERS", "ENABLE_ALL_TAGS", "REQUIRE_AUTH_FOR_CONFIG", "IMAGE_CACHE_MAX_SIZE",
                 "DEFAULT_PAGE_SIZE", "MAX_PAGE_SIZE",
                 "LOG_LEVEL", "LOG_DIR", "LOG_FILE", "LOG_MAX_SIZE_MB", "LOG_BACKUP_COUNT",
-                "BAN_THRESHOLD", "BAN_WINDOW_MINUTES", "BANNED_IPS"
+                "BAN_THRESHOLD", "BAN_WINDOW_MINUTES", "BANNED_IPS",
+                *[k for k, *_ in _P5B_KEYS],
             ]
 
             # Sensitive keys - log changes but mask values
@@ -403,6 +510,8 @@ async def ui_api_config(request):
                 "BAN_THRESHOLD": str(runtime.BAN_THRESHOLD),
                 "BAN_WINDOW_MINUTES": str(runtime.BAN_WINDOW_MINUTES),
                 "BANNED_IPS": ", ".join(sorted(runtime.BANNED_IPS)) if runtime.BANNED_IPS else "",
+                **{k: _p5b_stringify(kind, getattr(runtime, attr, default))
+                   for k, attr, kind, default, _live in _P5B_KEYS},
             }
 
             # Default values for comparison
@@ -442,6 +551,7 @@ async def ui_api_config(request):
                 "BAN_THRESHOLD": "10",
                 "BAN_WINDOW_MINUTES": "15",
                 "BANNED_IPS": "",
+                **{k: _p5b_stringify(kind, default) for k, _attr, kind, default, _live in _P5B_KEYS},
             }
 
             # Prepare new values and track which keys should be commented out (reverted to default)
@@ -639,6 +749,11 @@ async def ui_api_config(request):
                 elif key in ["PROXY_BIND", "PROXY_PORT", "UI_PORT", "LOG_DIR", "LOG_FILE",
                              "STASH_URL", "STASH_API_KEY", "SJS_USER", "SJS_PASSWORD", "SERVER_ID"]:
                     needs_restart.append(key)
+                elif key in {k for k, *_ in _P5B_KEYS}:
+                    if _p5b_apply_update(key, new_val):
+                        applied_immediately.append(key)
+                    else:
+                        needs_restart.append(key)
 
             # Apply default values for commented-out keys
             for key in commented_keys:
@@ -716,6 +831,9 @@ async def ui_api_config(request):
                 elif key == "BANNED_IPS":
                     runtime.BANNED_IPS = set()
                     applied_immediately.append(key)
+                elif key in {k for k, *_ in _P5B_KEYS}:
+                    if _p5b_apply_default(key):
+                        applied_immediately.append(key)
 
             # Update _config_defined_keys to reflect new state
             for key in updates:
