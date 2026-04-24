@@ -184,8 +184,17 @@ async def _scoped_filter_data(scene_clause: str, scene_vars: dict):
 
 
 def _split_tag_counts(tag_counts: dict, allowed, excludes: set, cap: int):
-    """Return (genres, residual_tags), both sorted by count desc and capped
-    at `cap`. `allowed` is a lowercase frozenset from genre_allowed_names;
+    """Return (genres, residual_tags) for the filter-panel response.
+
+    Two-pass ordering:
+      1. SELECT — walk `tag_counts` in scene-count-desc order so when we
+         cap at `cap`, the long tail of rarely-used tags is the part
+         dropped (filter panels on large libraries stay useful).
+      2. DISPLAY — sort the survivors alphabetically (case-insensitive)
+         so the user scans a predictable list rather than a count-desc
+         rank that keeps shuffling as scenes get added.
+
+    `allowed` is a lowercase frozenset from genre_allowed_names;
     None means "every non-system tag is a genre" (all_tags mode)."""
     genres: list = []
     residual: list = []
@@ -197,7 +206,9 @@ def _split_tag_counts(tag_counts: dict, allowed, excludes: set, cap: int):
             genres.append(name)
         else:
             residual.append(name)
-    return genres[:cap], residual[:cap]
+    genres = sorted(genres[:cap], key=str.lower)
+    residual = sorted(residual[:cap], key=str.lower)
+    return genres, residual
 
 
 # Lazy import so genre module's stash-client dependency isn't pulled in at
