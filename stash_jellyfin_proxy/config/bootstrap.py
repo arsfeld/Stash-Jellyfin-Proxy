@@ -131,7 +131,7 @@ def run_bootstrap(config_file: str, local_config_file: str) -> None:
             TAG_GROUPS = [t.strip() for t in tag_groups_str.split(",") if t.strip()]
         FAVORITE_TAG = cfg.get("FAVORITE_TAG", FAVORITE_TAG).strip()
         latest_groups_str = cfg.get("LATEST_GROUPS", "")
-        if latest_groups_str:
+        if latest_groups_str and latest_groups_str.lower() != "none":
             LATEST_GROUPS = [t.strip() for t in latest_groups_str.split(",") if t.strip()]
         if "BANNER_MODE" in cfg:
             mode = cfg.get("BANNER_MODE", BANNER_MODE).strip().lower()

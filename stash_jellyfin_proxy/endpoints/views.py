@@ -74,11 +74,11 @@ async def endpoint_user_views(request):
     items = [
         _make_library("Scenes",     "root-scenes",     "movies"),
         _make_library("Studios",    "root-studios",    "movies"),
-        _make_library("Performers", "root-performers", ""),
+        _make_library("Performers", "root-performers", "movies"),
         _make_library("Groups",     "root-groups",     "movies"),
     ]
     if runtime.ENABLE_TAG_FILTERS:
-        items.append(_make_library("Tags", "root-tags", ""))
+        items.append(_make_library("Tags", "root-tags", "movies"))
     for tag_name in sorted(runtime.TAG_GROUPS, key=str.lower):
         tag_id = f"tag-{tag_name.lower().replace(' ', '-')}"
         items.append(_make_library(tag_name, tag_id, "movies"))
@@ -91,11 +91,11 @@ async def endpoint_virtual_folders(request):
     folders = [
         {"Name": "Scenes",     "Locations": [], "CollectionType": "movies", "ItemId": "root-scenes"},
         {"Name": "Studios",    "Locations": [], "CollectionType": "movies", "ItemId": "root-studios"},
-        {"Name": "Performers", "Locations": [], "CollectionType": "",       "ItemId": "root-performers"},
+        {"Name": "Performers", "Locations": [], "CollectionType": "movies",  "ItemId": "root-performers"},
         {"Name": "Groups",     "Locations": [], "CollectionType": "movies", "ItemId": "root-groups"},
     ]
     if runtime.ENABLE_TAG_FILTERS:
-        folders.append({"Name": "Tags", "Locations": [], "CollectionType": "", "ItemId": "root-tags"})
+        folders.append({"Name": "Tags", "Locations": [], "CollectionType": "movies", "ItemId": "root-tags"})
     for tag_name in sorted(runtime.TAG_GROUPS, key=str.lower):
         tag_id = f"tag-{tag_name.lower().replace(' ', '-')}"
         folders.append({"Name": tag_name, "Locations": [], "CollectionType": "movies", "ItemId": tag_id})
