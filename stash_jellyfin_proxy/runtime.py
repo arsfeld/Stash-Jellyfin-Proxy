@@ -111,6 +111,10 @@ MIGRATION_LOG: List[str] = []
 # --- Image byte cache (Pillow output keyed by (item_id, size)) ---
 IMAGE_CACHE: Dict[Any, Any] = {}
 
+# --- scene_id → is_series_scene (bool). Populated by the image endpoint
+# when resolving Episode vs Movie poster format. Cleared on config reload.
+SERIES_SCENE_CACHE: Dict[str, bool] = {}
+
 # --- Live config state (mutable at runtime via ui_api_config) ---
 # Keys that are currently overridden via environment variables — the Web UI
 # shows them as read-only. Populated at bootstrap.

@@ -17,6 +17,7 @@ from starlette.responses import Response
 
 from stash_jellyfin_proxy import runtime
 from stash_jellyfin_proxy.mapping.image_policy import scene_poster_format
+from stash_jellyfin_proxy.mapping.scene import is_series_scene
 from stash_jellyfin_proxy.stash.client import fetch_from_stash, stash_query
 from stash_jellyfin_proxy.util.ids import get_numeric_id
 from stash_jellyfin_proxy.util.images import (
@@ -191,17 +192,41 @@ async def endpoint_image(request):
     elif item_id.startswith("scene-"):
         numeric_id = item_id.replace("scene-", "")
         stash_img_url = f"{runtime.STASH_URL}/scene/{numeric_id}/screenshot"
-        needs_portrait_resize = (not is_landscape_type) and scene_poster_format(request) == "portrait"
+        # Scenes in SERIES-tagged studios are Episodes. Swiftfin renders
+        # Episode tiles as 16:9 landscape, so force landscape regardless of
+        # the profile's poster_format. Cache the is-series check per scene
+        # to avoid a Stash roundtrip on every image request.
+        is_episode_scene = runtime.SERIES_SCENE_CACHE.get(numeric_id)
+        if is_episode_scene is None and runtime.SERIES_TAG:
+            try:
+                res = await stash_query(
+                    """query SceneSeries($id: ID!) { findScene(id: $id) {
+                        studio { tags { name } parent_studio { tags { name } } }
+                    } }""",
+                    {"id": numeric_id},
+                )
+                scene_doc = (res or {}).get("data", {}).get("findScene") or {}
+                is_episode_scene = is_series_scene(scene_doc)
+            except Exception as e:
+                logger.debug(f"is_series_scene lookup failed for {item_id}: {e}")
+                is_episode_scene = False
+            runtime.SERIES_SCENE_CACHE[numeric_id] = is_episode_scene
+        if is_episode_scene:
+            needs_portrait_resize = False
+        else:
+            needs_portrait_resize = (not is_landscape_type) and scene_poster_format(request) == "portrait"
     else:
         numeric_id = get_numeric_id(item_id)
         stash_img_url = f"{runtime.STASH_URL}/scene/{numeric_id}/screenshot"
 
     logger.debug(f"Proxying image for {item_id} from {stash_img_url}")
 
-    format_key = "landscape" if is_landscape_type else (
-        scene_poster_format(request) if item_id.startswith("scene-")
-        else ("portrait" if needs_portrait_resize else "original")
-    )
+    if is_landscape_type:
+        format_key = "landscape"
+    elif item_id.startswith("scene-"):
+        format_key = "landscape" if not needs_portrait_resize else scene_poster_format(request)
+    else:
+        format_key = "portrait" if needs_portrait_resize else "original"
     cache_key = (item_id, format_key)
     if cache_key in runtime.IMAGE_CACHE:
         cached_data, cached_type = runtime.IMAGE_CACHE[cache_key]
