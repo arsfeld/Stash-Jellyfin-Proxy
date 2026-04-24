@@ -275,6 +275,53 @@ async function saveSection(card) {
 }
 
 /* ============================================================ */
+/* Playback tab                                                 */
+/* ============================================================ */
+const SORT_OPTIONS = [
+  ["DateCreated", "Date Added"],
+  ["SortName", "Name"],
+  ["CommunityRating", "Rating"],
+  ["PlayCount", "Scene Count"],
+  ["Random", "Random"],
+];
+
+function populateSortDefaults() {
+  const root = pageRoot("playback");
+  if (!root) return;
+  qsa("select[data-sort-options]", root).forEach((sel) => {
+    if (sel._populated) return;
+    sel._populated = true;
+    SORT_OPTIONS.forEach(([val, label]) => {
+      const opt = document.createElement("option");
+      opt.value = val;
+      opt.textContent = label;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function updateHeroVisibility() {
+  const root = pageRoot("playback");
+  if (!root) return;
+  const source = qs('[data-key=HERO_SOURCE]', root).value;
+  qsa("[data-shows-for-hero]", root).forEach((el) => {
+    el.style.display = (el.dataset.showsForHero === source) ? "" : "none";
+  });
+}
+
+window.init_playback = async function () {
+  try { await loadConfig(); } catch {}
+  populateSortDefaults();           // before bind, so options exist
+  bindFormFromConfig(pageRoot("playback"));
+  updateHeroVisibility();
+  qs('[data-key=HERO_SOURCE]').addEventListener("change", updateHeroVisibility);
+};
+
+window.show_playback = async function () {
+  try { await loadConfig(); populateSortDefaults(); bindFormFromConfig(pageRoot("playback")); updateHeroVisibility(); } catch {}
+};
+
+/* ============================================================ */
 /* Libraries tab                                                */
 /* ============================================================ */
 const GENRE_MODE_NOTES = {

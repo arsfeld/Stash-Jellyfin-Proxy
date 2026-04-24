@@ -246,7 +246,89 @@
         <div class="page-title">Playback</div>
         <div class="page-subtitle">Image formatting, sort defaults, Home-tab hero</div>
       </div>
-      <div class="page-content"><em class="section-note">Playback — coming in Phase 5B pass 5</em></div>
+      <div class="page-content" id="playback-content">
+
+        <!-- Poster Images -->
+        <div class="card" data-section="poster">
+          <div class="card-header"><div class="card-title">Poster Images <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Portrait Crop Anchor <span class="badge restart">⚠</span></div>
+              <select data-key="POSTER_CROP_ANCHOR">
+                <option value="center">Center (default)</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+              <div class="field-help">Where to anchor the crop when generating a 2:3 portrait from a 16:9 screenshot. Applies only when a player's poster format is <code>portrait</code>.</div>
+            </div>
+            <div class="field-help" style="margin-top: 10px;"><em>Per-client poster format (portrait vs landscape) is configured in the Players tab.</em></div>
+          </div>
+          <div class="card-footer"><button class="btn primary" data-save="poster">Save</button></div>
+        </div>
+
+        <!-- Sort Defaults -->
+        <div class="card" data-section="sort-defaults">
+          <div class="card-header"><div class="card-title">Sort Defaults <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="text-align: left; color: var(--text-dim);">
+                  <th style="padding: 8px 0;">Library Type</th>
+                  <th style="padding: 8px 0;">Default Sort <span class="badge live">✓ Live</span></th>
+                </tr>
+              </thead>
+              <tbody id="sort-defaults-tbody">
+                <tr><td style="padding: 6px 0;">Scenes</td><td><select data-key="SCENES_DEFAULT_SORT" data-sort-options></select></td></tr>
+                <tr><td style="padding: 6px 0;">Studios</td><td><select data-key="STUDIOS_DEFAULT_SORT" data-sort-options></select></td></tr>
+                <tr><td style="padding: 6px 0;">Performers</td><td><select data-key="PERFORMERS_DEFAULT_SORT" data-sort-options></select></td></tr>
+                <tr><td style="padding: 6px 0;">Groups</td><td><select data-key="GROUPS_DEFAULT_SORT" data-sort-options></select></td></tr>
+                <tr><td style="padding: 6px 0;">Tag Groups</td><td><select data-key="TAG_GROUPS_DEFAULT_SORT" data-sort-options></select></td></tr>
+                <tr><td style="padding: 6px 0;">Saved Filters</td><td><select data-key="SAVED_FILTERS_DEFAULT_SORT" data-sort-options></select></td></tr>
+              </tbody>
+            </table>
+            <div class="field-help" style="margin-top: 10px;">This sort is applied when the client sends no sort preference.</div>
+          </div>
+          <div class="card-footer"><button class="btn primary" data-save="sort-defaults">Save</button></div>
+        </div>
+
+        <!-- Sort Name -->
+        <div class="card" data-section="sort-name">
+          <div class="card-header"><div class="card-title">Sort Name <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Strip Leading Articles <span class="badge live">✓ Live</span></div>
+              <input type="text" data-key="SORT_STRIP_ARTICLES" placeholder="The, A, An">
+              <div class="field-help">Comma-separated. Titles beginning with these words sort by the remainder. Leave empty to disable.</div>
+            </div>
+          </div>
+          <div class="card-footer"><button class="btn primary" data-save="sort-name">Save</button></div>
+        </div>
+
+        <!-- Home Tab Hero Image -->
+        <div class="card" data-section="hero">
+          <div class="card-header"><div class="card-title">Home Tab Hero Image <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Hero Image Source <span class="badge restart">⚠</span></div>
+              <select data-key="HERO_SOURCE">
+                <option value="recent">Recent (default)</option>
+                <option value="random">Random</option>
+                <option value="favorites">Favorites</option>
+                <option value="top_rated">Top Rated</option>
+                <option value="recently_watched">Recently Watched</option>
+              </select>
+              <div class="field-help">Source pool for the cinematic header image on clients' Home tab.</div>
+            </div>
+            <div class="field" data-shows-for-hero="top_rated">
+              <div class="field-label">Minimum Rating <span class="badge restart">⚠</span></div>
+              <input type="number" data-key="HERO_MIN_RATING" min="0" max="100">
+              <div class="field-help">Scenes with a Stash rating at or above this threshold are eligible. Only applies when "Top Rated" is selected.</div>
+            </div>
+          </div>
+          <div class="card-footer"><button class="btn primary" data-save="hero">Save</button></div>
+        </div>
+
+      </div>
     </section>
 
     <!-- ================ SEARCH ================ -->
