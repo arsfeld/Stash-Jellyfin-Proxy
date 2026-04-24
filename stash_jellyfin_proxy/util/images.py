@@ -271,7 +271,9 @@ def generate_menu_icon(icon_type: str, width: int = 400, height: int = 600) -> T
         "root-studios": "Studios",
         "root-performers": "Performers",
         "root-groups": "Groups",
+        "root-series": "Series",
         "root-tag": "Tags",
+        "root-tags": "Tags",
     }
     text = icon_names.get(icon_type, icon_type.replace("root-", "").replace("-", " ").title())
     return generate_text_icon(text, width, height, max_chars_per_line=12, max_lines=4)

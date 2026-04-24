@@ -57,7 +57,7 @@ logger = logging.getLogger("stash-jellyfin-proxy")
 
 MENU_ICONS = {
     "root-scenes", "root-studios", "root-performers",
-    "root-groups", "root-tag", "root-tags",
+    "root-groups", "root-series", "root-tag", "root-tags",
 }
 
 
