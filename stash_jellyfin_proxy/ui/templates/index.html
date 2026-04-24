@@ -100,7 +100,159 @@
         <div class="page-title">System</div>
         <div class="page-subtitle">Server identity, performance, logging, security, server control</div>
       </div>
-      <div class="page-content"><em class="section-note">System — coming in Phase 5B pass 2</em></div>
+      <div class="page-content" id="system-content">
+
+        <!-- Server Identity -->
+        <div class="card" data-section="identity">
+          <div class="card-header">
+            <div class="card-title">Server Identity <span class="unsaved-dot hide"></span></div>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Server Name <span class="badge restart">⚠ Requires restart</span></div>
+              <input type="text" data-key="SERVER_NAME">
+              <div class="field-help">Display name shown in client server lists.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Server ID</div>
+              <input type="text" data-key="SERVER_ID" readonly style="color: var(--text-dim);">
+              <div class="field-help">Auto-generated UUID used by clients to identify this server. Changing this invalidates all paired clients.</div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn primary" data-save="identity">Save</button>
+          </div>
+        </div>
+
+        <!-- Performance -->
+        <div class="card" data-section="performance">
+          <div class="card-header">
+            <div class="card-title">Performance <span class="unsaved-dot hide"></span></div>
+          </div>
+          <div class="card-body">
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">Default Page Size <span class="badge restart">⚠</span></div>
+                <input type="number" data-key="DEFAULT_PAGE_SIZE" min="1" max="500">
+              </div>
+              <div class="field">
+                <div class="field-label">Max Page Size <span class="badge restart">⚠</span></div>
+                <input type="number" data-key="MAX_PAGE_SIZE" min="1" max="1000">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">Stash Timeout (seconds) <span class="badge live">✓ Live</span></div>
+                <input type="number" data-key="STASH_TIMEOUT" min="1" max="300">
+              </div>
+              <div class="field">
+                <div class="field-label">Stash Retries <span class="badge live">✓ Live</span></div>
+                <input type="number" data-key="STASH_RETRIES" min="0" max="10">
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn primary" data-save="performance">Save</button>
+          </div>
+        </div>
+
+        <!-- Logging -->
+        <div class="card" data-section="logging">
+          <div class="card-header">
+            <div class="card-title">Logging <span class="unsaved-dot hide"></span></div>
+          </div>
+          <div class="card-body">
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">Log Level <span class="badge live">✓ Live</span></div>
+                <select data-key="LOG_LEVEL">
+                  <option value="DEBUG">DEBUG</option>
+                  <option value="INFO">INFO</option>
+                  <option value="WARNING">WARNING</option>
+                  <option value="ERROR">ERROR</option>
+                </select>
+              </div>
+              <div class="field">
+                <div class="field-label">Log Directory <span class="badge restart">⚠</span></div>
+                <input type="text" data-key="LOG_DIR">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">Max Log File Size (MB) <span class="badge restart">⚠</span></div>
+                <input type="number" data-key="LOG_MAX_SIZE_MB" min="1" max="1000">
+              </div>
+              <div class="field">
+                <div class="field-label">Log Backup Count <span class="badge restart">⚠</span></div>
+                <input type="number" data-key="LOG_BACKUP_COUNT" min="0" max="50">
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn primary" data-save="logging">Save</button>
+          </div>
+        </div>
+
+        <!-- Security -->
+        <div class="card" data-section="security">
+          <div class="card-header">
+            <div class="card-title">Security <span class="unsaved-dot hide"></span></div>
+          </div>
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Require Auth for Config UI <span class="badge live">✓ Live</span></div>
+                <div class="th">Prompt for the client password before allowing config changes.</div>
+              </div>
+              <div class="toggle" data-key="REQUIRE_AUTH_FOR_CONFIG"></div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">IP Ban Threshold <span class="badge live">✓ Live</span></div>
+                <input type="number" data-key="BAN_THRESHOLD" min="1" max="100">
+                <div class="field-help">Failed auth attempts before an IP is banned.</div>
+              </div>
+              <div class="field">
+                <div class="field-label">Ban Window (minutes) <span class="badge live">✓ Live</span></div>
+                <input type="number" data-key="BAN_WINDOW_MINUTES" min="1" max="1440">
+              </div>
+            </div>
+            <div class="field">
+              <div class="field-label">Banned IPs <span class="badge live">✓ Live</span></div>
+              <input type="text" data-key="BANNED_IPS" placeholder="comma-separated; leave empty to clear">
+              <div class="field-help">Comma-separated list. Edit to unban an IP. Saved immediately.</div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn primary" data-save="security">Save</button>
+          </div>
+        </div>
+
+        <!-- Server Control -->
+        <div class="card" data-section="control">
+          <div class="card-header"><div class="card-title">Server Control</div></div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div>
+                <div class="field-label">Restart Proxy</div>
+                <div class="field-help">Restart the proxy process. Active streams will be interrupted.</div>
+                <button class="btn danger" id="sys-restart-btn" style="margin-top: 10px;">Restart Proxy</button>
+              </div>
+              <div>
+                <div class="field-label">Clear Cache</div>
+                <div class="field-help">Flush image cache, library-card artwork, genre allow-list, and in-memory TTL caches.</div>
+                <button class="btn" id="sys-clearcache-btn" style="margin-top: 10px;">Clear Cache</button>
+              </div>
+            </div>
+            <div style="margin-top: 20px;">
+              <div class="field-label">Download Config</div>
+              <div class="field-help">Download the current config file as a text backup.</div>
+              <button class="btn" id="sys-downloadconfig-btn" style="margin-top: 10px;">Download stash_jellyfin_proxy.conf</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </section>
 
     <!-- ================ LOGS ================ -->

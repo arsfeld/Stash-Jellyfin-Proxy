@@ -90,6 +90,8 @@ from stash_jellyfin_proxy.ui.api import (
     ui_api_streams,
     ui_api_stats,
     ui_api_stats_reset,
+    ui_api_clear_cache,
+    ui_api_download_config,
     ui_api_restart,
     ui_api_auth_config,
     ui_api_config,
@@ -253,6 +255,8 @@ ui_routes = [
     Route("/api/streams", ui_api_streams),
     Route("/api/stats", ui_api_stats),
     Route("/api/stats/reset", ui_api_stats_reset, methods=["POST"]),
+    Route("/api/cache/clear", ui_api_clear_cache, methods=["POST"]),
+    Route("/api/config/download", ui_api_download_config),
     Route("/api/restart", ui_api_restart, methods=["POST"]),
 ]
 

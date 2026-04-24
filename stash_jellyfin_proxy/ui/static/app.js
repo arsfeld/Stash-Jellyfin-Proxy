@@ -12,6 +12,9 @@ const app = {
 /* ---- Helpers ---- */
 const qs  = (sel, root = document) => root.querySelector(sel);
 const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+/* data-page is set on BOTH the sidebar nav-item and the page section —
+   always scope bindings to the section so the form inputs are reachable. */
+const pageRoot = (name) => qs(`section.page[data-page="${name}"]`);
 
 async function apiGet(path) {
   const r = await fetch(path, { credentials: "same-origin" });
@@ -153,6 +156,120 @@ async function saveConfig(patch) {
   await loadConfig(true);
   return res;
 }
+
+/* ============================================================ */
+/* Shared form-binding helpers (used by every config tab)       */
+/* ============================================================ */
+
+/* Fill every [data-key="X"] input/select/toggle inside `root` from
+   app.config. Call after loadConfig(). */
+function bindFormFromConfig(root) {
+  const cfg = app.config;
+  qsa("[data-key]", root).forEach((el) => {
+    const key = el.dataset.key;
+    const val = cfg[key];
+    if (el.classList.contains("toggle")) {
+      setToggleValue(el, !!val);
+    } else if (el.tagName === "SELECT") {
+      el.value = val == null ? "" : String(val);
+    } else if (el.type === "checkbox") {
+      el.checked = !!val;
+    } else if (Array.isArray(val)) {
+      el.value = val.join(", ");
+    } else {
+      el.value = val == null ? "" : String(val);
+    }
+    if (app.envFields.has(key)) {
+      el.setAttribute("disabled", "disabled");
+      el.title = "Overridden by environment variable";
+    }
+  });
+  /* Attach dirty-dot tracking once per section. */
+  qsa(".card[data-section]", root).forEach((card) => {
+    if (card._dirtyBound) return;
+    card._dirtyBound = true;
+    qsa("[data-key]", card).forEach((el) => {
+      const fire = () => {
+        const dot = qs(".unsaved-dot", card);
+        if (dot) dot.classList.remove("hide");
+      };
+      if (el.classList.contains("toggle")) {
+        el.addEventListener("click", () => {
+          el.classList.toggle("on");
+          fire();
+        });
+      } else {
+        el.addEventListener("input", fire);
+        el.addEventListener("change", fire);
+      }
+    });
+    qsa("[data-save]", card).forEach((btn) => {
+      btn.addEventListener("click", () => saveSection(card));
+    });
+  });
+}
+
+function setToggleValue(el, on) {
+  el.classList.toggle("on", !!on);
+}
+
+function readSectionValues(card) {
+  const out = {};
+  qsa("[data-key]", card).forEach((el) => {
+    if (el.hasAttribute("readonly") || el.hasAttribute("disabled")) return;
+    const key = el.dataset.key;
+    if (el.classList.contains("toggle")) {
+      out[key] = el.classList.contains("on");
+    } else if (el.tagName === "SELECT") {
+      out[key] = el.value;
+    } else if (el.type === "checkbox") {
+      out[key] = el.checked;
+    } else if (el.type === "number") {
+      out[key] = el.value === "" ? "" : Number(el.value);
+    } else {
+      out[key] = el.value;
+    }
+  });
+  return out;
+}
+
+async function saveSection(card) {
+  const patch = readSectionValues(card);
+  try {
+    await saveConfig(patch);
+    const dot = qs(".unsaved-dot", card);
+    if (dot) dot.classList.add("hide");
+  } catch (e) {
+    toast(`Save failed: ${e.message}`, "error");
+  }
+}
+
+/* ============================================================ */
+/* System tab                                                   */
+/* ============================================================ */
+window.init_system = async function () {
+  try { await loadConfig(); } catch {}
+  bindFormFromConfig(pageRoot("system"));
+
+  qs("#sys-restart-btn").addEventListener("click", doRestart);
+
+  qs("#sys-clearcache-btn").addEventListener("click", async () => {
+    try {
+      const res = await apiPost("/api/cache/clear", {});
+      toast(`Cache cleared: ${(res.cleared || []).join(", ")}`, "success");
+    } catch (e) {
+      toast(`Clear cache failed: ${e.message}`, "error");
+    }
+  });
+
+  qs("#sys-downloadconfig-btn").addEventListener("click", () => {
+    window.location.href = "/api/config/download";
+  });
+};
+
+window.show_system = async function () {
+  try { await loadConfig(); bindFormFromConfig(pageRoot("system")); } catch {}
+};
 
 /* ============================================================ */
 /* Logs tab                                                     */

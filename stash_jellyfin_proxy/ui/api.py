@@ -135,6 +135,63 @@ async def ui_api_stats_reset(request):
     return JSONResponse({"success": True, "message": "Statistics reset"})
 
 
+async def ui_api_clear_cache(request):
+    """Clear in-memory caches: image bytes, library-card artwork, genre
+    allow-list, filter-panel cache. Everything rebuilds on next request."""
+    if request.method != "POST":
+        return JSONResponse({"error": "Method not allowed"}, status_code=405)
+    cleared = []
+    try:
+        runtime.IMAGE_CACHE.clear()
+        cleared.append("image_cache")
+    except Exception:
+        pass
+    try:
+        from stash_jellyfin_proxy.endpoints.images import _LIBRARY_CARD_CACHE
+        _LIBRARY_CARD_CACHE.clear()
+        cleared.append("library_card_cache")
+    except Exception:
+        pass
+    try:
+        from stash_jellyfin_proxy.mapping.genre import invalidate_allowed_cache
+        invalidate_allowed_cache()
+        cleared.append("genre_allow_cache")
+    except Exception:
+        pass
+    try:
+        from stash_jellyfin_proxy.endpoints.views import _NEXTUP_CACHE
+        _NEXTUP_CACHE["payload"] = None
+        _NEXTUP_CACHE["expires"] = 0
+        cleared.append("nextup_cache")
+    except Exception:
+        pass
+    try:
+        runtime.SERIES_SCENE_CACHE.clear()
+        cleared.append("series_scene_cache")
+    except Exception:
+        pass
+    logger.info(f"Cache cleared via Web UI: {', '.join(cleared)}")
+    return JSONResponse({"success": True, "cleared": cleared})
+
+
+async def ui_api_download_config(request):
+    """Return the raw config file so the user can back it up locally."""
+    path = runtime.CONFIG_FILE
+    if not path or not os.path.isfile(path):
+        return JSONResponse({"error": "config file not found"}, status_code=404)
+    try:
+        with open(path, "r") as f:
+            data = f.read()
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    filename = os.path.basename(path)
+    return Response(
+        data,
+        media_type="text/plain",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 async def ui_api_restart(request):
     """Request a proxy restart. Sets runtime-level flag + event; the
     bootstrap loop picks those up and exits for the supervisor to relaunch."""
