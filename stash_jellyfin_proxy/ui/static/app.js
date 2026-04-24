@@ -848,6 +848,43 @@ window.init_logs = function () {
   });
   qs("#log-line-count").addEventListener("change", fetchLogs);
   qs("#log-refresh-btn").addEventListener("click", fetchLogs);
+  qs("#log-copy-btn").addEventListener("click", async () => {
+    /* Copy whatever the filter/search is currently showing — plain-text
+       `timestamp [LEVEL] message` per line, ready to paste. */
+    const filtered = logsState.entries.filter((e) => {
+      const lvl = (e.level || "INFO").toUpperCase();
+      if (!logsState.activeLevels.has(lvl)) return false;
+      if (logsState.search && !(e.message || "").toLowerCase().includes(logsState.search)) return false;
+      return true;
+    });
+    if (!filtered.length) {
+      toast("No log lines to copy (filter removed everything).", "warning");
+      return;
+    }
+    const text = filtered
+      .map((e) => `${e.timestamp || ""} [${(e.level || "INFO").toUpperCase()}] ${e.message || ""}`)
+      .join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      toast(`Copied ${filtered.length} log lines to clipboard.`, "success");
+    } catch (err) {
+      /* Fallback for non-secure contexts / old browsers. */
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.top = "-1000px";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+        toast(`Copied ${filtered.length} log lines to clipboard.`, "success");
+      } catch (_) {
+        toast(`Copy failed: ${err.message}`, "error");
+      } finally {
+        document.body.removeChild(ta);
+      }
+    }
+  });
   qs("#log-clear-btn").addEventListener("click", () => {
     qs("#log-viewer").innerHTML = "";
   });
