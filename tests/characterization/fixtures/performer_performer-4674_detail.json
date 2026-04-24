@@ -8,11 +8,16 @@
   },
   "response": {
     "body": {
-      "BackdropImageTags": [],
+      "BackdropImageTags": [
+        "img"
+      ],
       "ChildCount": 1,
       "CollectionType": "movies",
       "Id": "performer-4674",
       "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
         "Primary": {
           "img": "000000"
         }
@@ -22,7 +27,13 @@
       },
       "IsFolder": true,
       "Name": "Abella Anderson",
+      "Overview": "Female performer, born 1988-05-16 (37), from CU, active 2010–2017, 1 scene in library.\n\nHeight: 157 cm (5'2\")\nMeasurements: 34D-26-38\nBreasts: Fake\nEthnicity: Latin\nHair: Black\nEyes: Brown\n\nTattoos: Back of neck, Heart with keyhole and key\nPiercings: Navel\n\nAlso known as: Abella, Amy, Amy Quesada, Anna, Latina Ruvi",
+      "PremiereDate": "1988-05-16T00:00:00.0000000Z",
       "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 1988,
+      "ProviderIds": {
+        "StashDb": "94ad79c2-f279-4c1a-abac-caa5f006f6e2"
+      },
       "RecursiveItemCount": 1,
       "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
       "SortName": "Abella Anderson",

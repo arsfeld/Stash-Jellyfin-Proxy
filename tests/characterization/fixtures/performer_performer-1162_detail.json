@@ -8,11 +8,16 @@
   },
   "response": {
     "body": {
-      "BackdropImageTags": [],
+      "BackdropImageTags": [
+        "img"
+      ],
       "ChildCount": 15,
       "CollectionType": "movies",
       "Id": "performer-1162",
       "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
         "Primary": {
           "img": "000000"
         }
@@ -22,7 +27,13 @@
       },
       "IsFolder": true,
       "Name": "Aaliyah Love",
+      "Overview": "Female performer, born 1981-06-11 (44), from US, active since 2003, 15 scenes in library.\n\nHeight: 157 cm (5'2\")\nMeasurements: 33A-25-34\nBreasts: Natural\nEthnicity: Caucasian\nHair: Blonde\nEyes: Hazel\n\nTattoos: Left shoulder, Little bear\nPiercings: Ears\n\nAlso known as: Aailyah Love, Aaliyah12, Aliyah, Aliyah Love, Molly Star, Princess Molly Star, Tamara553",
+      "PremiereDate": "1981-06-11T00:00:00.0000000Z",
       "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 1981,
+      "ProviderIds": {
+        "StashDb": "9ac606f4-a784-4849-a2fa-5c8b04831e7e"
+      },
       "RecursiveItemCount": 15,
       "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
       "SortName": "Aaliyah Love",

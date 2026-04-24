@@ -1042,7 +1042,9 @@ async def endpoint_items(request):
     elif parent_id == "root-studios":
         folder_sort, folder_dir = get_stash_sort_params(request, context="folders")
 
-        count_q = """query { findStudios { count } }"""
+        # Filter parent-only studios (scene_count == 0). Network/holder
+        # studios with no direct scenes make for confusing empty tiles.
+        count_q = """query { findStudios(studio_filter: {scene_count: {value: 0, modifier: GREATER_THAN}}) { count } }"""
         count_res = await stash_query(count_q)
         studio_count = count_res.get("data", {}).get("findStudios", {}).get("count", 0)
 
@@ -1062,7 +1064,10 @@ async def endpoint_items(request):
         fetch_limit = limit - 1 if filters_added else limit
 
         q = """query FindStudios($page: Int!, $per_page: Int!, $sort: String!, $direction: SortDirectionEnum!) {
-            findStudios(filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}) {
+            findStudios(
+                studio_filter: {scene_count: {value: 0, modifier: GREATER_THAN}},
+                filter: {page: $page, per_page: $per_page, sort: $sort, direction: $direction}
+            ) {
                 studios { id name image_path scene_count }
             }
         }"""
@@ -1304,26 +1309,33 @@ async def endpoint_items(request):
         # Tags folder: show Favorites, All Tags (if enabled), and saved tag filters
         items_count = 0
 
-        # Always show "Favorites" subfolder at the top
-        items.append({
-            "Name": "Favorites",
-            "SortName": "!1-Favorites",  # Sort to top
-            "Id": "tags-favorites",
-            "ServerId": runtime.SERVER_ID,
-            "Type": "BoxSet",
-            "IsFolder": True,
-            "CollectionType": "movies",
-            "ParentId": parent_id,
-            "ImageTags": {"Primary": "img"},
-            "ImageBlurHashes": {"Primary": {"img": "000000"}},
-            "PrimaryImageAspectRatio": 0.6667,
-            "BackdropImageTags": [],
-            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "tags-favorites"}
-        })
-        items_count += 1
+        # If the user has a saved tag filter named "Favorites" it takes
+        # precedence over our synthetic tags-favorites folder (otherwise
+        # the tab shows "Favorites" twice).
+        saved_filters = await stash_get_saved_filters("TAGS")
+        saved_filter_names_lc = {(sf.get("name") or "").strip().lower() for sf in saved_filters}
+        show_synthetic_favorites = "favorites" not in saved_filter_names_lc
+        show_synthetic_all = runtime.ENABLE_ALL_TAGS and "all tags" not in saved_filter_names_lc
 
-        # Show "All Tags" if enabled
-        if runtime.ENABLE_ALL_TAGS:
+        if show_synthetic_favorites:
+            items.append({
+                "Name": "Favorites",
+                "SortName": "!1-Favorites",  # Sort to top
+                "Id": "tags-favorites",
+                "ServerId": runtime.SERVER_ID,
+                "Type": "BoxSet",
+                "IsFolder": True,
+                "CollectionType": "movies",
+                "ParentId": parent_id,
+                "ImageTags": {"Primary": "img"},
+                "ImageBlurHashes": {"Primary": {"img": "000000"}},
+                "PrimaryImageAspectRatio": 0.6667,
+                "BackdropImageTags": [],
+                "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": False, "Played": False, "Key": "tags-favorites"}
+            })
+            items_count += 1
+
+        if show_synthetic_all:
             items.append({
                 "Name": "All Tags",
                 "SortName": "!2-All Tags",  # Sort after Favorites
@@ -1342,7 +1354,6 @@ async def endpoint_items(request):
             items_count += 1
 
         # Show saved tag filters
-        saved_filters = await stash_get_saved_filters("TAGS")
         for sf in saved_filters:
             filter_id = sf.get("id")
             filter_name = sf.get("name", f"Filter {filter_id}")
@@ -1705,6 +1716,153 @@ async def endpoint_items(request):
 
     response_data = {"Items": items, "TotalRecordCount": total_count, "StartIndex": start_index}
     return JSONResponse(response_data)
+
+
+async def _fetch_performer_packet(performer_id: str) -> Optional[Dict[str, Any]]:
+    """Fetch the rich performer packet and shape it for Jellyfin's About
+    panel. Stash has no free-form Overview text most of the time, so we
+    synthesize a readable description from the structured attributes
+    (gender, age, country, measurements, career span, etc.) so Swiftfin's
+    performer page isn't blank. Returns None if the performer doesn't
+    exist."""
+    q = """query PerformerPacket($id: ID!) {
+        findPerformer(id: $id) {
+            id name disambiguation gender birthdate death_date
+            ethnicity country hair_color eye_color
+            height_cm weight measurements fake_tits
+            career_start career_end tattoos piercings
+            alias_list details rating100 favorite scene_count image_path
+            tags { id name }
+            stash_ids { endpoint stash_id }
+        }
+    }"""
+    res = await stash_query(q, {"id": performer_id})
+    performer = ((res or {}).get("data") or {}).get("findPerformer")
+    if not performer:
+        return None
+
+    out: Dict[str, Any] = {}
+
+    # Structured Overview — one short sentence summarising the performer,
+    # then paragraphs for the free-form details / aliases. Keeps Swiftfin's
+    # About panel populated even when Stash has no hand-written bio.
+    summary_bits = []
+    gender = (performer.get("gender") or "").lower()
+    if gender == "female":
+        summary_bits.append("Female performer")
+    elif gender == "male":
+        summary_bits.append("Male performer")
+    elif gender:
+        summary_bits.append(gender.replace("_", " ").capitalize() + " performer")
+    else:
+        summary_bits.append("Performer")
+
+    bd = performer.get("birthdate")
+    if bd:
+        try:
+            import datetime as _dt
+            today = _dt.date.today()
+            birth = _dt.date.fromisoformat(bd)
+            age = today.year - birth.year - ((today.month, today.day) < (birth.month, birth.day))
+            summary_bits[-1] += f", born {bd} ({age})" if not performer.get("death_date") else f", born {bd}"
+        except Exception:
+            pass
+
+    country = performer.get("country")
+    if country:
+        summary_bits.append(f"from {country}")
+
+    c_start = performer.get("career_start")
+    c_end = performer.get("career_end")
+    if c_start and c_end and c_start != c_end:
+        summary_bits.append(f"active {c_start}–{c_end}")
+    elif c_start:
+        summary_bits.append(f"active since {c_start}")
+
+    scene_count = int(performer.get("scene_count") or 0)
+    if scene_count:
+        summary_bits.append(f"{scene_count} scene{'s' if scene_count != 1 else ''} in library")
+
+    parts: list[str] = []
+    parts.append(", ".join(summary_bits) + ".")
+
+    # Physical attributes — second paragraph, only emit keys with values.
+    phys: list[str] = []
+    if performer.get("height_cm"):
+        cm = int(performer["height_cm"])
+        inches = round(cm / 2.54)
+        phys.append(f"Height: {cm} cm ({inches // 12}'{inches % 12}\")")
+    if performer.get("weight"):
+        phys.append(f"Weight: {performer['weight']} kg")
+    if performer.get("measurements"):
+        phys.append(f"Measurements: {performer['measurements']}")
+    if performer.get("fake_tits"):
+        phys.append(f"Breasts: {performer['fake_tits']}")
+    if performer.get("ethnicity"):
+        phys.append(f"Ethnicity: {performer['ethnicity']}")
+    if performer.get("hair_color"):
+        phys.append(f"Hair: {performer['hair_color']}")
+    if performer.get("eye_color"):
+        phys.append(f"Eyes: {performer['eye_color']}")
+    if phys:
+        parts.append("\n".join(phys))
+
+    # Body-mod notes.
+    mods: list[str] = []
+    if performer.get("tattoos"):
+        mods.append(f"Tattoos: {performer['tattoos']}")
+    if performer.get("piercings"):
+        mods.append(f"Piercings: {performer['piercings']}")
+    if mods:
+        parts.append("\n".join(mods))
+
+    aliases = [a for a in (performer.get("alias_list") or []) if a]
+    if aliases:
+        parts.append(f"Also known as: {', '.join(aliases)}")
+
+    if performer.get("details"):
+        # Prepend hand-written bio if present.
+        parts.insert(0, performer["details"].strip())
+
+    out["Overview"] = "\n\n".join(parts)
+
+    if performer.get("rating100") is not None:
+        try:
+            out["CommunityRating"] = round(float(performer["rating100"]) / 10.0, 1)
+        except (TypeError, ValueError):
+            pass
+
+    # Birthday as PremiereDate / ProductionYear for Swiftfin's "born" field.
+    if performer.get("birthdate"):
+        try:
+            out["PremiereDate"] = f"{performer['birthdate']}T00:00:00.0000000Z"
+            out["ProductionYear"] = int(performer["birthdate"][:4])
+        except (ValueError, TypeError):
+            pass
+    if performer.get("death_date"):
+        try:
+            out["EndDate"] = f"{performer['death_date']}T00:00:00.0000000Z"
+        except (ValueError, TypeError):
+            pass
+
+    tag_names = [
+        (t.get("name") or "").strip()
+        for t in (performer.get("tags") or [])
+        if t.get("name")
+    ]
+    if tag_names:
+        out["Genres"] = tag_names
+        out["Tags"] = tag_names
+
+    stash_ids = performer.get("stash_ids") or []
+    if stash_ids and stash_ids[0].get("stash_id"):
+        out["ProviderIds"] = {"StashDb": stash_ids[0]["stash_id"]}
+
+    out["_favorite"] = bool(performer.get("favorite"))
+    out["_scene_count"] = scene_count
+    out["_name"] = performer.get("name") or f"Performer {performer_id}"
+    out["_has_image"] = bool(performer.get("image_path"))
+    return out
 
 
 async def _fetch_studio_packet(studio_id: str) -> Optional[Dict[str, Any]]:
@@ -2095,42 +2253,54 @@ async def endpoint_item_details(request):
         })
 
     elif item_id.startswith("performer-") or item_id.startswith("person-"):
-        # Fetch actual performer info from Stash (handle both performer- and person- prefixes)
-        # Handle formats: performer-302, person-302, person-performer-302
+        # Handle id formats: performer-302, person-302, person-performer-302
         if item_id.startswith("person-performer-"):
             performer_id = item_id.replace("person-performer-", "")
         elif item_id.startswith("performer-"):
             performer_id = item_id.replace("performer-", "")
         else:
             performer_id = item_id.replace("person-", "")
-        q = """query FindPerformer($id: ID!) { findPerformer(id: $id) { id name image_path scene_count favorite } }"""
-        res = await stash_query(q, {"id": performer_id})
-        performer = res.get("data", {}).get("findPerformer")
 
-        if not performer:
+        packet = await _fetch_performer_packet(performer_id)
+        if not packet:
             logger.warning(f"Performer not found: {performer_id}")
             return JSONResponse({"Items": [], "TotalRecordCount": 0}, status_code=404)
 
-        performer_name = performer.get("name", f"Performer {performer_id}")
-        scene_count = performer.get("scene_count", 0)
-        has_image = bool(performer.get("image_path"))
+        performer_name = packet.pop("_name")
+        scene_count = packet.pop("_scene_count")
+        is_favorite = packet.pop("_favorite")
+        has_image = packet.pop("_has_image")
 
-        return JSONResponse({
+        from stash_jellyfin_proxy.mapping.image_policy import performer_item_type
+        item_type = performer_item_type(request)  # "Person" for Swiftfin, else "BoxSet"
+
+        out = {
             "Name": performer_name,
             "SortName": performer_name,
             "Id": item_id,
             "ServerId": runtime.SERVER_ID,
-            "Type": "BoxSet",
-            "CollectionType": "movies",
+            "Type": item_type,
             "IsFolder": True,
             "ImageTags": {"Primary": "img"} if has_image else {},
-            "ImageBlurHashes": {"Primary": {"img": "000000"}} if has_image else {},
+            "ImageBlurHashes": ({"Primary": {"img": "000000"}, "Backdrop": {"img": "000000"}} if has_image else {}),
             "PrimaryImageAspectRatio": 0.6667,
-            "BackdropImageTags": [],
+            # BackdropImageTags populated so Swiftfin's performer-page hero
+            # banner actually fires the backdrop request.
+            "BackdropImageTags": ["img"] if has_image else [],
             "ChildCount": scene_count,
             "RecursiveItemCount": scene_count,
-            "UserData": {"PlaybackPositionTicks": 0, "PlayCount": 0, "IsFavorite": bool(performer.get("favorite")), "Played": False, "Key": item_id}
-        })
+            "UserData": {
+                "PlaybackPositionTicks": 0, "PlayCount": 0,
+                "IsFavorite": is_favorite, "Played": False, "Key": item_id,
+            },
+        }
+        # BoxSet-typed performers (Infuse/SenPlayer) need CollectionType for
+        # the grid renderer to work. Person-typed performers skip it — Swiftfin
+        # renders its native Person screen which doesn't use CollectionType.
+        if item_type == "BoxSet":
+            out["CollectionType"] = "movies"
+        out.update(packet)
+        return JSONResponse(out)
 
     elif item_id == "root-groups":
         # Get actual count

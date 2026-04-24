@@ -8,11 +8,16 @@
   },
   "response": {
     "body": {
-      "BackdropImageTags": [],
+      "BackdropImageTags": [
+        "img"
+      ],
       "ChildCount": 1,
       "CollectionType": "movies",
       "Id": "performer-2937",
       "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
         "Primary": {
           "img": "000000"
         }
@@ -22,7 +27,13 @@
       },
       "IsFolder": true,
       "Name": "Abby Lee Brazil",
+      "Overview": "Female performer, born 1989-09-08 (36), from BR, active since 2014, 1 scene in library.\n\nHeight: 173 cm (5'8\")\nMeasurements: 34C-26-35\nBreasts: Natural\nEthnicity: Latin\nHair: Black\nEyes: Brown\n\nTattoos: Front hip, Rose; Left flank, Large floral design\nPiercings: clit; Navel\n\nAlso known as: Abby",
+      "PremiereDate": "1989-09-08T00:00:00.0000000Z",
       "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 1989,
+      "ProviderIds": {
+        "StashDb": "c1b7a6ca-d811-41aa-b136-a5867ec3cfbe"
+      },
       "RecursiveItemCount": 1,
       "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
       "SortName": "Abby Lee Brazil",

@@ -11,7 +11,7 @@
       "Items": [
         {
           "BackdropImageTags": [],
-          "ChildCount": 2,
+          "ChildCount": 3,
           "CollectionType": "movies",
           "Id": "filters-studios",
           "ImageBlurHashes": {
@@ -26,7 +26,7 @@
           "Name": "FILTERS",
           "ParentId": "root-studios",
           "PrimaryImageAspectRatio": 0.6667,
-          "RecursiveItemCount": 2,
+          "RecursiveItemCount": 3,
           "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
           "SortName": "!!!FILTERS",
           "Type": "BoxSet",
@@ -175,60 +175,6 @@
         },
         {
           "BackdropImageTags": [],
-          "ChildCount": 0,
-          "CollectionType": "movies",
-          "Id": "studio-393",
-          "ImageBlurHashes": {
-            "Primary": {
-              "img": "000000"
-            }
-          },
-          "ImageTags": {
-            "Primary": "img"
-          },
-          "IsFolder": true,
-          "Name": "Adult Prime",
-          "PrimaryImageAspectRatio": 0.6667,
-          "RecursiveItemCount": 0,
-          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
-          "Type": "BoxSet",
-          "UserData": {
-            "IsFavorite": false,
-            "Key": "studio-393",
-            "PlayCount": 0,
-            "PlaybackPositionTicks": 0,
-            "Played": false
-          }
-        },
-        {
-          "BackdropImageTags": [],
-          "ChildCount": 0,
-          "CollectionType": "movies",
-          "Id": "studio-421",
-          "ImageBlurHashes": {
-            "Primary": {
-              "img": "000000"
-            }
-          },
-          "ImageTags": {
-            "Primary": "img"
-          },
-          "IsFolder": true,
-          "Name": "Adult Time Originals",
-          "PrimaryImageAspectRatio": 0.6667,
-          "RecursiveItemCount": 0,
-          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
-          "Type": "BoxSet",
-          "UserData": {
-            "IsFavorite": false,
-            "Key": "studio-421",
-            "PlayCount": 0,
-            "PlaybackPositionTicks": 0,
-            "Played": false
-          }
-        },
-        {
-          "BackdropImageTags": [],
           "ChildCount": 20,
           "CollectionType": "movies",
           "Id": "studio-314",
@@ -249,60 +195,6 @@
           "UserData": {
             "IsFavorite": false,
             "Key": "studio-314",
-            "PlayCount": 0,
-            "PlaybackPositionTicks": 0,
-            "Played": false
-          }
-        },
-        {
-          "BackdropImageTags": [],
-          "ChildCount": 0,
-          "CollectionType": "movies",
-          "Id": "studio-478",
-          "ImageBlurHashes": {
-            "Primary": {
-              "img": "000000"
-            }
-          },
-          "ImageTags": {
-            "Primary": "img"
-          },
-          "IsFolder": true,
-          "Name": "Airerose Entertainment (Network)",
-          "PrimaryImageAspectRatio": 0.6667,
-          "RecursiveItemCount": 0,
-          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
-          "Type": "BoxSet",
-          "UserData": {
-            "IsFavorite": false,
-            "Key": "studio-478",
-            "PlayCount": 0,
-            "PlaybackPositionTicks": 0,
-            "Played": false
-          }
-        },
-        {
-          "BackdropImageTags": [],
-          "ChildCount": 0,
-          "CollectionType": "movies",
-          "Id": "studio-446",
-          "ImageBlurHashes": {
-            "Primary": {
-              "img": "000000"
-            }
-          },
-          "ImageTags": {
-            "Primary": "img"
-          },
-          "IsFolder": true,
-          "Name": "Alex Adams Media",
-          "PrimaryImageAspectRatio": 0.6667,
-          "RecursiveItemCount": 0,
-          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
-          "Type": "BoxSet",
-          "UserData": {
-            "IsFavorite": false,
-            "Key": "studio-446",
             "PlayCount": 0,
             "PlaybackPositionTicks": 0,
             "Played": false
@@ -472,33 +364,6 @@
         },
         {
           "BackdropImageTags": [],
-          "ChildCount": 0,
-          "CollectionType": "movies",
-          "Id": "studio-567",
-          "ImageBlurHashes": {
-            "Primary": {
-              "img": "000000"
-            }
-          },
-          "ImageTags": {
-            "Primary": "img"
-          },
-          "IsFolder": true,
-          "Name": "Anal Vids",
-          "PrimaryImageAspectRatio": 0.6667,
-          "RecursiveItemCount": 0,
-          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
-          "Type": "BoxSet",
-          "UserData": {
-            "IsFavorite": false,
-            "Key": "studio-567",
-            "PlayCount": 0,
-            "PlaybackPositionTicks": 0,
-            "Played": false
-          }
-        },
-        {
-          "BackdropImageTags": [],
           "ChildCount": 4,
           "CollectionType": "movies",
           "Id": "studio-230",
@@ -573,33 +438,6 @@
           "UserData": {
             "IsFavorite": false,
             "Key": "studio-570",
-            "PlayCount": 0,
-            "PlaybackPositionTicks": 0,
-            "Played": false
-          }
-        },
-        {
-          "BackdropImageTags": [],
-          "ChildCount": 0,
-          "CollectionType": "movies",
-          "Id": "studio-394",
-          "ImageBlurHashes": {
-            "Primary": {
-              "img": "000000"
-            }
-          },
-          "ImageTags": {
-            "Primary": "img"
-          },
-          "IsFolder": true,
-          "Name": "ARX Bucks",
-          "PrimaryImageAspectRatio": 0.6667,
-          "RecursiveItemCount": 0,
-          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
-          "Type": "BoxSet",
-          "UserData": {
-            "IsFavorite": false,
-            "Key": "studio-394",
             "PlayCount": 0,
             "PlaybackPositionTicks": 0,
             "Played": false
@@ -685,10 +523,172 @@
             "PlaybackPositionTicks": 0,
             "Played": false
           }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "studio-191",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Ass Titans",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-191",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 713,
+          "CollectionType": "movies",
+          "Id": "studio-2",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Aziani",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 713,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-2",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "studio-336",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Baberotica",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-336",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 8,
+          "CollectionType": "movies",
+          "Id": "studio-29",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Baby Got Boobs",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 8,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-29",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "studio-45",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Backroom MILF",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-45",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 7,
+          "CollectionType": "movies",
+          "Id": "studio-529",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Bad Family POV",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 7,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "studio-529",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
         }
       ],
       "StartIndex": 0,
-      "TotalRecordCount": 515
+      "TotalRecordCount": 412
     },
     "content_type": "application/json",
     "status": 200

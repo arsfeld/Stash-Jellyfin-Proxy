@@ -8,11 +8,16 @@
   },
   "response": {
     "body": {
-      "BackdropImageTags": [],
+      "BackdropImageTags": [
+        "img"
+      ],
       "ChildCount": 2,
       "CollectionType": "movies",
       "Id": "performer-3010",
       "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
         "Primary": {
           "img": "000000"
         }
@@ -22,7 +27,13 @@
       },
       "IsFolder": true,
       "Name": "Aaliyah Ca Pelle",
+      "Overview": "Female performer, born 1985-02-12 (41), from GB, active 2009–2020, 2 scenes in library.\n\nHeight: 165 cm (5'5\")\nMeasurements: 34EE-28-32\nBreasts: Fake\nEthnicity: Caucasian\nHair: Blonde\nEyes: Blue",
+      "PremiereDate": "1985-02-12T00:00:00.0000000Z",
       "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 1985,
+      "ProviderIds": {
+        "StashDb": "f0fae237-9255-4407-b636-fc0b2c522244"
+      },
       "RecursiveItemCount": 2,
       "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
       "SortName": "Aaliyah Ca Pelle",

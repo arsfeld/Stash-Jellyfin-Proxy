@@ -39,6 +39,33 @@
         {
           "BackdropImageTags": [],
           "CollectionType": "movies",
+          "Id": "filter-studios-56",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "No Scenes (Empty)",
+          "ParentId": "filters-studios",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "No Scenes (Empty)",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-studios-56",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
           "Id": "filter-studios-55",
           "ImageBlurHashes": {
             "Primary": {
@@ -65,7 +92,7 @@
         }
       ],
       "StartIndex": 0,
-      "TotalRecordCount": 2
+      "TotalRecordCount": 3
     },
     "content_type": "application/json",
     "status": 200

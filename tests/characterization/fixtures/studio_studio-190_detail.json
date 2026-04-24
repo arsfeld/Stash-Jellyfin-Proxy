@@ -1,25 +1,26 @@
 {
   "compare_mode": "full",
-  "name": "studio_studio-393_detail",
+  "name": "studio_studio-190_detail",
   "request": {
     "body": null,
     "method": "GET",
-    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/studio-393"
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/studio-190"
   },
   "response": {
     "body": {
       "BackdropImageTags": [
         "img"
       ],
-      "ChildCount": 0,
+      "ChildCount": 5,
       "CollectionType": "movies",
+      "EndDate": "2017-08-02T00:00:00.0000000Z",
       "ExternalUrls": [
         {
           "Name": "Homepage",
-          "Url": "https://adultprime.com/"
+          "Url": "https://arabellesplayground.com/"
         }
       ],
-      "Id": "studio-393",
+      "Id": "studio-190",
       "ImageBlurHashes": {
         "Backdrop": {
           "img": "000000"
@@ -32,18 +33,19 @@
         "Primary": "img"
       },
       "IsFolder": true,
-      "Name": "Adult Prime",
+      "Name": "Arabelle's Playground",
+      "Overview": "Arabelle's Playground — 5 titles.",
       "PrimaryImageAspectRatio": 0.6667,
       "ProviderIds": {
-        "StashDb": "bac1b01c-15af-430b-80af-1492a1a6e028"
+        "StashDb": "c5ad7b8f-2317-4f5e-bfe2-a1ca4ede2161"
       },
-      "RecursiveItemCount": 0,
+      "RecursiveItemCount": 5,
       "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
-      "SortName": "Adult Prime",
+      "SortName": "Arabelle's Playground",
       "Type": "BoxSet",
       "UserData": {
         "IsFavorite": false,
-        "Key": "studio-393",
+        "Key": "studio-190",
         "PlayCount": 0,
         "PlaybackPositionTicks": 0,
         "Played": false

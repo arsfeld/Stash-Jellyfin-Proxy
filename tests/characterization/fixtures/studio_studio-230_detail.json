@@ -1,19 +1,26 @@
 {
   "compare_mode": "full",
-  "name": "studio_studio-446_detail",
+  "name": "studio_studio-230_detail",
   "request": {
     "body": null,
     "method": "GET",
-    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/studio-446"
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/studio-230"
   },
   "response": {
     "body": {
       "BackdropImageTags": [
         "img"
       ],
-      "ChildCount": 0,
+      "ChildCount": 4,
       "CollectionType": "movies",
-      "Id": "studio-446",
+      "EndDate": "2023-04-29T00:00:00.0000000Z",
+      "ExternalUrls": [
+        {
+          "Name": "Homepage",
+          "Url": "http://angelawhite.com"
+        }
+      ],
+      "Id": "studio-230",
       "ImageBlurHashes": {
         "Backdrop": {
           "img": "000000"
@@ -26,18 +33,19 @@
         "Primary": "img"
       },
       "IsFolder": true,
-      "Name": "Alex Adams Media",
+      "Name": "Angela White",
+      "Overview": "Angela White — 4 titles.",
       "PrimaryImageAspectRatio": 0.6667,
       "ProviderIds": {
-        "StashDb": "e42f2af3-d410-4bb4-bb5c-1b5fbbb07eae"
+        "StashDb": "6dd57359-d8a2-4314-a0b9-32a95108165b"
       },
-      "RecursiveItemCount": 0,
+      "RecursiveItemCount": 4,
       "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
-      "SortName": "Alex Adams Media",
+      "SortName": "Angela White",
       "Type": "BoxSet",
       "UserData": {
         "IsFavorite": false,
-        "Key": "studio-446",
+        "Key": "studio-230",
         "PlayCount": 0,
         "PlaybackPositionTicks": 0,
         "Played": false

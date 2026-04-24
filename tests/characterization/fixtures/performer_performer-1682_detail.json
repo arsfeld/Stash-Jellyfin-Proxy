@@ -8,11 +8,16 @@
   },
   "response": {
     "body": {
-      "BackdropImageTags": [],
+      "BackdropImageTags": [
+        "img"
+      ],
       "ChildCount": 5,
       "CollectionType": "movies",
       "Id": "performer-1682",
       "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
         "Primary": {
           "img": "000000"
         }
@@ -22,7 +27,13 @@
       },
       "IsFolder": true,
       "Name": "Abbie Gail",
+      "Overview": "Female performer, born 1985-03-11 (41), from CZ, active 2005–2010, 5 scenes in library.\n\nHeight: 168 cm (5'6\")\nMeasurements: 34D-27-37\nBreasts: Natural\nEthnicity: Caucasian\nHair: Blonde\nEyes: Blue\n\nAlso known as: Bonnie, Jana, Jane, Jane East, Luella, Maria White, Michaela, Nancy, Vanesa, Vanessa, Vanessa Storm, Violet, Violet A, Violette, Violette G",
+      "PremiereDate": "1985-03-11T00:00:00.0000000Z",
       "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 1985,
+      "ProviderIds": {
+        "StashDb": "7401a0e7-5067-4801-bca2-07ae51e34f02"
+      },
       "RecursiveItemCount": 5,
       "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
       "SortName": "Abbie Gail",

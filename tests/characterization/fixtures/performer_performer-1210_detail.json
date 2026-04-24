@@ -8,11 +8,16 @@
   },
   "response": {
     "body": {
-      "BackdropImageTags": [],
+      "BackdropImageTags": [
+        "img"
+      ],
       "ChildCount": 1,
       "CollectionType": "movies",
       "Id": "performer-1210",
       "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
         "Primary": {
           "img": "000000"
         }
@@ -22,7 +27,13 @@
       },
       "IsFolder": true,
       "Name": "Abbie Anderson",
+      "Overview": "Female performer, born 1993-03-03 (33), from US, active 2011–2013, 1 scene in library.\n\nHeight: 163 cm (5'4\")\nMeasurements: 34B-25-36\nEthnicity: Caucasian\nHair: Blonde\nEyes: Blue\n\nAlso known as: Katie Zane",
+      "PremiereDate": "1993-03-03T00:00:00.0000000Z",
       "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 1993,
+      "ProviderIds": {
+        "StashDb": "7f653560-899c-45ae-b670-067a95462a01"
+      },
       "RecursiveItemCount": 1,
       "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
       "SortName": "Abbie Anderson",

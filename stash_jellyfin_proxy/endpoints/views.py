@@ -76,7 +76,8 @@ async def _has_series_studios() -> bool:
 
 # --- User views / virtual folders ---
 
-def _make_library(name: str, lib_id: str, collection_type: str = "movies") -> dict:
+def _make_library(name: str, lib_id: str, collection_type: str = "movies",
+                  child_count: int = 0) -> dict:
     return {
         "Name": name,
         "Id": lib_id,
@@ -107,7 +108,7 @@ def _make_library(name: str, lib_id: str, collection_type: str = "movies") -> di
         "LocationType": "FileSystem",
         "LockedFields": [],
         "LockData": False,
-        "ChildCount": 100,
+        "ChildCount": child_count,
         "SpecialFeatureCount": 0,
         "UserData": {
             "PlaybackPositionTicks": 0,
@@ -115,31 +116,109 @@ def _make_library(name: str, lib_id: str, collection_type: str = "movies") -> di
             "IsFavorite": False,
             "Played": False,
             "Key": lib_id,
-            "UnplayedItemCount": 100,
+            "UnplayedItemCount": child_count,
         },
     }
+
+
+async def _library_counts() -> dict:
+    """Fetch real counts for the library root cards. Runs the per-library
+    GraphQL count queries in parallel so /UserViews stays snappy (clients
+    call this every home-screen open). Any failure falls back to 0 so a
+    single missing endpoint doesn't break the root list."""
+    import asyncio
+
+    async def _count(q: str, variables: Optional[dict], path: list) -> int:
+        try:
+            res = await stash_query(q, variables)
+            node = (res or {}).get("data") or {}
+            for key in path:
+                if node is None:
+                    return 0
+                if isinstance(key, int):
+                    node = node[key] if isinstance(node, list) and len(node) > key else None
+                else:
+                    node = node.get(key) if isinstance(node, dict) else None
+            return int(node or 0)
+        except Exception as e:
+            logger.debug(f"library count query failed ({path}): {e}")
+            return 0
+
+    coroutines = {
+        "root-scenes": _count("query { findScenes { count } }", None, ["findScenes", "count"]),
+        "root-studios": _count(
+            """query { findStudios(studio_filter: {scene_count: {value: 0, modifier: GREATER_THAN}}) { count } }""",
+            None, ["findStudios", "count"]),
+        "root-performers": _count("query { findPerformers { count } }", None, ["findPerformers", "count"]),
+        "root-groups": _count("query { findGroups { count } }", None, ["findGroups", "count"]),
+    }
+    if runtime.ENABLE_TAG_FILTERS:
+        coroutines["root-tags"] = _count("query { findTags { count } }", None, ["findTags", "count"])
+    for tag_name in runtime.TAG_GROUPS:
+        tag_id = f"tag-{tag_name.lower().replace(' ', '-')}"
+        coroutines[tag_id] = _count(
+            """query TagSceneCount($name: String!) {
+                findTags(tag_filter: {name: {value: $name, modifier: EQUALS}}, filter: {per_page: 1}) {
+                    tags { scene_count }
+                }
+            }""",
+            {"name": tag_name},
+            ["findTags", "tags", 0, "scene_count"],
+        )
+    # series count handled separately — visibility check already fetches it.
+
+    keys = list(coroutines.keys())
+    results = await asyncio.gather(*(coroutines[k] for k in keys), return_exceptions=True)
+    out = {}
+    for k, v in zip(keys, results):
+        out[k] = 0 if isinstance(v, Exception) else int(v or 0)
+    return out
 
 
 async def endpoint_user_views(request):
     """`GET /Users/{user_id}/Views` — the root library list shown as the
     sidebar/top-level entries in every client."""
+    counts = await _library_counts()
     items = [
-        _make_library("Scenes",     "root-scenes",     "movies"),
-        _make_library("Studios",    "root-studios",    "movies"),
-        _make_library("Performers", "root-performers", "movies"),
-        _make_library("Groups",     "root-groups",     "movies"),
+        _make_library("Scenes",     "root-scenes",     "movies", counts.get("root-scenes", 0)),
+        _make_library("Studios",    "root-studios",    "movies", counts.get("root-studios", 0)),
+        _make_library("Performers", "root-performers", "movies", counts.get("root-performers", 0)),
+        _make_library("Groups",     "root-groups",     "movies", counts.get("root-groups", 0)),
     ]
     # Series library: appears only when at least one studio has SERIES_TAG.
     # Swiftfin gets tvshows for native Series nav; Infuse/SenPlayer get movies
     # (their tvshows renderer shows a blank/unnamed folder).
     if await _has_series_studios():
-        items.append(_make_library("Series", "root-series", _series_collection_type(request)))
+        series_count = await _series_count()
+        items.append(_make_library("Series", "root-series", _series_collection_type(request), series_count))
     if runtime.ENABLE_TAG_FILTERS:
-        items.append(_make_library("Tags", "root-tags", "movies"))
+        items.append(_make_library("Tags", "root-tags", "movies", counts.get("root-tags", 0)))
     for tag_name in sorted(runtime.TAG_GROUPS, key=str.lower):
         tag_id = f"tag-{tag_name.lower().replace(' ', '-')}"
-        items.append(_make_library(tag_name, tag_id, "movies"))
+        items.append(_make_library(tag_name, tag_id, "movies", counts.get(tag_id, 0)))
     return JSONResponse({"Items": items, "TotalRecordCount": len(items)})
+
+
+async def _series_count() -> int:
+    """Count of SERIES-tagged studios for the Series library badge."""
+    if not runtime.SERIES_TAG:
+        return 0
+    tag_id = await get_or_create_tag(runtime.SERIES_TAG)
+    if not tag_id:
+        return 0
+    try:
+        res = await stash_query(
+            """query SeriesCount($tid: [ID!]) {
+                findStudios(studio_filter: {tags: {value: $tid, modifier: INCLUDES}}, filter: {per_page: 1}) {
+                    count
+                }
+            }""",
+            {"tid": [tag_id]},
+        )
+        return int(((res.get("data") or {}).get("findStudios") or {}).get("count") or 0)
+    except Exception as e:
+        logger.debug(f"series count failed: {e}")
+        return 0
 
 
 async def endpoint_virtual_folders(request):
@@ -411,7 +490,10 @@ async def endpoint_latest_items(request):
 
     elif parent_id == "root-studios":
         q = """query FindStudios($page: Int!, $per_page: Int!) {
-            findStudios(filter: {page: $page, per_page: $per_page, sort: "created_at", direction: DESC}) {
+            findStudios(
+                studio_filter: {scene_count: {value: 0, modifier: GREATER_THAN}},
+                filter: {page: $page, per_page: $per_page, sort: "created_at", direction: DESC}
+            ) {
                 studios { id name image_path scene_count }
             }
         }"""

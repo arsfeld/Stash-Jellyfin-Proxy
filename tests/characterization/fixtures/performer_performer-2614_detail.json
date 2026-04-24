@@ -8,11 +8,16 @@
   },
   "response": {
     "body": {
-      "BackdropImageTags": [],
+      "BackdropImageTags": [
+        "img"
+      ],
       "ChildCount": 2,
       "CollectionType": "movies",
       "Id": "performer-2614",
       "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
         "Primary": {
           "img": "000000"
         }
@@ -22,7 +27,13 @@
       },
       "IsFolder": true,
       "Name": "Aaliyah Hadid",
+      "Overview": "Female performer, born 1995-10-19 (30), from US, active since 2016, 2 scenes in library.\n\nHeight: 168 cm (5'6\")\nMeasurements: 34D-24-36\nBreasts: Fake\nEthnicity: Black\nHair: Black\nEyes: Brown\n\nTattoos: left ribcage, blossoming cherry tree\nPiercings: nipples; right nostril",
+      "PremiereDate": "1995-10-19T00:00:00.0000000Z",
       "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 1995,
+      "ProviderIds": {
+        "StashDb": "50459d16-787c-47c9-8ce9-a4cac9404324"
+      },
       "RecursiveItemCount": 2,
       "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
       "SortName": "Aaliyah Hadid",

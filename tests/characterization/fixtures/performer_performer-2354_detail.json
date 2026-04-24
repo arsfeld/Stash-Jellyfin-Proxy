@@ -8,11 +8,16 @@
   },
   "response": {
     "body": {
-      "BackdropImageTags": [],
+      "BackdropImageTags": [
+        "img"
+      ],
       "ChildCount": 3,
       "CollectionType": "movies",
       "Id": "performer-2354",
       "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
         "Primary": {
           "img": "000000"
         }
@@ -22,7 +27,13 @@
       },
       "IsFolder": true,
       "Name": "Aaliyah Jolie",
+      "Overview": "Female performer, born 1981-04-21 (45), from US, active 2005–2014, 3 scenes in library.\n\nHeight: 173 cm (5'8\")\nMeasurements: 34A-26-34\nBreasts: Natural\nEthnicity: Caucasian\nHair: Blonde\nEyes: Green\n\nTattoos: Back of Neck\nPiercings: Navel; tongue\n\nAlso known as: Aaliyah, Aliyah Jolie, Aliyah Julie, Allayah",
+      "PremiereDate": "1981-04-21T00:00:00.0000000Z",
       "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 1981,
+      "ProviderIds": {
+        "StashDb": "77d836e2-bafc-4ef7-a1bb-147d9c5c7c05"
+      },
       "RecursiveItemCount": 3,
       "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
       "SortName": "Aaliyah Jolie",

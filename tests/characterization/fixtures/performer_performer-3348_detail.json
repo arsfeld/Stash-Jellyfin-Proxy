@@ -8,11 +8,16 @@
   },
   "response": {
     "body": {
-      "BackdropImageTags": [],
+      "BackdropImageTags": [
+        "img"
+      ],
       "ChildCount": 1,
       "CollectionType": "movies",
       "Id": "performer-3348",
       "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
         "Primary": {
           "img": "000000"
         }
@@ -22,7 +27,11 @@
       },
       "IsFolder": true,
       "Name": "Abby Adams",
+      "Overview": "Female performer, from USA, 1 scene in library.\n\nHeight: 157 cm (5'2\")\nBreasts: Natural\nEthnicity: Caucasian\nHair: Blonde\n\nAlso known as: Janey ID1635",
       "PrimaryImageAspectRatio": 0.6667,
+      "ProviderIds": {
+        "StashDb": "96aa8fc9-7118-45a0-b7fc-9ff865bfc10f"
+      },
       "RecursiveItemCount": 1,
       "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
       "SortName": "Abby Adams",

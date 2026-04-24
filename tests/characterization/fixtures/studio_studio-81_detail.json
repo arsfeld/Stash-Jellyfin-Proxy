@@ -1,25 +1,26 @@
 {
   "compare_mode": "full",
-  "name": "studio_studio-421_detail",
+  "name": "studio_studio-81_detail",
   "request": {
     "body": null,
     "method": "GET",
-    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/studio-421"
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/studio-81"
   },
   "response": {
     "body": {
       "BackdropImageTags": [
         "img"
       ],
-      "ChildCount": 0,
+      "ChildCount": 23,
       "CollectionType": "movies",
+      "EndDate": "2026-04-21T00:00:00.0000000Z",
       "ExternalUrls": [
         {
           "Name": "Homepage",
-          "Url": "https://www.adulttime.com/"
+          "Url": "http://www.americandaydreams.com/"
         }
       ],
-      "Id": "studio-421",
+      "Id": "studio-81",
       "ImageBlurHashes": {
         "Backdrop": {
           "img": "000000"
@@ -32,18 +33,27 @@
         "Primary": "img"
       },
       "IsFolder": true,
-      "Name": "Adult Time Originals",
+      "Name": "American Daydreams",
+      "Overview": "American Daydreams — 23 titles, 2010–2026, part of the Naughty America (Network) network.",
+      "PremiereDate": "2010-04-02T00:00:00.0000000Z",
       "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 2010,
       "ProviderIds": {
-        "StashDb": "91bfd32c-2f56-43a1-8bb9-55d3a84d88d5"
+        "StashDb": "1d514eb6-2225-436b-ae09-fda5fb11f5e3"
       },
-      "RecursiveItemCount": 0,
+      "RecursiveItemCount": 23,
       "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
-      "SortName": "Adult Time Originals",
+      "SortName": "American Daydreams",
+      "Studios": [
+        {
+          "Id": "studio-364",
+          "Name": "Naughty America (Network)"
+        }
+      ],
       "Type": "BoxSet",
       "UserData": {
         "IsFavorite": false,
-        "Key": "studio-421",
+        "Key": "studio-81",
         "PlayCount": 0,
         "PlaybackPositionTicks": 0,
         "Played": false
