@@ -4,10 +4,49 @@ Clients parse LocalAddress and will refuse the server if it advertises
 something unreachable (e.g. http://0.0.0.0:8096). Respect reverse-proxy
 headers so SWAG/nginx setups advertise the public https origin.
 """
-from starlette.responses import JSONResponse, RedirectResponse
+from starlette.responses import JSONResponse, Response
 from starlette.requests import Request
 
 from stash_jellyfin_proxy import runtime
+
+
+_ROOT_LANDING_HTML = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stash-Jellyfin Proxy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: -apple-system, system-ui, sans-serif; background: #1a1a1f; color: #ccc;
+       max-width: 540px; margin: 60px auto; padding: 0 20px; line-height: 1.5; }
+h1 { color: #eee; font-weight: 500; margin-bottom: 4px; }
+.sub { color: #888; margin-bottom: 30px; font-size: 14px; }
+.card { background: #252530; border: 1px solid #333; border-radius: 8px; padding: 16px 20px; margin: 12px 0; }
+code { background: #333; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+a { color: #5ba8ff; }
+</style>
+</head>
+<body>
+<h1>Stash-Jellyfin Proxy</h1>
+<div class="sub">Jellyfin API emulation layer in front of a Stash media server.</div>
+<div class="card">
+  <strong>This is an API endpoint, not a web app.</strong>
+  Point a Jellyfin-compatible client (Swiftfin, Infuse, SenPlayer, the official Jellyfin iOS/Android app)
+  at this server's address to browse and stream.
+</div>
+<div class="card">
+  Configuration and status dashboard: <a href="/"></a>
+  <script>document.querySelector('.card a').href =
+    window.location.origin.replace(/:\\d+/, ':' + "__UI_PORT__");
+    document.querySelector('.card a').textContent = document.querySelector('.card a').href;
+  </script>
+</div>
+<div class="card">
+  Server identity: <a href="/System/Info/Public"><code>/System/Info/Public</code></a>
+</div>
+</body>
+</html>
+"""
 
 
 def derive_local_address(request: Request) -> str:
@@ -23,9 +62,19 @@ def derive_local_address(request: Request) -> str:
 
 
 async def endpoint_root(request):
-    """`GET /` — Infuse probes root for life. Redirect to System/Info/Public
-    so the response also satisfies clients that expect server identity here."""
-    return RedirectResponse(url="/System/Info/Public")
+    """`GET /` — human-readable landing page identifying the proxy.
+
+    Previously redirected to /System/Info/Public so clients that probe
+    the root URL for server identity would see it. That broke the
+    official Jellyfin iOS/iPadOS app: it hits `/` on first connect,
+    followed our 307, and rendered the resulting JSON as its "server
+    content" view — user sees raw JSON and gets stuck.
+
+    Now serves a small HTML page. Clients that want identity hit
+    `/System/Info/Public` explicitly (every maintained Jellyfin client
+    does). Infuse's liveness probe is satisfied by any 2xx response."""
+    html = _ROOT_LANDING_HTML.replace("__UI_PORT__", str(runtime.UI_PORT))
+    return Response(content=html, media_type="text/html")
 
 
 async def endpoint_system_info(request):
