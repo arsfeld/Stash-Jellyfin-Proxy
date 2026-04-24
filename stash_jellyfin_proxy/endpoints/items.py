@@ -1775,13 +1775,18 @@ async def endpoint_item_details(request):
                 count_q = """query Cnt($tid: [ID!]) { findStudios(studio_filter: {tags: {value: $tid, modifier: INCLUDES}}) { count } }"""
                 count_res = await stash_query(count_q, {"tid": [tag_id]})
                 total_count = count_res.get("data", {}).get("findStudios", {}).get("count", 0)
+        # Per-client CollectionType: Swiftfin gets tvshows for native Series
+        # nav; Infuse/SenPlayer render tvshows as unnamed folders so they get
+        # movies (name shows, tapping in lists series as BoxSets).
+        from stash_jellyfin_proxy.players.matcher import resolve_from_request
+        series_ct = "tvshows" if resolve_from_request(request).name == "swiftfin" else "movies"
         return JSONResponse({
             "Name": "Series",
             "SortName": "Series",
             "Id": "root-series",
             "ServerId": runtime.SERVER_ID,
             "Type": "CollectionFolder",
-            "CollectionType": "tvshows",
+            "CollectionType": series_ct,
             "IsFolder": True,
             "ImageTags": {},
             "BackdropImageTags": [],

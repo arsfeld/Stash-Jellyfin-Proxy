@@ -8,6 +8,7 @@ from starlette.responses import JSONResponse
 
 from stash_jellyfin_proxy import runtime
 from stash_jellyfin_proxy.mapping.scene import format_jellyfin_item, is_group_favorite
+from stash_jellyfin_proxy.players.matcher import resolve_from_request
 from stash_jellyfin_proxy.stash.client import stash_query
 from stash_jellyfin_proxy.stash.scene import get_scene_title
 from stash_jellyfin_proxy.stash.tags import get_or_create_tag
@@ -30,6 +31,19 @@ _SCENE_FIELDS = (
 # short because series tagging changes rarely but we want fresh-enough state.
 import time as _time
 _series_visibility: dict = {"expires": 0.0, "value": False}
+
+
+def _series_collection_type(request) -> str:
+    """CollectionType for the Series library tile.
+
+    Swiftfin renders 'tvshows' with native Series/Season/Episode navigation.
+    Infuse and SenPlayer display 'tvshows' libraries as an unnamed blank
+    folder (no TV UI), so give them 'movies' — the label shows and tapping
+    in renders the studios list as regular BoxSets."""
+    profile = resolve_from_request(request)
+    if profile.name == "swiftfin":
+        return "tvshows"
+    return "movies"
 
 
 async def _has_series_studios() -> bool:
@@ -116,9 +130,10 @@ async def endpoint_user_views(request):
         _make_library("Groups",     "root-groups",     "movies"),
     ]
     # Series library: appears only when at least one studio has SERIES_TAG.
-    # Uses tvshows CollectionType so Swiftfin renders Series/Season/Episode nav.
+    # Swiftfin gets tvshows for native Series nav; Infuse/SenPlayer get movies
+    # (their tvshows renderer shows a blank/unnamed folder).
     if await _has_series_studios():
-        items.append(_make_library("Series", "root-series", "tvshows"))
+        items.append(_make_library("Series", "root-series", _series_collection_type(request)))
     if runtime.ENABLE_TAG_FILTERS:
         items.append(_make_library("Tags", "root-tags", "movies"))
     for tag_name in sorted(runtime.TAG_GROUPS, key=str.lower):
@@ -137,7 +152,7 @@ async def endpoint_virtual_folders(request):
         {"Name": "Groups",     "Locations": [], "CollectionType": "movies", "ItemId": "root-groups"},
     ]
     if await _has_series_studios():
-        folders.append({"Name": "Series", "Locations": [], "CollectionType": "tvshows", "ItemId": "root-series"})
+        folders.append({"Name": "Series", "Locations": [], "CollectionType": _series_collection_type(request), "ItemId": "root-series"})
     if runtime.ENABLE_TAG_FILTERS:
         folders.append({"Name": "Tags", "Locations": [], "CollectionType": "movies", "ItemId": "root-tags"})
     for tag_name in sorted(runtime.TAG_GROUPS, key=str.lower):
