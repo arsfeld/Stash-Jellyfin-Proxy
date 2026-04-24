@@ -22,12 +22,35 @@ from stash_jellyfin_proxy.stash.client import fetch_from_stash, stash_query
 from stash_jellyfin_proxy.util.ids import get_numeric_id
 from stash_jellyfin_proxy.util.images import (
     PILLOW_AVAILABLE,
+    crop_to_portrait,
     generate_filter_icon,
     generate_menu_icon,
     generate_placeholder_icon,
     generate_text_icon,
     pad_image_to_portrait,
 )
+
+
+def _request_wants_landscape(request) -> bool:
+    """Infer tile aspect from the client's image-request query params.
+    Clients like Swiftfin send fillWidth/fillHeight that reflect the
+    target tile shape: a 206x309 fill is a 2:3 portrait Movie card; a
+    500x281 fill is a 16:9 Home-rail card. When width > height the
+    client is rendering a landscape tile and we should skip portrait
+    cropping regardless of the profile's poster_format."""
+    q = request.query_params
+    for w_key, h_key in (("fillWidth", "fillHeight"), ("maxWidth", "maxHeight")):
+        w = q.get(w_key) or q.get(w_key.lower())
+        h = q.get(h_key) or q.get(h_key.lower())
+        if w and h:
+            try:
+                if int(w) > int(h):
+                    return True
+                if int(h) > int(w):
+                    return False
+            except ValueError:
+                pass
+    return False
 
 logger = logging.getLogger("stash-jellyfin-proxy")
 
@@ -53,7 +76,13 @@ async def endpoint_image(request):
     item_id = request.path_params.get("item_id")
     # Backdrop must always be landscape (design §7.4), regardless of per-client
     # poster_format. Skip portrait cropping for Backdrop and Thumb requests.
-    is_landscape_type = "/Backdrop" in request.url.path or "/Thumb" in request.url.path
+    # Also detect when the client is rendering a landscape tile and honour
+    # that even for Primary requests (Home-row fillWidth>fillHeight).
+    is_landscape_type = (
+        "/Backdrop" in request.url.path
+        or "/Thumb" in request.url.path
+        or _request_wants_landscape(request)
+    )
 
     if item_id in MENU_ICONS:
         img_data, content_type = generate_menu_icon(item_id)
@@ -337,6 +366,9 @@ async def endpoint_image(request):
                         scene_fb = await _studio_scene_fallback(numeric_id)
                         if scene_fb is not None:
                             data, content_type = scene_fb
+                            # Scene screenshots are 16:9 — crop to portrait
+                            # when resizing, don't letterbox.
+                            source_is_scene = True
                             logger.debug(f"Used scene-screenshot fallback for {item_id}")
                         else:
                             logger.debug(f"No fallback for {item_id}, generating text icon")
@@ -389,8 +421,17 @@ async def endpoint_image(request):
                 return Response(content=img_data, media_type=ct, headers=_IMAGE_CACHE_HEADERS)
 
         if needs_portrait_resize and runtime.ENABLE_IMAGE_RESIZE and PILLOW_AVAILABLE:
-            data, content_type = pad_image_to_portrait(data, target_width=400, target_height=600)
-            logger.debug("Resized studio image to 400x600 portrait (2:3)")
+            # Scenes (and scene-screenshot fallbacks for studios) get cropped
+            # to 2:3 — scenes are 16:9 landscape and center-cropping produces
+            # a clean poster. Studio logos keep the letterbox-pad so text
+            # wordmarks don't get chopped in half.
+            if item_id.startswith("scene-") or locals().get("source_is_scene"):
+                anchor = getattr(runtime, "POSTER_CROP_ANCHOR", "center") or "center"
+                data, content_type = crop_to_portrait(data, 400, 600, anchor=anchor)
+                logger.debug("Cropped to 400x600 portrait (2:3)")
+            else:
+                data, content_type = pad_image_to_portrait(data, target_width=400, target_height=600)
+                logger.debug("Letterbox-padded to 400x600 portrait (2:3)")
             if len(runtime.IMAGE_CACHE) >= runtime.IMAGE_CACHE_MAX_SIZE:
                 oldest_key = next(iter(runtime.IMAGE_CACHE))
                 del runtime.IMAGE_CACHE[oldest_key]

@@ -127,6 +127,9 @@ SERIES_TAG: str = "Series"
 SERIES_EPISODE_PATTERNS: str = ""
 PLAYER_PROFILES: List[Any] = []
 
+# --- Image policy (Phase 3) ---
+POSTER_CROP_ANCHOR: str = "center"
+
 
 def publish(**kwargs):
     """Bulk-set attributes. Used by the monolith bootstrap to copy its

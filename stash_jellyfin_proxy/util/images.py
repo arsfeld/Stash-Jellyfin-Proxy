@@ -48,6 +48,72 @@ def placeholder_png() -> bytes:
     return _PLACEHOLDER_PNG
 
 
+def crop_to_portrait(image_data: bytes, target_width: int = 400, target_height: int = 600,
+                     anchor: str = "center") -> Tuple[bytes, str]:
+    """Crop a source image to a 2:3 portrait using cover+crop (no letterbox).
+    Source is scaled to fill the target frame on the narrower dimension,
+    then cropped horizontally (for landscape sources) or vertically (for
+    portrait sources) using the configured anchor.
+
+    anchor: "center" (default), "left", "right" for horizontal crop;
+            "top", "bottom" for vertical crop (ignored when source is
+            already wider than target).
+
+    Returns (image_bytes, content_type). Pillow failure → return source
+    bytes untouched so the caller still has a usable image."""
+    if not PILLOW_AVAILABLE:
+        return image_data, "image/jpeg"
+
+    try:
+        img = Image.open(io.BytesIO(image_data))
+        if img.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', img.size, (20, 20, 20))
+            if img.mode == 'P':
+                img = img.convert('RGBA')
+            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+            img = background
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+
+        src_w, src_h = img.size
+        target_ratio = target_width / target_height  # 2/3 ≈ 0.667
+        src_ratio = src_w / src_h
+
+        if src_ratio > target_ratio:
+            # Source is wider than target — scale to match height, crop sides.
+            scale = target_height / src_h
+            new_w = int(src_w * scale)
+            new_h = target_height
+            img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+            if anchor == "left":
+                x0 = 0
+            elif anchor == "right":
+                x0 = new_w - target_width
+            else:
+                x0 = (new_w - target_width) // 2
+            img = img.crop((x0, 0, x0 + target_width, target_height))
+        else:
+            # Source is taller than target — scale to match width, crop top/bottom.
+            scale = target_width / src_w
+            new_w = target_width
+            new_h = int(src_h * scale)
+            img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+            if anchor == "top":
+                y0 = 0
+            elif anchor == "bottom":
+                y0 = new_h - target_height
+            else:
+                y0 = (new_h - target_height) // 2
+            img = img.crop((0, y0, target_width, y0 + target_height))
+
+        output = io.BytesIO()
+        img.save(output, format='JPEG', quality=85)
+        return output.getvalue(), "image/jpeg"
+    except Exception as e:
+        logger.warning(f"Portrait crop failed: {e}, returning original")
+        return image_data, "image/jpeg"
+
+
 def pad_image_to_portrait(image_data: bytes, target_width: int = 400, target_height: int = 600) -> Tuple[bytes, str]:
     """Pad a source image to a portrait 2:3 canvas using contain+pad.
     Returns (image_bytes, content_type). Pillow failure → return the
