@@ -15,6 +15,7 @@ Helper functions:
 import json
 import logging
 import os
+import random
 from typing import Any, Dict, List
 
 from starlette.responses import JSONResponse
@@ -1378,7 +1379,7 @@ async def endpoint_items(request):
             if is_banner_request:
                 banner_scenes = []
                 tag_ids = []
-                if BANNER_MODE == "tag" and runtime.BANNER_TAGS:
+                if runtime.BANNER_MODE == "tag" and runtime.BANNER_TAGS:
                     # Stash's name filter doesn't accept a list; look up each tag individually.
                     for tname in runtime.BANNER_TAGS:
                         try:
@@ -1395,7 +1396,7 @@ async def endpoint_items(request):
                     if not tag_ids:
                         logger.debug(f"Banner mode=tag but no runtime.BANNER_TAGS resolved ({runtime.BANNER_TAGS}); falling back to recent")
 
-                if BANNER_MODE == "tag" and tag_ids:
+                if runtime.BANNER_MODE == "tag" and tag_ids:
                     q = f"""query BannerScenesByTags($tids: [ID!], $per_page: Int!) {{
                         findScenes(
                             scene_filter: {{tags: {{value: $tids, modifier: INCLUDES}}}},
