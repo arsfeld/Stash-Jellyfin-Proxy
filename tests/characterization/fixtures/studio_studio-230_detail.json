@@ -1,0 +1,57 @@
+{
+  "compare_mode": "full",
+  "name": "studio_studio-230_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/studio-230"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [
+        "img"
+      ],
+      "ChildCount": 4,
+      "CollectionType": "movies",
+      "EndDate": "2023-04-29T00:00:00.0000000Z",
+      "ExternalUrls": [
+        {
+          "Name": "Homepage",
+          "Url": "http://angelawhite.com"
+        }
+      ],
+      "Id": "studio-230",
+      "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
+        "Primary": {
+          "img": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "img"
+      },
+      "IsFolder": true,
+      "Name": "Angela White",
+      "Overview": "Angela White — 4 titles.",
+      "PrimaryImageAspectRatio": 0.6667,
+      "ProviderIds": {
+        "StashDb": "6dd57359-d8a2-4314-a0b9-32a95108165b"
+      },
+      "RecursiveItemCount": 4,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "Angela White",
+      "Type": "BoxSet",
+      "UserData": {
+        "IsFavorite": false,
+        "Key": "studio-230",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

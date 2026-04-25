@@ -1,0 +1,62 @@
+{
+  "compare_mode": "full",
+  "name": "studio_studio-570_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/studio-570"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [
+        "img"
+      ],
+      "ChildCount": 1,
+      "CollectionType": "movies",
+      "ExternalUrls": [
+        {
+          "Name": "Homepage",
+          "Url": "https://arporn.com"
+        }
+      ],
+      "Id": "studio-570",
+      "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
+        "Primary": {
+          "img": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "img"
+      },
+      "IsFolder": true,
+      "Name": "ARPorn",
+      "Overview": "ARPorn — 1 title, part of the Unzip VR network.",
+      "PrimaryImageAspectRatio": 0.6667,
+      "ProviderIds": {
+        "StashDb": "7286530c-e135-4f96-9a06-a27c22b2ca42"
+      },
+      "RecursiveItemCount": 1,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "ARPorn",
+      "Studios": [
+        {
+          "Id": "studio-571",
+          "Name": "Unzip VR"
+        }
+      ],
+      "Type": "BoxSet",
+      "UserData": {
+        "IsFavorite": false,
+        "Key": "studio-570",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

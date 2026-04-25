@@ -1,0 +1,456 @@
+{
+  "compare_mode": "full",
+  "name": "group_group-47_items",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=group-47&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b29724"
+          ],
+          "CanDownload": true,
+          "Container": "avi",
+          "Etag": "b53cfc3420cc2d93",
+          "Genres": [],
+          "HasSubtitles": false,
+          "Id": "scene-29724",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b29724": "000000"
+            },
+            "Primary": {
+              "p29724": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p29724"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 1341520,
+              "Container": "avi",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-29724",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "608:336",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 1341520,
+                  "Codec": "mpeg4",
+                  "Height": 336,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 608
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Addicted to Boobs #7 - CD1",
+              "Path": "/data2/Movies/Addicted to Boobs 7 (2010)/Addicted to Boobs 7 (2010) scene 1.avi",
+              "Protocol": "File",
+              "RunTimeTicks": 43559300000,
+              "Size": 730445824,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "608:336",
+              "AverageFrameRate": 29.97,
+              "BitRate": 1341520,
+              "Codec": "mpeg4",
+              "Height": 336,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 608
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Addicted to Boobs #7 - CD1",
+          "OfficialRating": "NC-17",
+          "Overview": "We've got a serious problem, we're addicted to boobs! We've rounded up five sluts who all have one thing in common: Amazing tits! These girls love having their titties played with while they're getting their fuck on! Jessica Moore, Sierra Skye, London Keyes, Charley Chases, and Jennifer White star in this tittalizing installment!",
+          "ParentId": "group-47",
+          "PartCount": 1,
+          "Path": "/data2/Movies/Addicted to Boobs 7 (2010)/Addicted to Boobs 7 (2010) scene 1.avi",
+          "People": [
+            {
+              "Id": "person-492",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p492": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p492"
+              },
+              "Name": "Jennifer White",
+              "PrimaryImageTag": "p492",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-562",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p562": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p562"
+              },
+              "Name": "London Keyes",
+              "PrimaryImageTag": "p562",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-754",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p754": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p754"
+              },
+              "Name": "Jessica Moore",
+              "PrimaryImageTag": "p754",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1532",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1532": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1532"
+              },
+              "Name": "Sierra Skye",
+              "PrimaryImageTag": "p1532",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-3669",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p3669": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p3669"
+              },
+              "Name": "Charley Chase",
+              "PrimaryImageTag": "p3669",
+              "Role": "",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2010-03-22T00:00:00.0000000Z",
+          "ProductionYear": 2010,
+          "RunTimeTicks": 43559300000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Addicted to Boobs #7 - CD1",
+          "SourceType": "Default",
+          "Studios": [
+            {
+              "Id": "studio-372",
+              "Name": "Red Light District"
+            }
+          ],
+          "Tags": [
+            "!8. Movie",
+            "Big Tits",
+            "Gonzo"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-29724",
+            "Key": "scene-29724",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b22269"
+          ],
+          "CanDownload": true,
+          "Container": "avi",
+          "Etag": "c38afc3371239cd4",
+          "Genres": [],
+          "HasSubtitles": false,
+          "Id": "scene-22269",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b22269": "000000"
+            },
+            "Primary": {
+              "p22269": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p22269"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 1271955,
+              "Container": "avi",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-22269",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "608:336",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 1271955,
+                  "Codec": "mpeg4",
+                  "Height": 336,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 608
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Addicted to Boobs #7 - CD2",
+              "Path": "/data2/Movies/Addicted to Boobs 7 (2010)/Addicted to Boobs 7 (2010) scene 2.avi",
+              "Protocol": "File",
+              "RunTimeTicks": 46005400000,
+              "Size": 731459584,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "608:336",
+              "AverageFrameRate": 29.97,
+              "BitRate": 1271955,
+              "Codec": "mpeg4",
+              "Height": 336,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 608
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Addicted to Boobs #7 - CD2",
+          "OfficialRating": "NC-17",
+          "Overview": "We've got a serious problem, we're addicted to boobs! We've rounded up five sluts who all have one thing in common: Amazing tits! These girls love having their titties played with while they're getting their fuck on! Jessica Moore, Sierra Skye, London Keyes, Charley Chases, and Jennifer White star in this tittalizing installment!",
+          "ParentId": "group-47",
+          "PartCount": 1,
+          "Path": "/data2/Movies/Addicted to Boobs 7 (2010)/Addicted to Boobs 7 (2010) scene 2.avi",
+          "People": [
+            {
+              "Id": "person-492",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p492": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p492"
+              },
+              "Name": "Jennifer White",
+              "PrimaryImageTag": "p492",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-562",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p562": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p562"
+              },
+              "Name": "London Keyes",
+              "PrimaryImageTag": "p562",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-754",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p754": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p754"
+              },
+              "Name": "Jessica Moore",
+              "PrimaryImageTag": "p754",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1532",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1532": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1532"
+              },
+              "Name": "Sierra Skye",
+              "PrimaryImageTag": "p1532",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-3669",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p3669": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p3669"
+              },
+              "Name": "Charley Chase",
+              "PrimaryImageTag": "p3669",
+              "Role": "",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2010-03-22T00:00:00.0000000Z",
+          "ProductionYear": 2010,
+          "RunTimeTicks": 46005400000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Addicted to Boobs #7 - CD2",
+          "SourceType": "Default",
+          "Studios": [
+            {
+              "Id": "studio-372",
+              "Name": "Red Light District"
+            }
+          ],
+          "Tags": [
+            "Big Tits",
+            "Gonzo"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-22269",
+            "Key": "scene-22269",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 2
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

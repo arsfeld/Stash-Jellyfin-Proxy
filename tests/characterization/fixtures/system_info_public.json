@@ -1,0 +1,22 @@
+{
+  "compare_mode": "full",
+  "name": "system_info_public",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/System/Info/Public"
+  },
+  "response": {
+    "body": {
+      "Id": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "LocalAddress": "http://192.168.0.200:18096",
+      "OperatingSystem": "Linux",
+      "ProductName": "Jellyfin Server",
+      "ServerName": "Stash Dev",
+      "StartupWizardCompleted": true,
+      "Version": "10.11.0"
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

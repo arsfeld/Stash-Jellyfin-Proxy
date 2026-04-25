@@ -1,0 +1,720 @@
+{
+  "compare_mode": "shape",
+  "name": "items_root-performers",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=root-performers&Limit=25&StartIndex=0&Fields=PrimaryImageAspectRatio"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "filters-performers",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "FILTERS",
+          "ParentId": "root-performers",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "!!!FILTERS",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filters-performers",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "performer-3010",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Aaliyah Ca Pelle",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Aaliyah Ca Pelle",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-3010",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "performer-2614",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Aaliyah Hadid",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Aaliyah Hadid",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-2614",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 3,
+          "CollectionType": "movies",
+          "Id": "performer-2354",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Aaliyah Jolie",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 3,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Aaliyah Jolie",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-2354",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 15,
+          "CollectionType": "movies",
+          "Id": "performer-1162",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Aaliyah Love",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 15,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Aaliyah Love",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-1162",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 3,
+          "CollectionType": "movies",
+          "Id": "performer-3840",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abbey Brook",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 3,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abbey Brook",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-3840",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 24,
+          "CollectionType": "movies",
+          "Id": "performer-53",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abbey Brooks",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 24,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abbey Brooks",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-53",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "performer-1210",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abbie Anderson",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abbie Anderson",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-1210",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 5,
+          "CollectionType": "movies",
+          "Id": "performer-1682",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abbie Gail",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 5,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abbie Gail",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-1682",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "performer-3348",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abby Adams",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abby Adams",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-3348",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "performer-2919",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abby Cross",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abby Cross",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-2919",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "performer-2937",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abby Lee Brazil",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abby Lee Brazil",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-2937",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 4,
+          "CollectionType": "movies",
+          "Id": "performer-1211",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abby Rains",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 4,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abby Rains",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-1211",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 10,
+          "CollectionType": "movies",
+          "Id": "performer-73",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abby Rode",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 10,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abby Rode",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-73",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "performer-4085",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abby Rose",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abby Rose",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-4085",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "performer-4674",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abella Anderson",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abella Anderson",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-4674",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 30,
+          "CollectionType": "movies",
+          "Id": "performer-225",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abella Danger",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 30,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abella Danger",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-225",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "performer-3697",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abi James",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abi James",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-3697",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 16,
+          "CollectionType": "movies",
+          "Id": "performer-757",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abigail Mac",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 16,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abigail Mac",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-757",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 23,
+          "CollectionType": "movies",
+          "Id": "performer-283",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Abigail Toyne",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 23,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Abigail Toyne",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-283",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "performer-1670",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Ada Costa",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Ada Costa",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-1670",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 2,
+          "CollectionType": "movies",
+          "Id": "performer-4178",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Ada Lapiedra",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 2,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Ada Lapiedra",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-4178",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "performer-2121",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Adalind Gray",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Adalind Gray",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-2121",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 5,
+          "CollectionType": "movies",
+          "Id": "performer-2787",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Adaline Star",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 5,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Adaline Star",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-2787",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "ChildCount": 1,
+          "CollectionType": "movies",
+          "Id": "performer-4250",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Adara Jordin",
+          "PrimaryImageAspectRatio": 0.6667,
+          "RecursiveItemCount": 1,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Adara Jordin",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "performer-4250",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 4206
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

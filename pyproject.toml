@@ -1,6 +1,6 @@
 [project]
 name = "stash-jellyfin-proxy"
-version = "6.02"
+version = "7.0.0"
 description = "Proxy that lets Jellyfin clients (Infuse, Findroid, etc.) browse and stream a Stash library."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -8,10 +8,13 @@ requires-python = ">=3.10"
 dependencies = [
     "hypercorn>=0.16",
     "starlette>=0.37",
-    "requests>=2.31",
+    "httpx>=0.27",
     "Pillow>=10.0",
     "setproctitle>=1.3",
 ]
+
+[project.scripts]
+stash-jellyfin-proxy = "stash_jellyfin_proxy.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/feldorn/stash-jellyfin-proxy"
@@ -22,8 +25,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-only-include = ["stash_jellyfin_proxy.py"]
+packages = ["stash_jellyfin_proxy"]
 
 [tool.uv]
-# `uv run stash_jellyfin_proxy.py` resolves dependencies from [project].
+# `uv run python -m stash_jellyfin_proxy` resolves dependencies from [project].
 # `uv sync` creates a .venv matching this lockfile.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers"

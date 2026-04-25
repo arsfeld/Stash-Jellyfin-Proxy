@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{SERVER_NAME}}</title>
+    <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo"><span class="hex">⬡</span> SJP</div>
+      <div class="ver" id="brand-version">v7.0.0</div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="nav-item active" data-page="dashboard"><span class="dot"></span>Dashboard</div>
+      <div class="nav-item" data-page="connection"><span class="dot"></span>Connection</div>
+      <div class="nav-item" data-page="libraries"><span class="dot"></span>Libraries</div>
+      <div class="nav-item" data-page="players"><span class="dot"></span>Players</div>
+      <div class="nav-item" data-page="playback"><span class="dot"></span>Playback</div>
+      <div class="nav-item" data-page="search"><span class="dot"></span>Search</div>
+      <div class="nav-item" data-page="system"><span class="dot"></span>System</div>
+      <div class="nav-item" data-page="logs"><span class="dot"></span>Logs</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="status-line"><span class="status-dot on" id="sidebar-proxy-dot"></span><span id="sidebar-proxy-label">Proxy</span></div>
+      <div class="status-line"><span class="status-dot ok" id="sidebar-stash-dot"></span><span id="sidebar-stash-label">Stash</span></div>
+      <div class="status-line" style="margin-top: 6px; color: var(--text-faint); font-size: 11.5px;" id="sidebar-uptime">Uptime: —</div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="restart-banner" id="restart-banner">
+      <span class="icon">⚠</span>
+      <div class="banner-body">Some changes require a server restart to take effect.</div>
+      <button class="link-btn" id="restart-now-btn">Restart Now</button>
+    </div>
+
+    <!-- ================ DASHBOARD ================ -->
+    <section class="page active" data-page="dashboard">
+      <div class="page-header">
+        <div class="page-title">Dashboard</div>
+        <div class="page-subtitle">At-a-glance health check and activity monitor</div>
+      </div>
+      <div class="page-content" id="dashboard-content">
+
+        <!-- Row 1: Status cards -->
+        <div class="stat-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+          <div class="card stat-card" data-stat="proxy">
+            <div class="card-body">
+              <div class="stat-label">Proxy Status</div>
+              <div class="stat-value" id="dash-proxy-status">—</div>
+              <div class="stat-sub" id="dash-proxy-uptime">Uptime: —</div>
+            </div>
+          </div>
+          <div class="card stat-card" data-stat="stash">
+            <div class="card-body">
+              <div class="stat-label">Stash Connection</div>
+              <div class="stat-value" id="dash-stash-status">—</div>
+              <div class="stat-sub" id="dash-stash-version">&nbsp;</div>
+            </div>
+          </div>
+          <div class="card stat-card" data-stat="streams" style="cursor: pointer;" id="dash-streams-card">
+            <div class="card-body">
+              <div class="stat-label">Active Streams</div>
+              <div class="stat-value" id="dash-streams-count">0</div>
+              <div class="stat-sub">In the last 5 min</div>
+            </div>
+          </div>
+          <div class="card stat-card" data-stat="library">
+            <div class="card-body">
+              <div class="stat-label">Library Size</div>
+              <div class="stat-value" id="dash-scene-count">—</div>
+              <div class="stat-sub">Scenes</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Active streams + library stats -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Active Streams</div>
+              <div style="color: var(--text-dim); font-size: 12px;">Updates every 5s</div>
+            </div>
+            <div class="card-body" id="dash-streams-list">
+              <div class="field-help">No active streams.</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Library Stats</div>
+              <div style="color: var(--text-dim); font-size: 12px;">Refreshes every 60s</div>
+            </div>
+            <div class="card-body">
+              <div class="stat-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;">
+                <div><div class="stat-label">Scenes</div><div class="stat-value" style="font-size: 18px;" id="dash-lib-scenes">—</div></div>
+                <div><div class="stat-label">Performers</div><div class="stat-value" style="font-size: 18px;" id="dash-lib-performers">—</div></div>
+                <div><div class="stat-label">Studios</div><div class="stat-value" style="font-size: 18px;" id="dash-lib-studios">—</div></div>
+                <div><div class="stat-label">Groups</div><div class="stat-value" style="font-size: 18px;" id="dash-lib-groups">—</div></div>
+                <div><div class="stat-label">Tags</div><div class="stat-value" style="font-size: 18px;" id="dash-lib-tags">—</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Proxy usage + top played -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Proxy Usage</div>
+              <button class="btn" id="dash-reset-stats-btn" style="font-size: 12px;">Reset</button>
+            </div>
+            <div class="card-body">
+              <div class="stat-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                <div><div class="stat-label">Streams Today</div><div class="stat-value" style="font-size: 18px;" id="dash-streams-today">—</div></div>
+                <div><div class="stat-label">Total Streams</div><div class="stat-value" style="font-size: 18px;" id="dash-streams-total">—</div></div>
+                <div><div class="stat-label">Auth Success</div><div class="stat-value" style="font-size: 18px;" id="dash-auth-ok">—</div></div>
+                <div><div class="stat-label">Auth Failed</div><div class="stat-value" style="font-size: 18px;" id="dash-auth-fail">—</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Top Played</div></div>
+            <div class="card-body" id="dash-top-played">
+              <div class="field-help">No plays recorded yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4: Migration notice (conditional) -->
+        <div class="card hide" id="dash-migration-banner" style="margin-top: 16px; border-color: var(--accent, #3b82f6);">
+          <div class="card-body" style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+            <div>
+              <strong>ℹ Config migrated from v1 to v2.</strong>
+              Your original config is backed up at <code>stash_jellyfin_proxy.conf.v1.bak</code>. Review your new settings in <em>Libraries</em>, <em>Players</em>, <em>Playback</em>, and <em>Search</em> tabs.
+            </div>
+            <button class="btn" id="dash-migration-dismiss">Dismiss</button>
+          </div>
+        </div>
+
+        <!-- Row 5: Recent logs -->
+        <div class="card" style="margin-top: 16px;">
+          <div class="card-header">
+            <div class="card-title">Recent Logs</div>
+            <a href="#logs" class="btn" style="font-size: 12px; text-decoration: none;">View All Logs</a>
+          </div>
+          <div class="card-body">
+            <div id="dash-recent-logs" style="font-family: monospace; font-size: 12px; max-height: 240px; overflow-y: auto; white-space: pre-wrap;">
+              Loading…
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================ CONNECTION ================ -->
+    <section class="page" data-page="connection">
+      <div class="page-header">
+        <div class="page-title">Connection</div>
+        <div class="page-subtitle">Stash server connection and client credentials</div>
+      </div>
+      <div class="page-content" id="connection-content">
+
+        <!-- Stash Server -->
+        <div class="card" data-section="stash-server">
+          <div class="card-header">
+            <div class="card-title">Stash Server <span class="unsaved-dot hide"></span></div>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Stash URL</div>
+              <input type="text" data-key="STASH_URL" placeholder="http://localhost:9999">
+              <div class="field-help">Full URL including port. Use <code>host.docker.internal</code> if Stash is on the Docker host.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">API Key</div>
+              <input type="password" data-key="STASH_API_KEY" autocomplete="off" placeholder="(unchanged)">
+              <div class="field-help">From Stash → Settings → Security → API Key. Required for images to load. Leave blank to keep the current value.</div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">GraphQL Path</div>
+                <input type="text" data-key="STASH_GRAPHQL_PATH" placeholder="/graphql">
+                <div class="field-help">Advanced: override for reverse-proxy setups.</div>
+              </div>
+              <div class="field">
+                <div class="field-label">Request Timeout (seconds)</div>
+                <input type="number" data-key="STASH_TIMEOUT" min="1" max="300">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">Retry Attempts</div>
+                <input type="number" data-key="STASH_RETRIES" min="0" max="10">
+              </div>
+              <div class="field">
+                <div class="toggle-row">
+                  <div class="info">
+                    <div class="tl">Verify TLS Certificate</div>
+                    <div class="th">Disable for self-signed certificates.</div>
+                  </div>
+                  <div class="toggle" data-key="STASH_VERIFY_TLS"></div>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <button class="btn" id="conn-test-btn">Test Connection</button>
+              <div id="conn-test-result" class="field-help" style="margin-top: 8px;"></div>
+              <div class="field-help">Runs a live probe against the values above (no save required).</div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge restart" title="Every field in this card requires a proxy restart before the new value takes effect. Save writes to the config file; restart applies it.">
+              <span class="sb-dot"></span>Restart required
+            </span>
+            <button class="btn primary" data-save="stash-server">Save</button>
+          </div>
+        </div>
+
+        <!-- Client Credentials -->
+        <div class="card" data-section="credentials">
+          <div class="card-header">
+            <div class="card-title">Client Credentials <span class="unsaved-dot hide"></span></div>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Username</div>
+              <input type="text" data-key="SJS_USER" autocomplete="off">
+              <div class="field-help">The username Jellyfin clients use to connect to this proxy.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Password</div>
+              <input type="password" data-key="SJS_PASSWORD" autocomplete="new-password" placeholder="(unchanged)">
+              <div class="field-help">Leave blank to keep the current password.</div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge restart" title="Username and password are only applied at startup. Save writes them to the config file; restart picks them up.">
+              <span class="sb-dot"></span>Restart required
+            </span>
+            <button class="btn primary" data-save="credentials">Save</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================ LIBRARIES ================ -->
+    <section class="page" data-page="libraries">
+      <div class="page-header">
+        <div class="page-title">Libraries</div>
+        <div class="page-subtitle">Tag groups, genre mapping, series detection</div>
+      </div>
+      <div class="page-content" id="libraries-content">
+
+        <!-- Tag Groups -->
+        <div class="card" data-section="tag-groups">
+          <div class="card-header"><div class="card-title">Tag Groups <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Tag Groups</div>
+              <input type="text" data-key="TAG_GROUPS" placeholder="Tit Worship, JOI, Gooning">
+              <div class="field-help">Comma-separated list of Stash tags to expose as top-level library folders. Each tag becomes a movies library.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Favorite Tag</div>
+              <input type="text" data-key="FAVORITE_TAG" placeholder="FAVORITE">
+              <div class="field-help">Stash tag name used for scene favorites. Toggling favorite in a client adds/removes this tag.</div>
+            </div>
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Show Tags Library</div>
+                <div class="th">Expose a Tags folder with tag-based navigation.</div>
+              </div>
+              <div class="toggle" data-key="ENABLE_TAG_FILTERS"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Show All Tags Subfolder</div>
+                <div class="th">Include an "All Tags" subfolder (can be large). Only meaningful if Tags Library is enabled.</div>
+              </div>
+              <div class="toggle" data-key="ENABLE_ALL_TAGS"></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge restart" title="Library structure changes need a restart so all clients see a consistent folder layout.">
+              <span class="sb-dot"></span>Restart required
+            </span>
+            <button class="btn primary" data-save="tag-groups">Save</button>
+          </div>
+        </div>
+
+        <!-- Genre Configuration -->
+        <div class="card" data-section="genre">
+          <div class="card-header"><div class="card-title">Genre Configuration <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Genre Mode</div>
+              <div class="radio-group" data-key="GENRE_MODE" data-radio>
+                <label><input type="radio" name="genre-mode" value="all_tags"> All Tags</label>
+                <label><input type="radio" name="genre-mode" value="parent_tag"> Parent Tag <em>(default)</em></label>
+                <label><input type="radio" name="genre-mode" value="top_n"> Top N</label>
+              </div>
+              <div id="genre-mode-note" class="field-help" style="margin-top: 6px;"></div>
+            </div>
+            <div class="field" data-shows-for="parent_tag">
+              <div class="field-label">Genre Parent Tag</div>
+              <input type="text" data-key="GENRE_PARENT_TAG" placeholder="GENRE">
+              <div class="field-help">Create this tag in Stash and attach your genre tags as direct children. Only one level deep — no nesting.</div>
+            </div>
+            <div class="field" data-shows-for="top_n">
+              <div class="field-label">Top N Count</div>
+              <input type="number" data-key="GENRE_TOP_N" min="1" max="500">
+              <div class="field-help">Number of tags (by scene count, descending) to use as genres. No Stash-side setup required.</div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge restart" title="Genre resolution is cached at startup. Changing the mode or source tag needs a restart to rebuild the cache.">
+              <span class="sb-dot"></span>Restart required
+            </span>
+            <button class="btn primary" data-save="genre">Save</button>
+          </div>
+        </div>
+
+        <!-- Series Detection -->
+        <div class="card" data-section="series">
+          <div class="card-header"><div class="card-title">Series Detection <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Series Tag</div>
+              <input type="text" data-key="SERIES_TAG" placeholder="Series">
+              <div class="field-help">Apply this tag to a Studio in Stash to expose it as a TV Series. Scenes get Season/Episode navigation from title parsing.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Episode Pattern List</div>
+              <textarea data-key="SERIES_EPISODE_PATTERNS" data-lines rows="5" style="font-family: monospace; font-size: 13px;"></textarea>
+              <div class="field-help">One regex per line. Each must capture two groups: (season, episode). First match wins. No match → Season 0, auto-numbered.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Test a Scene Title</div>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="series-pattern-test-input" placeholder="S02:E05 — Some Episode" style="flex: 1;">
+                <button class="btn" id="series-pattern-test-btn">Test</button>
+              </div>
+              <div id="series-pattern-test-result" class="field-help" style="margin-top: 6px;"></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge mixed" title="Episode patterns apply immediately on save. The Series Tag change requires a restart (studio classification is cached at startup).">
+              <span class="sb-dot"></span>Mixed
+            </span>
+            <button class="btn primary" data-save="series">Save</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================ PLAYERS ================ -->
+    <section class="page" data-page="players">
+      <div class="page-header">
+        <div class="page-title">Players</div>
+        <div class="page-subtitle">Per-client rendering profiles and live User-Agent feed</div>
+      </div>
+      <div class="page-content" id="players-content">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+
+          <!-- Connected Players (left) -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Connected Players</div>
+              <div style="color: var(--text-dim); font-size: 12px;">Last 7 days · auto-refresh 30s</div>
+            </div>
+            <div class="card-body" id="players-ua-list" style="max-height: 480px; overflow-y: auto;">
+              <div class="field-help">Loading…</div>
+            </div>
+          </div>
+
+          <!-- Player Profiles (right) -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">Player Profiles</div></div>
+            <div class="card-body" id="players-profile-list">
+              <div class="field-help">Loading…</div>
+            </div>
+            <div class="card-footer">
+              <button class="btn primary" id="players-add-btn">+ Add Profile</button>
+            </div>
+          </div>
+
+        </div>
+
+        <details style="margin-top: 16px; color: var(--text-dim);">
+          <summary style="cursor: pointer; padding: 6px 0;">How to use</summary>
+          <div style="padding: 8px 0; line-height: 1.5;">
+            To add a new client: connect it to the proxy, wait for it to appear in <em>Connected Players</em>, copy its User-Agent string, click <strong>+ Add Profile</strong>, paste the string into <em>User-Agent Match</em>, and configure rendering options.
+          </div>
+        </details>
+
+      </div>
+    </section>
+
+    <!-- Profile Editor Modal -->
+    <div id="profile-editor-modal" class="modal-backdrop">
+      <div class="modal">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <div id="profile-editor-title">Edit Player Profile</div>
+          <button class="icon-btn" id="profile-editor-close" aria-label="Close" style="font-size: 20px; line-height: 1;">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="field">
+            <div class="field-label">Profile Name</div>
+            <input type="text" id="profile-editor-name" autocomplete="off">
+            <div class="field-help">Lowercase, no spaces. Used as the config section name (<code>[player.&lt;name&gt;]</code>).</div>
+          </div>
+          <div class="field">
+            <div class="field-label">User-Agent Match</div>
+            <input type="text" id="profile-editor-ua" autocomplete="off">
+            <div class="field-help">Case-insensitive substring. Regex not supported. Leave empty for the default profile only.</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Performer Display Type</div>
+            <div class="radio-group">
+              <label><input type="radio" name="profile-perf" value="Person"> Person</label>
+              <label><input type="radio" name="profile-perf" value="BoxSet"> BoxSet</label>
+            </div>
+            <div class="field-help">Person: native bio + filmography (Swiftfin). BoxSet: safe fallback (Infuse, SenPlayer).</div>
+          </div>
+          <div class="field">
+            <div class="field-label">Poster Image Format</div>
+            <div class="radio-group">
+              <label><input type="radio" name="profile-poster" value="portrait"> Portrait (2:3 crop)</label>
+              <label><input type="radio" name="profile-poster" value="landscape"> Landscape (original 16:9)</label>
+              <label><input type="radio" name="profile-poster" value="original"> Original (no processing)</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="profile-editor-cancel">Cancel</button>
+          <button class="btn primary" id="profile-editor-save">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================ PLAYBACK ================ -->
+    <section class="page" data-page="playback">
+      <div class="page-header">
+        <div class="page-title">Playback</div>
+        <div class="page-subtitle">Image formatting, sort defaults, Home-tab hero</div>
+      </div>
+      <div class="page-content" id="playback-content">
+
+        <!-- Poster Images -->
+        <div class="card" data-section="poster">
+          <div class="card-header"><div class="card-title">Poster Images <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Portrait Crop Anchor</div>
+              <select data-key="POSTER_CROP_ANCHOR">
+                <option value="center">Center (default)</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+              <div class="field-help">Where to anchor the crop when generating a 2:3 portrait from a 16:9 screenshot. Applies only when a player's poster format is <code>portrait</code>.</div>
+            </div>
+            <div class="field-help" style="margin-top: 10px;"><em>Per-client poster format (portrait vs landscape) is configured in the Players tab.</em></div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge restart" title="The crop anchor is baked into cached artwork. Restart clears the image cache so new posters use the new anchor.">
+              <span class="sb-dot"></span>Restart required
+            </span>
+            <button class="btn primary" data-save="poster">Save</button>
+          </div>
+        </div>
+
+        <!-- Sort Defaults -->
+        <div class="card" data-section="sort-defaults">
+          <div class="card-header"><div class="card-title">Sort Defaults <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="text-align: left; color: var(--text-dim);">
+                  <th style="padding: 8px 0;">Library Type</th>
+                  <th style="padding: 8px 0;">Default Sort</th>
+                </tr>
+              </thead>
+              <tbody id="sort-defaults-tbody">
+                <tr><td style="padding: 6px 0;">Scenes</td><td><select data-key="SCENES_DEFAULT_SORT" data-sort-options></select></td></tr>
+                <tr><td style="padding: 6px 0;">Studios</td><td><select data-key="STUDIOS_DEFAULT_SORT" data-sort-options></select></td></tr>
+                <tr><td style="padding: 6px 0;">Performers</td><td><select data-key="PERFORMERS_DEFAULT_SORT" data-sort-options></select></td></tr>
+                <tr><td style="padding: 6px 0;">Groups</td><td><select data-key="GROUPS_DEFAULT_SORT" data-sort-options></select></td></tr>
+                <tr><td style="padding: 6px 0;">Tag Groups</td><td><select data-key="TAG_GROUPS_DEFAULT_SORT" data-sort-options></select></td></tr>
+                <tr><td style="padding: 6px 0;">Saved Filters</td><td><select data-key="SAVED_FILTERS_DEFAULT_SORT" data-sort-options></select></td></tr>
+              </tbody>
+            </table>
+            <div class="field-help" style="margin-top: 10px;">This sort is applied when the client sends no sort preference.</div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge live" title="Applied immediately on save. The next library browse that doesn't send an explicit sort preference will use the new default.">
+              <span class="sb-dot"></span>Live
+            </span>
+            <button class="btn primary" data-save="sort-defaults">Save</button>
+          </div>
+        </div>
+
+        <!-- Sort Name -->
+        <div class="card" data-section="sort-name">
+          <div class="card-header"><div class="card-title">Sort Name <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Strip Leading Articles</div>
+              <input type="text" data-key="SORT_STRIP_ARTICLES" placeholder="The, A, An">
+              <div class="field-help">Comma-separated. Titles beginning with these words sort by the remainder. Leave empty to disable.</div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge live" title="Applied immediately on save. Next listing that sorts by SortName uses the new article list.">
+              <span class="sb-dot"></span>Live
+            </span>
+            <button class="btn primary" data-save="sort-name">Save</button>
+          </div>
+        </div>
+
+        <!-- Home Tab Hero Image -->
+        <div class="card" data-section="hero">
+          <div class="card-header"><div class="card-title">Home Tab Hero Image <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Hero Image Source</div>
+              <select data-key="HERO_SOURCE">
+                <option value="recent">Recent (default)</option>
+                <option value="random">Random</option>
+                <option value="favorites">Favorites</option>
+                <option value="top_rated">Top Rated</option>
+                <option value="recently_watched">Recently Watched</option>
+              </select>
+              <div class="field-help">Source pool for the cinematic header image on clients' Home tab.</div>
+            </div>
+            <div class="field" data-shows-for-hero="top_rated">
+              <div class="field-label">Minimum Rating</div>
+              <input type="number" data-key="HERO_MIN_RATING" min="0" max="100">
+              <div class="field-help">Scenes with a Stash rating at or above this threshold are eligible. Only applies when "Top Rated" is selected.</div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge restart" title="The hero image pool is built once at startup. Restart rebuilds it with the new source.">
+              <span class="sb-dot"></span>Restart required
+            </span>
+            <button class="btn primary" data-save="hero">Save</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================ SEARCH ================ -->
+    <section class="page" data-page="search">
+      <div class="page-header">
+        <div class="page-title">Search</div>
+        <div class="page-subtitle">Search scope and filter-panel behavior</div>
+      </div>
+      <div class="page-content" id="search-content">
+
+        <!-- Search Scope -->
+        <div class="card" data-section="search-scope">
+          <div class="card-header"><div class="card-title">Search Scope <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Include Scenes</div>
+                <div class="th">Scenes appear in search results.</div>
+              </div>
+              <div class="toggle" data-key="SEARCH_INCLUDE_SCENES"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Include Performers</div>
+                <div class="th">Performers appear in search results as People (Swiftfin) or Collections (other clients).</div>
+              </div>
+              <div class="toggle" data-key="SEARCH_INCLUDE_PERFORMERS"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Include Studios</div>
+                <div class="th">Studios appear in search results as Collections.</div>
+              </div>
+              <div class="toggle" data-key="SEARCH_INCLUDE_STUDIOS"></div>
+            </div>
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Include Groups</div>
+                <div class="th">Groups appear in search results as Collections.</div>
+              </div>
+              <div class="toggle" data-key="SEARCH_INCLUDE_GROUPS"></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge live" title="Applied immediately on save. Next client search uses the updated scope.">
+              <span class="sb-dot"></span>Live
+            </span>
+            <button class="btn primary" data-save="search-scope">Save</button>
+          </div>
+        </div>
+
+        <!-- Filter Panel -->
+        <div class="card" data-section="filter-panel">
+          <div class="card-header"><div class="card-title">Filter Panel <span class="unsaved-dot hide"></span></div></div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Maximum Tags in Filter</div>
+              <input type="number" data-key="FILTER_TAGS_MAX" min="1" max="500">
+              <div class="field-help">Maximum number of genre and tag options shown in the client filter panel. Tags are ordered by scene count, most-used first. Applies to both Genres and Tags dimensions.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Multi-Select Filter Logic</div>
+              <div class="radio-group" data-key="GENRE_FILTER_LOGIC" data-radio>
+                <label><input type="radio" name="filter-logic" value="AND"> <strong>AND</strong> <em>(default)</em></label>
+                <label><input type="radio" name="filter-logic" value="OR"> OR</label>
+              </div>
+              <div class="field-help">When multiple genres are selected in the filter panel: <strong>AND</strong> = scene must have all selected tags; <strong>OR</strong> = scene must have any. Standard Jellyfin behavior is OR — AND is a proxy-specific enhancement.</div>
+            </div>
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Walk Tag Hierarchy</div>
+                <div class="th">When filtering by a tag, also include scenes tagged with any of its descendants in Stash.</div>
+              </div>
+              <div class="toggle" data-key="FILTER_TAGS_WALK_HIERARCHY"></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge live" title="Applied immediately on save. The filter panel cache is cleared so the next /Items/Filters response uses the new settings.">
+              <span class="sb-dot"></span>Live
+            </span>
+            <button class="btn primary" data-save="filter-panel">Save</button>
+          </div>
+        </div>
+
+        <!-- Genre Hierarchy Note (static info) -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Genre Hierarchy</div></div>
+          <div class="card-body">
+            <div class="field-help">
+              Genre definitions (configured in <em>Libraries → Genre Configuration</em>) are flat — only direct children of your genre parent tag are used as genres. <strong>Walk Tag Hierarchy</strong> applies at search/filter query time only: when a user selects a genre in the filter panel, scenes tagged with that genre's descendants in Stash are included in results.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================ SYSTEM ================ -->
+    <section class="page" data-page="system">
+      <div class="page-header">
+        <div class="page-title">System</div>
+        <div class="page-subtitle">Server identity, performance, logging, security, server control</div>
+      </div>
+      <div class="page-content" id="system-content">
+
+        <!-- Server Identity -->
+        <div class="card" data-section="identity">
+          <div class="card-header">
+            <div class="card-title">Server Identity <span class="unsaved-dot hide"></span></div>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <div class="field-label">Server Name</div>
+              <input type="text" data-key="SERVER_NAME">
+              <div class="field-help">Display name shown in client server lists.</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Server ID</div>
+              <input type="text" data-key="SERVER_ID" readonly style="color: var(--text-dim);">
+              <div class="field-help">Auto-generated UUID used by clients to identify this server. Changing this invalidates all paired clients.</div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge restart" title="Server Name is included in the handshake response every client caches on first connection. Restart makes all clients re-read it.">
+              <span class="sb-dot"></span>Restart required
+            </span>
+            <button class="btn primary" data-save="identity">Save</button>
+          </div>
+        </div>
+
+        <!-- Performance -->
+        <div class="card" data-section="performance">
+          <div class="card-header">
+            <div class="card-title">Performance <span class="unsaved-dot hide"></span></div>
+          </div>
+          <div class="card-body">
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">Default Page Size</div>
+                <input type="number" data-key="DEFAULT_PAGE_SIZE" min="1" max="500">
+              </div>
+              <div class="field">
+                <div class="field-label">Max Page Size</div>
+                <input type="number" data-key="MAX_PAGE_SIZE" min="1" max="1000">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">Stash Timeout (seconds)</div>
+                <input type="number" data-key="STASH_TIMEOUT" min="1" max="300">
+              </div>
+              <div class="field">
+                <div class="field-label">Stash Retries</div>
+                <input type="number" data-key="STASH_RETRIES" min="0" max="10">
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge restart" title="Page-size limits and the Stash HTTP client are built once at startup. Restart rebuilds them with the new values.">
+              <span class="sb-dot"></span>Restart required
+            </span>
+            <button class="btn primary" data-save="performance">Save</button>
+          </div>
+        </div>
+
+        <!-- Logging -->
+        <div class="card" data-section="logging">
+          <div class="card-header">
+            <div class="card-title">Logging <span class="unsaved-dot hide"></span></div>
+          </div>
+          <div class="card-body">
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">Log Level</div>
+                <select data-key="LOG_LEVEL">
+                  <option value="DEBUG">DEBUG</option>
+                  <option value="INFO">INFO</option>
+                  <option value="WARNING">WARNING</option>
+                  <option value="ERROR">ERROR</option>
+                </select>
+              </div>
+              <div class="field">
+                <div class="field-label">Log Directory</div>
+                <input type="text" data-key="LOG_DIR">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">Max Log File Size (MB)</div>
+                <input type="number" data-key="LOG_MAX_SIZE_MB" min="1" max="1000">
+              </div>
+              <div class="field">
+                <div class="field-label">Log Backup Count</div>
+                <input type="number" data-key="LOG_BACKUP_COUNT" min="0" max="50">
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge mixed" title="Log Level applies immediately on save. Log Directory, file size, and backup count require a restart (the rotating file handler is bound once at startup).">
+              <span class="sb-dot"></span>Mixed
+            </span>
+            <button class="btn primary" data-save="logging">Save</button>
+          </div>
+        </div>
+
+        <!-- Security -->
+        <div class="card" data-section="security">
+          <div class="card-header">
+            <div class="card-title">Security <span class="unsaved-dot hide"></span></div>
+          </div>
+          <div class="card-body">
+            <div class="toggle-row">
+              <div class="info">
+                <div class="tl">Require Auth for Config UI</div>
+                <div class="th">Prompt for the client password before allowing config changes.</div>
+              </div>
+              <div class="toggle" data-key="REQUIRE_AUTH_FOR_CONFIG"></div>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <div class="field-label">IP Ban Threshold</div>
+                <input type="number" data-key="BAN_THRESHOLD" min="1" max="100">
+                <div class="field-help">Failed auth attempts before an IP is banned.</div>
+              </div>
+              <div class="field">
+                <div class="field-label">Ban Window (minutes)</div>
+                <input type="number" data-key="BAN_WINDOW_MINUTES" min="1" max="1440">
+              </div>
+            </div>
+            <div class="field">
+              <div class="field-label">Banned IPs</div>
+              <input type="text" data-key="BANNED_IPS" placeholder="comma-separated; leave empty to clear">
+              <div class="field-help">Comma-separated list. Edit to unban an IP. Saved immediately.</div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <span class="save-badge live" title="Applied immediately on save. Ban threshold, window, and the current banned-IP list are read fresh on every auth attempt.">
+              <span class="sb-dot"></span>Live
+            </span>
+            <button class="btn primary" data-save="security">Save</button>
+          </div>
+        </div>
+
+        <!-- Server Control -->
+        <div class="card" data-section="control">
+          <div class="card-header"><div class="card-title">Server Control</div></div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div>
+                <div class="field-label">Restart Proxy</div>
+                <div class="field-help">Restart the proxy process. Active streams will be interrupted.</div>
+                <button class="btn danger" id="sys-restart-btn" style="margin-top: 10px;">Restart Proxy</button>
+              </div>
+              <div>
+                <div class="field-label">Clear Cache</div>
+                <div class="field-help">Flush image cache, library-card artwork, genre allow-list, and in-memory TTL caches.</div>
+                <button class="btn" id="sys-clearcache-btn" style="margin-top: 10px;">Clear Cache</button>
+              </div>
+            </div>
+            <div style="margin-top: 20px;">
+              <div class="field-label">Download Config</div>
+              <div class="field-help">Download the current config file as a text backup.</div>
+              <button class="btn" id="sys-downloadconfig-btn" style="margin-top: 10px;">Download stash_jellyfin_proxy.conf</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================ LOGS ================ -->
+    <section class="page" data-page="logs">
+      <div class="page-header">
+        <div class="page-title">Logs</div>
+        <div class="page-subtitle">Proxy log stream, filterable by level and text</div>
+      </div>
+      <div class="page-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Log Viewer</div>
+            <div id="log-count-indicator" style="font-size: 12px; color: var(--text-dim);"></div>
+          </div>
+          <div class="card-body">
+            <div class="log-controls">
+              <div class="log-filter" id="log-level-filter">
+                <div class="chip active" data-level="DEBUG">DEBUG</div>
+                <div class="chip active" data-level="INFO">INFO</div>
+                <div class="chip active" data-level="WARNING">WARNING</div>
+                <div class="chip active" data-level="ERROR">ERROR</div>
+              </div>
+              <input type="text" id="log-search" placeholder="Filter by text…" style="flex: 1; min-width: 200px; max-width: 360px;">
+              <label style="display:flex; gap:6px; align-items:center; font-size:12.5px; color:var(--text-dim);">
+                <input type="checkbox" id="log-autoscroll" checked> Auto-scroll
+              </label>
+              <label style="display:flex; gap:6px; align-items:center; font-size:12.5px; color:var(--text-dim);">
+                <input type="checkbox" id="log-autorefresh" checked> Auto-refresh
+              </label>
+              <select id="log-line-count" class="btn small" title="Lines to fetch">
+                <option value="100">100 lines</option>
+                <option value="250" selected>250 lines</option>
+                <option value="500">500 lines</option>
+                <option value="1000">1000 lines</option>
+              </select>
+              <button class="btn small" id="log-refresh-btn">↻</button>
+              <button class="btn small" id="log-copy-btn" title="Copy visible logs to clipboard">Copy</button>
+              <button class="btn small" id="log-clear-btn">Clear display</button>
+            </div>
+            <div class="log-viewer" id="log-viewer"><em style="color: var(--text-faint);">Loading…</em></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

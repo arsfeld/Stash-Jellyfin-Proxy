@@ -1,0 +1,41 @@
+{
+  "compare_mode": "full",
+  "name": "group_group-81_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/group-81"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [],
+      "ChildCount": 2,
+      "CollectionType": "movies",
+      "Id": "group-81",
+      "ImageBlurHashes": {
+        "Primary": {
+          "img": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "img"
+      },
+      "IsFolder": true,
+      "Name": "25 Sexiest Boobs Ever!",
+      "PrimaryImageAspectRatio": 0.6667,
+      "RecursiveItemCount": 2,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "25 Sexiest Boobs Ever!",
+      "Type": "BoxSet",
+      "UserData": {
+        "IsFavorite": false,
+        "Key": "group-81",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

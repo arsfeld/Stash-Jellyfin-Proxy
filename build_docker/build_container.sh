@@ -2,7 +2,7 @@
 
 IMAGE_NAME="stash-jellyfin-proxy"
 IMAGE_TAG="latest"
-VERSION_TAG="5.00"
+VERSION_TAG="7.0.0"
 
 show_help() {
     echo "Stash-Jellyfin Proxy Docker Build Script"
@@ -65,8 +65,8 @@ if [ ! -f "Dockerfile" ]; then
     exit 1
 fi
 
-if [ ! -f "${PROJECT_DIR}/stash_jellyfin_proxy.py" ]; then
-    echo "Error: stash_jellyfin_proxy.py not found in ${PROJECT_DIR}"
+if [ ! -d "${PROJECT_DIR}/stash_jellyfin_proxy" ]; then
+    echo "Error: stash_jellyfin_proxy/ package not found in ${PROJECT_DIR}"
     exit 1
 fi
 
@@ -79,7 +79,7 @@ BUILD_DIR=$(mktemp -d)
 trap "rm -rf $BUILD_DIR" EXIT
 
 echo "Preparing build context..."
-cp "${PROJECT_DIR}/stash_jellyfin_proxy.py" "$BUILD_DIR/"
+cp -r "${PROJECT_DIR}/stash_jellyfin_proxy" "$BUILD_DIR/"
 cp "${SCRIPT_DIR}/Dockerfile" "$BUILD_DIR/"
 cp "${SCRIPT_DIR}/docker-entrypoint.sh" "$BUILD_DIR/"
 

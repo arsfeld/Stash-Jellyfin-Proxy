@@ -1,0 +1,16 @@
+{
+  "compare_mode": "full",
+  "name": "negative_unknown_scene",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/scene-99999999"
+  },
+  "response": {
+    "body": {
+      "error": "Not found"
+    },
+    "content_type": "application/json",
+    "status": 404
+  }
+}

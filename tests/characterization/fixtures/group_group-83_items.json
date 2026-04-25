@@ -1,0 +1,187 @@
+{
+  "compare_mode": "full",
+  "name": "group_group-83_items",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=group-83&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b19486"
+          ],
+          "CanDownload": true,
+          "Container": "mkv",
+          "Etag": "320dbc9495d0c7cd",
+          "Genres": [],
+          "HasSubtitles": false,
+          "Id": "scene-19486",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b19486": "000000"
+            },
+            "Primary": {
+              "p19486": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p19486"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 981576,
+              "Container": "mkv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-19486",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "512:384",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 981576,
+                  "Codec": "hevc",
+                  "Height": 384,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 512
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "About Face 2 - CD2",
+              "Path": "/data2/Movies/About Face 2 (2005)/About Face 2 (2005).mkv",
+              "Protocol": "File",
+              "RunTimeTicks": 31944300000,
+              "Size": 391946710,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "512:384",
+              "AverageFrameRate": 29.97,
+              "BitRate": 981576,
+              "Codec": "hevc",
+              "Height": 384,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 512
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "About Face 2 - CD2",
+          "OfficialRating": "NC-17",
+          "Overview": "These broads get served when they get cummy chin checks, large loads in their face, and their big milky asses filled with cream. You'll see brown eyes winking at you when massive cocks go up big ol' butts. They're looking at you eye to eye when they're giving you lip service. They'll have you yelling, \"About Face!\"",
+          "ParentId": "group-83",
+          "PartCount": 1,
+          "Path": "/data2/Movies/About Face 2 (2005)/About Face 2 (2005).mkv",
+          "People": [
+            {
+              "Id": "person-130",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p130": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p130"
+              },
+              "Name": "Jenaveve Jolie",
+              "PrimaryImageTag": "p130",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1182",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1182": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1182"
+              },
+              "Name": "Sunny Lane",
+              "PrimaryImageTag": "p1182",
+              "Role": "",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2005-05-18T00:00:00.0000000Z",
+          "ProductionYear": 2005,
+          "RunTimeTicks": 31944300000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "About Face 2 - CD2",
+          "SourceType": "Default",
+          "Tags": [
+            "!8. Movie",
+            "Gonzo",
+            "POV"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-19486",
+            "Key": "scene-19486",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 1
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

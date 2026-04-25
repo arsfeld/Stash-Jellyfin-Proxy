@@ -1,0 +1,52 @@
+{
+  "compare_mode": "full",
+  "name": "performer_performer-73_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/performer-73"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [
+        "img"
+      ],
+      "ChildCount": 10,
+      "CollectionType": "movies",
+      "Id": "performer-73",
+      "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
+        "Primary": {
+          "img": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "img"
+      },
+      "IsFolder": true,
+      "Name": "Abby Rode",
+      "Overview": "Female performer, born 1979-02-21 (47), from US, active 2007–2011, 10 scenes in library.\n\nHeight: 168 cm (5'6\")\nMeasurements: 36E-24-36\nBreasts: Fake\nEthnicity: Caucasian\nEyes: Green\n\nTattoos: Right Thigh; Three Characters On Inner Left Calf",
+      "PremiereDate": "1979-02-21T00:00:00.0000000Z",
+      "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 1979,
+      "ProviderIds": {
+        "StashDb": "53f49f44-5403-4bb2-a8fd-0ba9c53803dd"
+      },
+      "RecursiveItemCount": 10,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "Abby Rode",
+      "Type": "BoxSet",
+      "UserData": {
+        "IsFavorite": false,
+        "Key": "performer-73",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

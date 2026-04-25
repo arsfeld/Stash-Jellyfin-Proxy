@@ -1,0 +1,17 @@
+{
+  "compare_mode": "shape",
+  "name": "shows_nextup",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Shows/NextUp?Limit=24&UserId=bed0fa2f-5a08-543a-96eb-ef0150360506&EnableResumable=false"
+  },
+  "response": {
+    "body": {
+      "Items": [],
+      "TotalRecordCount": 0
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

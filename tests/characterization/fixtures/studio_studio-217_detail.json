@@ -1,0 +1,59 @@
+{
+  "compare_mode": "full",
+  "name": "studio_studio-217_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/studio-217"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [
+        "img"
+      ],
+      "ChildCount": 2,
+      "CollectionType": "movies",
+      "EndDate": "2009-12-31T00:00:00.0000000Z",
+      "ExternalUrls": [
+        {
+          "Name": "Homepage",
+          "Url": "https://www.adamevepictures.com/"
+        }
+      ],
+      "Id": "studio-217",
+      "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
+        "Primary": {
+          "img": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "img"
+      },
+      "IsFolder": true,
+      "Name": "Adam & Eve Pictures",
+      "Overview": "Adam & Eve Pictures — 2 titles, 2009.",
+      "PremiereDate": "2009-10-22T00:00:00.0000000Z",
+      "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 2009,
+      "ProviderIds": {
+        "StashDb": "c7ff5793-eada-4367-b4f7-507b3b847751"
+      },
+      "RecursiveItemCount": 2,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "Adam & Eve Pictures",
+      "Type": "BoxSet",
+      "UserData": {
+        "IsFavorite": false,
+        "Key": "studio-217",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

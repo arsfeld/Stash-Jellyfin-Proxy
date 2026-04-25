@@ -1,0 +1,303 @@
+{
+  "compare_mode": "full",
+  "name": "group_group-10_items",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=group-10&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b683"
+          ],
+          "CanDownload": true,
+          "Container": "mkv",
+          "Etag": "a39621b2ed37e73e",
+          "Genres": [],
+          "HasSubtitles": false,
+          "Id": "scene-683",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b683": "000000"
+            },
+            "Primary": {
+              "p683": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p683"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 2604116,
+              "Container": "mkv",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-683",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "720:480",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 2604116,
+                  "Codec": "hevc",
+                  "Height": 480,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 720
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "ac3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AC3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "10 Dirty Talkin Masturbators (2007).mkv",
+              "Path": "/data2/Movies/10 Dirty Talkin' Masturbators (2007)/10 Dirty Talkin' Masturbators (2007).mkv",
+              "Protocol": "File",
+              "RunTimeTicks": 53937600000,
+              "Size": 1755745705,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "720:480",
+              "AverageFrameRate": 29.97,
+              "BitRate": 2604116,
+              "Codec": "hevc",
+              "Height": 480,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 720
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "ac3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AC3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "10 Dirty Talkin Masturbators (2007).mkv",
+          "OfficialRating": "NC-17",
+          "ParentId": "group-10",
+          "PartCount": 1,
+          "Path": "/data2/Movies/10 Dirty Talkin' Masturbators (2007)/10 Dirty Talkin' Masturbators (2007).mkv",
+          "People": [
+            {
+              "Id": "person-95",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p95": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p95"
+              },
+              "Name": "Mikayla",
+              "PrimaryImageTag": "p95",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-731",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p731": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p731"
+              },
+              "Name": "India Summer",
+              "PrimaryImageTag": "p731",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-818",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p818": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p818"
+              },
+              "Name": "Adrianna Nicole",
+              "PrimaryImageTag": "p818",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-999",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p999": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p999"
+              },
+              "Name": "Allie Ray",
+              "PrimaryImageTag": "p999",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1000",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1000": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1000"
+              },
+              "Name": "Annette Schwarz",
+              "PrimaryImageTag": "p1000",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1001",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1001": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1001"
+              },
+              "Name": "Chavon Taylor",
+              "PrimaryImageTag": "p1001",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1002",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1002": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1002"
+              },
+              "Name": "Chelsie Rae",
+              "PrimaryImageTag": "p1002",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1003",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1003": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1003"
+              },
+              "Name": "Cindy Crawford",
+              "PrimaryImageTag": "p1003",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1004",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1004": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1004"
+              },
+              "Name": "Elena Rivera",
+              "PrimaryImageTag": "p1004",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-1005",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1005": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1005"
+              },
+              "Name": "Nadi Phuket",
+              "PrimaryImageTag": "p1005",
+              "Role": "",
+              "Type": "Actor"
+            }
+          ],
+          "RunTimeTicks": 53937600000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "10 Dirty Talkin Masturbators (2007).mkv",
+          "SourceType": "Default",
+          "Tags": [
+            "!8. Movie",
+            "Dirty"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-683",
+            "Key": "scene-683",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 1
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

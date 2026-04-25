@@ -1,0 +1,52 @@
+{
+  "compare_mode": "full",
+  "name": "performer_performer-2919_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/performer-2919"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [
+        "img"
+      ],
+      "ChildCount": 1,
+      "CollectionType": "movies",
+      "Id": "performer-2919",
+      "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
+        "Primary": {
+          "img": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "img"
+      },
+      "IsFolder": true,
+      "Name": "Abby Cross",
+      "Overview": "Female performer, born 1992-11-29 (33), from US, active since 2012, 1 scene in library.\n\nHeight: 158 cm (5'2\")\nMeasurements: 34B-26-34\nBreasts: Natural\nEthnicity: Caucasian\nHair: Brunette\nEyes: Green\n\nPiercings: Top lip pierced\n\nAlso known as: Abbey Cross, Abbie Cross, Abby Rocks, Becky Bazooka, Flora, Penny",
+      "PremiereDate": "1992-11-29T00:00:00.0000000Z",
+      "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 1992,
+      "ProviderIds": {
+        "StashDb": "03319cab-165a-4745-b354-9a4edb8b6a8e"
+      },
+      "RecursiveItemCount": 1,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "Abby Cross",
+      "Type": "BoxSet",
+      "UserData": {
+        "IsFavorite": false,
+        "Key": "performer-2919",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

@@ -45,5 +45,19 @@ __pycache__/
 # Local per-user config overrides (merged on top of the shipped conf)
 *.local.conf
 
+# Local dev container data (conf file with secrets, logs, stats)
+/dev-data/
+
+# Build staging — CI (docker-publish.yml) and build_container.sh both
+# copy stash_jellyfin_proxy.py into build_docker/ at build time. The
+# committed copy always drifts; root is canonical.
+/build_docker/stash_jellyfin_proxy.py
+
+# Private design docs (author-owned, not for the public repo)
+/docs/
+
+# Personal Claude CLI convenience
+pickup.sh
+
 # Claude Code
 CLAUDE.md

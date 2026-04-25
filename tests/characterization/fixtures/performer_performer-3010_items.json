@@ -1,0 +1,480 @@
+{
+  "compare_mode": "full",
+  "name": "performer_performer-3010_items",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=performer-3010&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b27623"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "b87eb472a3073e31",
+          "Genres": [],
+          "HasSubtitles": false,
+          "Id": "scene-27623",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b27623": "000000"
+            },
+            "Primary": {
+              "p27623": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p27623"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 6214156,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-27623",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 25,
+                  "BitRate": 6214156,
+                  "Codec": "h264",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 25,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Porn Star Pajama Party Part 1",
+              "Path": "/data/Video-B/Studios/Digital Playground/Digital Playground - 2016-08-17 - Porn Star Pajama Party Part 1.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 17287200000,
+              "Size": 1342817164,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 25,
+              "BitRate": 6214156,
+              "Codec": "h264",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 25,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Porn Star Pajama Party Part 1",
+          "OfficialRating": "NC-17",
+          "Overview": "Porn stars just want to have fun - in one big, wet orgy of bouncing breasts! What could be better than a slutty sleepover?",
+          "ParentId": "performer-3010",
+          "PartCount": 1,
+          "Path": "/data/Video-B/Studios/Digital Playground/Digital Playground - 2016-08-17 - Porn Star Pajama Party Part 1.mp4",
+          "People": [
+            {
+              "Id": "person-1967",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1967": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1967"
+              },
+              "Name": "Sienna Day",
+              "PrimaryImageTag": "p1967",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-2428",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p2428": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p2428"
+              },
+              "Name": "Michelle Thorne",
+              "PrimaryImageTag": "p2428",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-2942",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p2942": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p2942"
+              },
+              "Name": "Jasmine James",
+              "PrimaryImageTag": "p2942",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-3010",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p3010": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p3010"
+              },
+              "Name": "Aaliyah Ca Pelle",
+              "PrimaryImageTag": "p3010",
+              "Role": "",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2016-08-17T00:00:00.0000000Z",
+          "ProductionYear": 2016,
+          "ProviderIds": {
+            "StashDb": "3eb5abc8-4c03-47e0-95f7-8de0931e1371"
+          },
+          "RunTimeTicks": 17287200000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Porn Star Pajama Party Part 1",
+          "SourceType": "Default",
+          "Studios": [
+            {
+              "Id": "studio-10",
+              "Name": "Digital Playground"
+            }
+          ],
+          "Tags": [
+            "69",
+            "Amateur",
+            "Blond Hair",
+            "British",
+            "Facesitting",
+            "Foursome",
+            "Indoors",
+            "Lesbian",
+            "Oral Train",
+            "Party",
+            "Pussy Fingering",
+            "Pussy Licking",
+            "Rimming",
+            "Spanking",
+            "Vaginal Sex",
+            "White"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-27623",
+            "Key": "scene-27623",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b27576"
+          ],
+          "CanDownload": true,
+          "Container": "mp4",
+          "Etag": "f12d216019150463",
+          "Genres": [],
+          "HasSubtitles": false,
+          "Id": "scene-27576",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b27576": "000000"
+            },
+            "Primary": {
+              "p27576": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p27576"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 6228378,
+              "Container": "mp4",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-27576",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "1920:1080",
+                  "AverageFrameRate": 25,
+                  "BitRate": 6228378,
+                  "Codec": "h264",
+                  "Height": 1080,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 25,
+                  "Type": "Video",
+                  "Width": 1920
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "aac",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "AAC - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Porn Star Pajama Party Part 2",
+              "Path": "/data/Video-B/Studios/Digital Playground/Digital Playground - 2016-08-19 - Porn Star Pajama Party Part 2.mp4",
+              "Protocol": "File",
+              "RunTimeTicks": 19700000000,
+              "Size": 1533738265,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "1920:1080",
+              "AverageFrameRate": 25,
+              "BitRate": 6228378,
+              "Codec": "h264",
+              "Height": 1080,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 25,
+              "Type": "Video",
+              "Width": 1920
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "aac",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "AAC - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Porn Star Pajama Party Part 2",
+          "OfficialRating": "NC-17",
+          "Overview": "Porn stars just want to have fun - in one naked, wet orgy of bouncing breasts! What could be better than a slutty sleepover? Find out who's knocking at the door for a midnight booty call!",
+          "ParentId": "performer-3010",
+          "PartCount": 1,
+          "Path": "/data/Video-B/Studios/Digital Playground/Digital Playground - 2016-08-19 - Porn Star Pajama Party Part 2.mp4",
+          "People": [
+            {
+              "Id": "person-1967",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p1967": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p1967"
+              },
+              "Name": "Sienna Day",
+              "PrimaryImageTag": "p1967",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-2428",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p2428": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p2428"
+              },
+              "Name": "Michelle Thorne",
+              "PrimaryImageTag": "p2428",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-2942",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p2942": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p2942"
+              },
+              "Name": "Jasmine James",
+              "PrimaryImageTag": "p2942",
+              "Role": "",
+              "Type": "Actor"
+            },
+            {
+              "Id": "person-3010",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p3010": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p3010"
+              },
+              "Name": "Aaliyah Ca Pelle",
+              "PrimaryImageTag": "p3010",
+              "Role": "",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2016-08-19T00:00:00.0000000Z",
+          "ProductionYear": 2016,
+          "ProviderIds": {
+            "StashDb": "5a931cde-00bb-4f84-b078-be0b09f33d07"
+          },
+          "RunTimeTicks": 19700000000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Porn Star Pajama Party Part 2",
+          "SourceType": "Default",
+          "Studios": [
+            {
+              "Id": "studio-10",
+              "Name": "Digital Playground"
+            }
+          ],
+          "Tags": [
+            "Amateur",
+            "Average Male Body",
+            "Big Dick",
+            "Black Hair",
+            "Blond Hair",
+            "Blowjob",
+            "British",
+            "Cowgirl",
+            "Cowgirl - POV",
+            "Cumshot Clean-up",
+            "Deepthroat",
+            "DILF (30+)",
+            "Doggy Style",
+            "European",
+            "Face Fuck",
+            "Facial",
+            "Fetish",
+            "Foot Fetish",
+            "Fuck N Lick",
+            "Hair Pulling",
+            "Indoors",
+            "Lesbian",
+            "Masturbation",
+            "Missionary",
+            "Multiple Facials",
+            "Oral Train",
+            "Orgy",
+            "Party",
+            "Pussy Fingering",
+            "Pussy Licking",
+            "Rimming",
+            "Short Hair",
+            "Side Fuck",
+            "Spanking",
+            "Squirting",
+            "Vaginal Sex",
+            "White"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-27576",
+            "Key": "scene-27576",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 2
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

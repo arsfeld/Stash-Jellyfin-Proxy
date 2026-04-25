@@ -1,0 +1,53 @@
+services:
+  proxy-dev:
+    build:
+      context: ./build_docker
+      dockerfile: Dockerfile.dev
+    image: stash-jellyfin-proxy:dev
+    container_name: sjp-proxy-dev
+    restart: unless-stopped
+    ports:
+      - "18096:8096"
+      - "18097:8097"
+    volumes:
+      - ./stash_jellyfin_proxy:/app/stash_jellyfin_proxy:ro
+      - ./dev-data:/config
+    environment:
+      - CONFIG_FILE=/config/stash_jellyfin_proxy.conf
+      - LOG_DIR=/config
+      - TZ=America/Chicago
+    dns:
+      # Pihole serves the local-DNS record for stash-local.feldorn.com
+      # (→ 172.19.0.221 on the_internet, where Stash actually listens).
+      - 192.168.0.200
+    networks:
+      # Stash binds only on the_internet (SSL cert is issued for
+      # stash-local.feldorn.com). Compose `default` network is attached
+      # so host port publishing works.
+      - the_internet
+      - default
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8096/System/Info/Public"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  jellyfin-web:
+    build:
+      context: ./build_docker
+      dockerfile: Dockerfile.jfweb
+    image: stash-jellyfin-proxy-web:dev
+    container_name: sjp-jellyfin-web-dev
+    restart: unless-stopped
+    ports:
+      - "18098:80"
+    volumes:
+      # Preconfigure the web client to auto-target the dev proxy. Overrides
+      # the config.json shipped inside the upstream jellyfin-web bundle.
+      - ./build_docker/jellyfin-web.config.json:/usr/share/nginx/html/config.json:ro
+
+networks:
+  the_internet:
+    external: true
+  default:

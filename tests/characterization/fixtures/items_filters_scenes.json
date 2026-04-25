@@ -1,0 +1,424 @@
+{
+  "compare_mode": "shape",
+  "name": "items_filters_scenes",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=filters-scenes&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-40",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "1. Identitfy",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "1. Identitfy",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-40",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-41",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "2. Duplicates",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "2. Duplicates",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-41",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-42",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "3. Filed, Not Organized",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "3. Filed, Not Organized",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-42",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-44",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "4. Requires Tagging",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "4. Requires Tagging",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-44",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-45",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "5. File New, excludes empornium",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "5. File New, excludes empornium",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-45",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-46",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "6. File New, empornium",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "6. File New, empornium",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-46",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-54",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "7. Verify --NEW Files",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "7. Verify --NEW Files",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-54",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-49",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Audio Only",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Audio Only",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-49",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-38",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Cover Missing",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Cover Missing",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-38",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-23",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Details Missing",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Details Missing",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-23",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-51",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "High Rated",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "High Rated",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-51",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-50",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Might Be Scraped",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Might Be Scraped",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-50",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-24",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Movies",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Movies",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-24",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-47",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Movies - Need Movie Created",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Movies - Need Movie Created",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-47",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        },
+        {
+          "BackdropImageTags": [],
+          "CollectionType": "movies",
+          "Id": "filter-scenes-37",
+          "ImageBlurHashes": {
+            "Primary": {
+              "img": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "img"
+          },
+          "IsFolder": true,
+          "Name": "Performer Can be Tagged?",
+          "ParentId": "filters-scenes",
+          "PrimaryImageAspectRatio": 0.6667,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Performer Can be Tagged?",
+          "Type": "BoxSet",
+          "UserData": {
+            "IsFavorite": false,
+            "Key": "filter-scenes-37",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          }
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 15
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

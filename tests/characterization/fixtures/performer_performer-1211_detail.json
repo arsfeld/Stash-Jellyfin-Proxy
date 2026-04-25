@@ -1,0 +1,52 @@
+{
+  "compare_mode": "full",
+  "name": "performer_performer-1211_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/performer-1211"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [
+        "img"
+      ],
+      "ChildCount": 4,
+      "CollectionType": "movies",
+      "Id": "performer-1211",
+      "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
+        "Primary": {
+          "img": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "img"
+      },
+      "IsFolder": true,
+      "Name": "Abby Rains",
+      "Overview": "Female performer, born 1995-06-18 (30), from US, active since 2015, 4 scenes in library.\n\nHeight: 165 cm (5'5\")\nMeasurements: 32DD-25-33\nBreasts: Natural\nEthnicity: Caucasian\nHair: Red\nEyes: Green\n\nAlso known as: Abbey Rain, Abbey Rains, Julie Snow, Liz B, Pen, Robin Hearts, penelope",
+      "PremiereDate": "1995-06-18T00:00:00.0000000Z",
+      "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 1995,
+      "ProviderIds": {
+        "StashDb": "679ce50f-f74b-4543-9bec-ede76f9f2b72"
+      },
+      "RecursiveItemCount": 4,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "Abby Rains",
+      "Type": "BoxSet",
+      "UserData": {
+        "IsFavorite": false,
+        "Key": "performer-1211",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

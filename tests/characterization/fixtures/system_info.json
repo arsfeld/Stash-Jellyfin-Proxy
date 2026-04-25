@@ -1,0 +1,36 @@
+{
+  "compare_mode": "full",
+  "name": "system_info",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/System/Info"
+  },
+  "response": {
+    "body": {
+      "CachePath": "/tmp",
+      "CanLaunchWebBrowser": false,
+      "CanSelfRestart": false,
+      "CompletedInstallations": [],
+      "HasPendingRestart": false,
+      "HasUpdateAvailable": false,
+      "Id": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "InternalMetadataPath": "/tmp",
+      "IsShuttingDown": false,
+      "ItemsByNamePath": "/tmp",
+      "LocalAddress": "http://192.168.0.200:18096",
+      "LogPath": "/tmp",
+      "OperatingSystem": "Linux",
+      "ProductName": "Jellyfin Server",
+      "ProgramDataPath": "/tmp",
+      "ServerName": "Stash Dev",
+      "StartupWizardCompleted": true,
+      "SupportsLibraryMonitor": false,
+      "TranscodingTempPath": "/tmp",
+      "Version": "10.11.0",
+      "WebSocketPortNumber": 8096
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

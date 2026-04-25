@@ -1,0 +1,346 @@
+{
+  "compare_mode": "full",
+  "name": "studio_studio-217_items",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=studio-217&Limit=25&StartIndex=0"
+  },
+  "response": {
+    "body": {
+      "Items": [
+        {
+          "BackdropImageTags": [
+            "b24856"
+          ],
+          "CanDownload": true,
+          "Container": "avi",
+          "Etag": "4ac7e82f41db9421",
+          "Genres": [],
+          "HasSubtitles": false,
+          "Id": "scene-24856",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b24856": "000000"
+            },
+            "Primary": {
+              "p24856": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p24856"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 2296372,
+              "Container": "avi",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-24856",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "576:320",
+                  "AverageFrameRate": 23.98,
+                  "BitRate": 2296372,
+                  "Codec": "mpeg4",
+                  "Height": 320,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 23.98,
+                  "Type": "Video",
+                  "Width": 576
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Dangerous Curves Scene 1",
+              "Path": "/data2/Video-B/Performers/Alanah Rae/Alanah Rae - Adam & Eve Pictures - 2009-12-31 Dangerous Curves Scene 1.avi",
+              "Protocol": "File",
+              "RunTimeTicks": 10596000000,
+              "Size": 304154624,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "576:320",
+              "AverageFrameRate": 23.98,
+              "BitRate": 2296372,
+              "Codec": "mpeg4",
+              "Height": 320,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 23.98,
+              "Type": "Video",
+              "Width": 576
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Dangerous Curves Scene 1",
+          "OfficialRating": "NC-17",
+          "ParentId": "studio-217",
+          "PartCount": 1,
+          "Path": "/data2/Video-B/Performers/Alanah Rae/Alanah Rae - Adam & Eve Pictures - 2009-12-31 Dangerous Curves Scene 1.avi",
+          "People": [
+            {
+              "Id": "person-524",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p524": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p524"
+              },
+              "Name": "Alanah Rae",
+              "PrimaryImageTag": "p524",
+              "Role": "",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2009-12-31T00:00:00.0000000Z",
+          "ProductionYear": 2009,
+          "ProviderIds": {
+            "StashDb": "d8d10502-6429-4b83-b1e8-8946d3b6afb7"
+          },
+          "RunTimeTicks": 10596000000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Dangerous Curves Scene 1",
+          "SourceType": "Default",
+          "Studios": [
+            {
+              "Id": "studio-217",
+              "Name": "Adam & Eve Pictures"
+            }
+          ],
+          "Tags": [
+            "!1. File By Performer",
+            "Bouncing Tits",
+            "Cowgirl"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-24856",
+            "Key": "scene-24856",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        },
+        {
+          "BackdropImageTags": [
+            "b10433"
+          ],
+          "CanDownload": true,
+          "Container": "avi",
+          "Etag": "914a65b856bac8da",
+          "Genres": [],
+          "HasSubtitles": false,
+          "Id": "scene-10433",
+          "ImageBlurHashes": {
+            "Backdrop": {
+              "b10433": "000000"
+            },
+            "Primary": {
+              "p10433": "000000"
+            }
+          },
+          "ImageTags": {
+            "Primary": "p10433"
+          },
+          "IsFolder": false,
+          "LocationType": "FileSystem",
+          "MediaSources": [
+            {
+              "Bitrate": 1464345,
+              "Container": "avi",
+              "DefaultAudioStreamIndex": 1,
+              "DefaultSubtitleStreamIndex": -1,
+              "Id": "scene-10433",
+              "MediaStreams": [
+                {
+                  "AspectRatio": "624:352",
+                  "AverageFrameRate": 29.97,
+                  "BitRate": 1464345,
+                  "Codec": "mpeg4",
+                  "Height": 352,
+                  "Index": 0,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "RealFrameRate": 29.97,
+                  "Type": "Video",
+                  "Width": 624
+                },
+                {
+                  "ChannelLayout": "stereo",
+                  "Channels": 2,
+                  "Codec": "mp3",
+                  "DisplayLanguage": "Unknown",
+                  "DisplayTitle": "MP3 - Stereo",
+                  "Index": 1,
+                  "IsDefault": true,
+                  "IsExternal": false,
+                  "IsForced": false,
+                  "IsInterlaced": false,
+                  "IsTextSubtitleStream": false,
+                  "Language": "und",
+                  "SampleRate": 48000,
+                  "SupportsExternalStream": false,
+                  "Type": "Audio"
+                }
+              ],
+              "Name": "Superstar MILFS sc4 - Lisa Ann",
+              "Path": "/data2/Video-B/Performers/Lisa Ann/Lisa Ann - Adam & Eve Pictures - 2009-10-22 Superstar MILFS sc4 - Lisa Ann.avi",
+              "Protocol": "File",
+              "RunTimeTicks": 12692400000,
+              "Size": 232325700,
+              "SupportsDirectPlay": true,
+              "SupportsDirectStream": true,
+              "SupportsTranscoding": false,
+              "Type": "Default"
+            }
+          ],
+          "MediaStreams": [
+            {
+              "AspectRatio": "624:352",
+              "AverageFrameRate": 29.97,
+              "BitRate": 1464345,
+              "Codec": "mpeg4",
+              "Height": 352,
+              "Index": 0,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "RealFrameRate": 29.97,
+              "Type": "Video",
+              "Width": 624
+            },
+            {
+              "ChannelLayout": "stereo",
+              "Channels": 2,
+              "Codec": "mp3",
+              "DisplayLanguage": "Unknown",
+              "DisplayTitle": "MP3 - Stereo",
+              "Index": 1,
+              "IsDefault": true,
+              "IsExternal": false,
+              "IsForced": false,
+              "IsInterlaced": false,
+              "IsTextSubtitleStream": false,
+              "Language": "und",
+              "SampleRate": 48000,
+              "SupportsExternalStream": false,
+              "Type": "Audio"
+            }
+          ],
+          "MediaType": "Video",
+          "Name": "Superstar MILFS sc4 - Lisa Ann",
+          "OfficialRating": "NC-17",
+          "Overview": "These magnificent MILFs are back for bone! Yesterday's top XXX stars (Teri Weigel, Lisa Ann, Ginger Lynn, Julia Ann and Dyanna Lauren) have aged like fine wine, and now they are breaking in the hottest studs in the business!",
+          "ParentId": "studio-217",
+          "PartCount": 1,
+          "Path": "/data2/Video-B/Performers/Lisa Ann/Lisa Ann - Adam & Eve Pictures - 2009-10-22 Superstar MILFS sc4 - Lisa Ann.avi",
+          "People": [
+            {
+              "Id": "person-465",
+              "ImageBlurHashes": {
+                "Primary": {
+                  "p465": "000000"
+                }
+              },
+              "ImageTags": {
+                "Primary": "p465"
+              },
+              "Name": "Lisa Ann",
+              "PrimaryImageTag": "p465",
+              "Role": "",
+              "Type": "Actor"
+            }
+          ],
+          "PremiereDate": "2009-10-22T00:00:00.0000000Z",
+          "ProductionYear": 2009,
+          "ProviderIds": {
+            "StashDb": "d63ff039-c711-487e-8929-776e761add85"
+          },
+          "RunTimeTicks": 12692400000,
+          "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+          "SortName": "Superstar MILFS sc4 - Lisa Ann",
+          "SourceType": "Default",
+          "Studios": [
+            {
+              "Id": "studio-217",
+              "Name": "Adam & Eve Pictures"
+            }
+          ],
+          "Tags": [
+            "!1. File By Performer",
+            "Blowjob",
+            "Bra",
+            "Cum on Feet",
+            "Doggy Style",
+            "MILF",
+            "Reverse Cowgirl"
+          ],
+          "Type": "Movie",
+          "UserData": {
+            "IsFavorite": false,
+            "ItemId": "scene-10433",
+            "Key": "scene-10433",
+            "PlayCount": 0,
+            "PlaybackPositionTicks": 0,
+            "Played": false
+          },
+          "VideoType": "VideoFile"
+        }
+      ],
+      "StartIndex": 0,
+      "TotalRecordCount": 2
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

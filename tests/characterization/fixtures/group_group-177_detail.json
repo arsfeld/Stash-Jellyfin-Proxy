@@ -1,0 +1,41 @@
+{
+  "compare_mode": "full",
+  "name": "group_group-177_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/group-177"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [],
+      "ChildCount": 3,
+      "CollectionType": "movies",
+      "Id": "group-177",
+      "ImageBlurHashes": {
+        "Primary": {
+          "img": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "img"
+      },
+      "IsFolder": true,
+      "Name": "\"I Got The Biggest Tits!\" Wet T-Shirt Contest 5",
+      "PrimaryImageAspectRatio": 0.6667,
+      "RecursiveItemCount": 3,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "\"I Got The Biggest Tits!\" Wet T-Shirt Contest 5",
+      "Type": "BoxSet",
+      "UserData": {
+        "IsFavorite": false,
+        "Key": "group-177",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

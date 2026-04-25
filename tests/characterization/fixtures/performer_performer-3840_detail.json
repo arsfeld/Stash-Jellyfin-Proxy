@@ -1,0 +1,52 @@
+{
+  "compare_mode": "full",
+  "name": "performer_performer-3840_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/performer-3840"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [
+        "img"
+      ],
+      "ChildCount": 3,
+      "CollectionType": "movies",
+      "Id": "performer-3840",
+      "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
+        "Primary": {
+          "img": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "img"
+      },
+      "IsFolder": true,
+      "Name": "Abbey Brook",
+      "Overview": "Female performer, born 1983-02-17 (43), from US, active 2006–2017, 3 scenes in library.\n\nHeight: 170 cm (5'7\")\nMeasurements: 36DD-27-36\nBreasts: Fake\nEthnicity: Caucasian\nHair: Blonde\nEyes: Brown\n\nPiercings: Two in navel\n\nAlso known as: Abbey Brookes, Abbey Brookess, Abby Brooklly Browning, Abby Brooks, Holly Browning",
+      "PremiereDate": "1983-02-17T00:00:00.0000000Z",
+      "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 1983,
+      "ProviderIds": {
+        "StashDb": "d9b76a8b-c5df-45c1-8c68-3e5a2e084860"
+      },
+      "RecursiveItemCount": 3,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "Abbey Brook",
+      "Type": "BoxSet",
+      "UserData": {
+        "IsFavorite": false,
+        "Key": "performer-3840",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "compare_mode": "full",
+  "name": "system_endpoint",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/System/Endpoint"
+  },
+  "response": {
+    "body": {
+      "IsInNetwork": true,
+      "IsLocal": true
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

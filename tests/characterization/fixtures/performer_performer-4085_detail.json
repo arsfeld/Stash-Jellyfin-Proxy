@@ -1,0 +1,52 @@
+{
+  "compare_mode": "full",
+  "name": "performer_performer-4085_detail",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items/performer-4085"
+  },
+  "response": {
+    "body": {
+      "BackdropImageTags": [
+        "img"
+      ],
+      "ChildCount": 1,
+      "CollectionType": "movies",
+      "Id": "performer-4085",
+      "ImageBlurHashes": {
+        "Backdrop": {
+          "img": "000000"
+        },
+        "Primary": {
+          "img": "000000"
+        }
+      },
+      "ImageTags": {
+        "Primary": "img"
+      },
+      "IsFolder": true,
+      "Name": "Abby Rose",
+      "Overview": "Female performer, born 1992-05-21 (33), from US, 1 scene in library.\n\nHeight: 163 cm (5'4\")\nMeasurements: 34DD-35-42\nBreasts: Fake\nEthnicity: Caucasian\nHair: Brunette\n\nTattoos: Above left breast, Text \"i must've been a lie\"[?]; Above left butt cheek; Inside left ankle, Cross; Inside of left forearm, Two women's faces; Left flank on to back, Music notes; Left forearm, Coffee cup with legs sticking out; Left shoulder blade, Bird; continuation of the upper left arm tattoo; Lower right abdomen, Script; Outside of left thigh, Text \"39164\"; Outside of right thigh; Right shoulder blade; Upper back; Upper left arm, Bird cage and feathers\nPiercings: Ears, Standard earring; Left nostril, Nose ring\n\nAlso known as: Abby, ItsAbbyRose",
+      "PremiereDate": "1992-05-21T00:00:00.0000000Z",
+      "PrimaryImageAspectRatio": 0.6667,
+      "ProductionYear": 1992,
+      "ProviderIds": {
+        "StashDb": "6c67e56d-ebc5-493e-9f48-8578de7f0394"
+      },
+      "RecursiveItemCount": 1,
+      "ServerId": "5884545f-0192-45e3-ae35-70061e0dba57",
+      "SortName": "Abby Rose",
+      "Type": "BoxSet",
+      "UserData": {
+        "IsFavorite": false,
+        "Key": "performer-4085",
+        "PlayCount": 0,
+        "PlaybackPositionTicks": 0,
+        "Played": false
+      }
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}

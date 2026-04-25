@@ -1,0 +1,18 @@
+{
+  "compare_mode": "full",
+  "name": "negative_unknown_parent",
+  "request": {
+    "body": null,
+    "method": "GET",
+    "path": "/Users/bed0fa2f-5a08-543a-96eb-ef0150360506/Items?ParentId=bogus-prefix-123&Limit=10"
+  },
+  "response": {
+    "body": {
+      "Items": [],
+      "StartIndex": 0,
+      "TotalRecordCount": 0
+    },
+    "content_type": "application/json",
+    "status": 200
+  }
+}
