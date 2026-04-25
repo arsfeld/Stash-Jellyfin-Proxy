@@ -24,6 +24,7 @@ from stash_jellyfin_proxy.util.images import (
     PILLOW_AVAILABLE,
     compose_library_card,
     crop_to_portrait,
+    fit_to_landscape,
     generate_filter_icon,
     generate_menu_icon,
     generate_placeholder_icon,
@@ -564,6 +565,19 @@ async def endpoint_image(request):
             else:
                 data, content_type = pad_image_to_portrait(data, target_width=400, target_height=600)
                 logger.debug("Letterbox-padded to 400x600 portrait (2:3)")
+            if len(runtime.IMAGE_CACHE) >= runtime.IMAGE_CACHE_MAX_SIZE:
+                oldest_key = next(iter(runtime.IMAGE_CACHE))
+                del runtime.IMAGE_CACHE[oldest_key]
+            runtime.IMAGE_CACHE[cache_key] = (data, content_type)
+        elif is_landscape_type and runtime.ENABLE_IMAGE_RESIZE and PILLOW_AVAILABLE:
+            # Landscape target (Backdrop, Thumb, landscape tile). Route through
+            # fit_to_landscape so portrait phone-video screenshots don't get
+            # stretched by the client's hero renderer — we produce a blurred
+            # full-frame background with the original centered on top at its
+            # natural aspect. Sources that already match 16:9 short-circuit
+            # inside fit_to_landscape (just a resize, no blur).
+            data, content_type = fit_to_landscape(data)
+            logger.debug("Fit to 1920x1080 landscape (blur-background when source aspect differs)")
             if len(runtime.IMAGE_CACHE) >= runtime.IMAGE_CACHE_MAX_SIZE:
                 oldest_key = next(iter(runtime.IMAGE_CACHE))
                 del runtime.IMAGE_CACHE[oldest_key]

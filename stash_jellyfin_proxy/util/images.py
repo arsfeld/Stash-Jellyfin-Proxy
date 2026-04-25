@@ -114,6 +114,74 @@ def crop_to_portrait(image_data: bytes, target_width: int = 400, target_height: 
         return image_data, "image/jpeg"
 
 
+def fit_to_landscape(image_data: bytes, target_width: int = 1920, target_height: int = 1080,
+                     blur_radius: int = 40, tolerance: float = 0.01) -> Tuple[bytes, str]:
+    """Fit a source image to a landscape canvas with a blurred-stretched
+    copy of the source filling the frame and the original image centered
+    on top at its natural aspect.
+
+    Used by /Backdrop, /Thumb, and landscape-tile Primary requests so
+    portrait phone-video screenshots (or square / 4:3 sources) don't get
+    stretched by the client's hero renderer. When the source already
+    matches the target aspect (within tolerance), we skip the blur layer
+    and just resize to exact target dimensions.
+
+    Returns (image_bytes, content_type). Pillow failure → source bytes
+    untouched so the caller still has a usable image."""
+    if not PILLOW_AVAILABLE:
+        return image_data, "image/jpeg"
+
+    try:
+        from PIL import ImageFilter
+        img = Image.open(io.BytesIO(image_data))
+        if img.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', img.size, (20, 20, 20))
+            if img.mode == 'P':
+                img = img.convert('RGBA')
+            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+            img = background
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+
+        src_w, src_h = img.size
+        target_ratio = target_width / target_height
+        src_ratio = src_w / src_h
+
+        if abs(src_ratio - target_ratio) / target_ratio < tolerance:
+            if (src_w, src_h) != (target_width, target_height):
+                img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
+            output = io.BytesIO()
+            img.save(output, format='JPEG', quality=85)
+            return output.getvalue(), "image/jpeg"
+
+        bg_scale = max(target_width / src_w, target_height / src_h)
+        bg_w = max(target_width, int(src_w * bg_scale))
+        bg_h = max(target_height, int(src_h * bg_scale))
+        bg = img.resize((bg_w, bg_h), Image.Resampling.LANCZOS)
+        x0 = (bg_w - target_width) // 2
+        y0 = (bg_h - target_height) // 2
+        bg = bg.crop((x0, y0, x0 + target_width, y0 + target_height))
+        bg = bg.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+        dark = Image.new('RGB', bg.size, (0, 0, 0))
+        bg = Image.blend(bg, dark, 0.3)
+
+        fg_scale = min(target_width / src_w, target_height / src_h)
+        fg_w = max(1, int(src_w * fg_scale))
+        fg_h = max(1, int(src_h * fg_scale))
+        fg = img.resize((fg_w, fg_h), Image.Resampling.LANCZOS)
+
+        x_off = (target_width - fg_w) // 2
+        y_off = (target_height - fg_h) // 2
+        bg.paste(fg, (x_off, y_off))
+
+        output = io.BytesIO()
+        bg.save(output, format='JPEG', quality=85)
+        return output.getvalue(), "image/jpeg"
+    except Exception as e:
+        logger.warning(f"Landscape fit failed: {e}, returning original")
+        return image_data, "image/jpeg"
+
+
 def pad_image_to_portrait(image_data: bytes, target_width: int = 400, target_height: int = 600) -> Tuple[bytes, str]:
     """Pad a source image to a portrait 2:3 canvas using contain+pad.
     Returns (image_bytes, content_type). Pillow failure → return the
