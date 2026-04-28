@@ -412,6 +412,31 @@ def run_bootstrap(config_file: str, local_config_file: str) -> None:
     _uuid_padded = SERVER_ID.replace("-", "").ljust(32, "0")[:32]
     USER_ID = str(uuid.uuid5(uuid.UUID(_uuid_padded), SJS_USER or "user"))
 
+    # ---- Probe config-file writability ----
+    # If the file (or its parent dir, when the file doesn't yet exist)
+    # isn't writable, SERVER_ID and ACCESS_TOKEN can't persist — they'll
+    # regenerate on every restart and break client reconnects.
+    # We do both an os.access check (catches non-root users) and an
+    # open('r+') probe (catches read-only filesystem mounts, where root
+    # would otherwise bypass DAC and look writable).
+    CONFIG_WRITABLE = True
+    if os.path.isfile(config_file):
+        if not os.access(config_file, os.W_OK):
+            CONFIG_WRITABLE = False
+        else:
+            try:
+                with open(config_file, "r+"):
+                    pass
+            except OSError:
+                CONFIG_WRITABLE = False
+    else:
+        parent = os.path.dirname(os.path.abspath(config_file)) or "."
+        if not os.access(parent, os.W_OK):
+            CONFIG_WRITABLE = False
+    if not CONFIG_WRITABLE:
+        print(f"  WARNING: Config file is not writable: {config_file}")
+        print("  SERVER_ID and ACCESS_TOKEN cannot persist; clients will need to re-add the server after every restart.")
+
     # ---- Publish to stash_jellyfin_proxy.runtime ----
     runtime.publish(
         STASH_URL=STASH_URL,
@@ -454,6 +479,7 @@ def run_bootstrap(config_file: str, local_config_file: str) -> None:
         BAN_WINDOW_MINUTES=BAN_WINDOW_MINUTES,
         CONFIG_FILE=config_file,
         LOCAL_CONFIG_FILE=local_config_file,
+        CONFIG_WRITABLE=CONFIG_WRITABLE,
         config=cfg,
         config_defined_keys=cfg_defined_keys,
         config_sections=cfg_sections,

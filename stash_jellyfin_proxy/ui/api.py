@@ -52,6 +52,8 @@ async def ui_api_status(request):
         "stashUrl": runtime.STASH_URL,
         "migrationPerformed": bool(getattr(runtime, "MIGRATION_PERFORMED", False)),
         "migrationLog": list(getattr(runtime, "MIGRATION_LOG", []) or []),
+        "configWritable": bool(getattr(runtime, "CONFIG_WRITABLE", True)),
+        "configFile": runtime.CONFIG_FILE,
     })
 
 

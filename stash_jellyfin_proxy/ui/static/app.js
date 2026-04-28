@@ -305,6 +305,16 @@ async function renderDashStatus() {
     if (s.migrationPerformed && !banner._dismissed) {
       banner.classList.remove("hide");
     }
+
+    // Config-not-writable banner — not dismissible, since the underlying
+    // problem (regenerating tokens every restart) needs to be fixed.
+    const cwBanner = qs("#dash-config-writable-banner");
+    if (s.configWritable === false) {
+      qs("#dash-config-writable-path").textContent = s.configFile || "(unknown)";
+      cwBanner.classList.remove("hide");
+    } else {
+      cwBanner.classList.add("hide");
+    }
   } catch {}
 }
 
