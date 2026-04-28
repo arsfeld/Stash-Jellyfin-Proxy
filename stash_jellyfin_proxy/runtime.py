@@ -80,6 +80,11 @@ PROXY_START_TIME: Optional[float] = None
 # --- Config file paths ---
 CONFIG_FILE: str = ""
 LOCAL_CONFIG_FILE: str = ""
+# Set to False at bootstrap if the config file (or its parent dir, when
+# the file doesn't yet exist) isn't writable. Surfaced on the dashboard
+# because a non-persistent config means SERVER_ID and ACCESS_TOKEN
+# rotate on every restart, breaking client reconnects (issue #16).
+CONFIG_WRITABLE: bool = True
 
 # --- Fixed identity strings ---
 # The Jellyfin protocol version we pretend to be. Bump when clients

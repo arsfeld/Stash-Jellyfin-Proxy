@@ -132,6 +132,17 @@
           </div>
         </div>
 
+        <!-- Row 4a: Config-not-writable warning (conditional) -->
+        <div class="card hide" id="dash-config-writable-banner" style="margin-top: 16px; border-color: #d97706; background: rgba(217, 119, 6, 0.08);">
+          <div class="card-body">
+            <div>
+              <strong style="color: #d97706;">⚠ Config file is not writable.</strong>
+              <code id="dash-config-writable-path"></code> can't be saved to, so <strong>SERVER_ID</strong> and <strong>ACCESS_TOKEN</strong> will regenerate on every restart — clients (Infuse, Swiftfin, SenPlayer) will need to re-add the server each time.
+              <div style="margin-top: 6px; color: var(--text-dim); font-size: 13px;">Fix: ensure the proxy process can write to that file. If running in Docker, mount a writable volume for the config directory.</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Row 4: Migration notice (conditional) -->
         <div class="card hide" id="dash-migration-banner" style="margin-top: 16px; border-color: var(--accent, #3b82f6);">
           <div class="card-body" style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
