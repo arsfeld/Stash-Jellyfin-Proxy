@@ -46,9 +46,31 @@ def generate_server_id():
     return str(uuid.uuid4())
 
 
+def _line_matches_key(line: str, key: str) -> bool:
+    """True if `line` is `KEY = ...` or `# KEY = ...`, exact key match.
+    Used so SERVER_ID doesn't collide with a hypothetical SERVER_ID_FOO."""
+    s = line.strip()
+    if s.startswith('#'):
+        s = s[1:].lstrip()
+    if not s.startswith(key):
+        return False
+    rest = s[len(key):]
+    return rest.lstrip().startswith('=')
+
+
 def save_config_value(config_file: str, key: str, value: str, comment: str = None) -> bool:
-    """Write a KEY = value line to the config file. Updates an existing
-    entry (commented or active) in-place; appends if not found."""
+    """Write a KEY = value line at global scope in the config file.
+
+    Removes any prior line for `key` (active or commented, anywhere in
+    the file — including inside a `[section]` block) and re-inserts at
+    global scope, just before the first `[section]` header. If the file
+    has no sections, appends at the end.
+
+    Inserting at global scope matters because the loader puts any
+    `KEY = value` line that follows a `[section]` header into that
+    section's dict — so a flat key appended below a trailing player
+    profile block would be invisible to bootstrap on the next load.
+    """
     if not os.path.isfile(config_file):
         with open(config_file, 'w') as f:
             if comment:
@@ -59,25 +81,35 @@ def save_config_value(config_file: str, key: str, value: str, comment: str = Non
     with open(config_file, 'r') as f:
         lines = f.readlines()
 
-    updated = False
-    new_lines = []
+    # Strip every existing line for this key (active or commented),
+    # regardless of section. Track where the first section header sits.
+    cleaned = []
+    first_section_idx = None
     for line in lines:
+        if _line_matches_key(line, key):
+            continue
         stripped = line.strip()
-        if stripped.startswith('#') and key in stripped and '=' in stripped:
-            new_lines.append(f'{key} = {value}\n')
-            updated = True
-        elif stripped.startswith(key) and '=' in stripped:
-            new_lines.append(f'{key} = {value}\n')
-            updated = True
-        else:
-            new_lines.append(line)
+        if first_section_idx is None and stripped.startswith('[') and stripped.endswith(']'):
+            first_section_idx = len(cleaned)
+        cleaned.append(line)
 
-    if not updated:
-        prefix = f'\n# {comment}\n' if comment else '\n'
-        new_lines.append(f'{prefix}{key} = {value}\n')
+    new_block = []
+    if comment:
+        new_block.append(f'# {comment}\n')
+    new_block.append(f'{key} = {value}\n')
+
+    if first_section_idx is None:
+        if cleaned and not cleaned[-1].endswith('\n'):
+            cleaned.append('\n')
+        if cleaned and cleaned[-1].strip() != '':
+            cleaned.append('\n')
+        cleaned.extend(new_block)
+    else:
+        new_block.append('\n')
+        cleaned[first_section_idx:first_section_idx] = new_block
 
     with open(config_file, 'w') as f:
-        f.writelines(new_lines)
+        f.writelines(cleaned)
     return True
 
 
