@@ -126,7 +126,7 @@ def main():
     logging.getLogger("hypercorn.error").addFilter(SuppressDisconnectFilter())
     logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 
-    logger.info("--- Stash-Jellyfin Proxy v7.0.0 ---")
+    logger.info("--- Stash-Jellyfin Proxy v7.1.1 ---")
 
     if not check_stash_connection():
         logger.warning("Could not connect to Stash. Proxy will start but streaming will not work until Stash is reachable.")
