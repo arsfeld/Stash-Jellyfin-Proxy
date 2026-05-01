@@ -446,12 +446,18 @@ def run_bootstrap(config_file: str, local_config_file: str) -> None:
         if (verify_cfg.get("CONFIG_LAST_BOOT_AT", "") or "").strip() != now_iso:
             CONFIG_WRITABLE = False
             write_error = "write succeeded but read-back returned a different value"
-        elif not prior_introduced:
-            # First boot that's writing markers. Plant the introduction
-            # stamp so future boots can distinguish "fresh install" from
-            # "file got wiped after we'd been running here."
+        else:
+            # Re-write CONFIG_PERSISTENCE_INTRODUCED every boot. If it
+            # was absent at load time, plant a fresh stamp; if present,
+            # rewrite with its existing value so save_config_value's
+            # placement logic can relocate it (v7.1.3 wrote these
+            # markers between the player-profiles divider and the
+            # first [player.*] header — v7.1.4 fixed the placement
+            # logic, but a one-shot write that already happened in
+            # v7.1.3 stays stuck unless we rewrite it here).
+            introduced_value = prior_introduced or now_iso
             save_config_value(
-                config_file, "CONFIG_PERSISTENCE_INTRODUCED", now_iso,
+                config_file, "CONFIG_PERSISTENCE_INTRODUCED", introduced_value,
                 "Set once, on the first boot that wrote CONFIG_LAST_BOOT_AT. Used to detect file resets.",
             )
     except OSError as e:
