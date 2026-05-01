@@ -1,6 +1,6 @@
 # Stash-Jellyfin Proxy
 
-**Version 7.1.0**
+**Version 7.1.7**
 
 A Python proxy server that lets Jellyfin-compatible media players browse and stream a [Stash](https://stashapp.cc/) library by emulating the Jellyfin HTTP API.
 
