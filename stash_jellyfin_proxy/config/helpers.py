@@ -112,18 +112,19 @@ def save_config_value(config_file: str, key: str, value: str, comment: str = Non
             cleaned.append('\n')
         cleaned.extend(new_block)
     else:
-        # Walk back past blank lines and any decorative "# ==== ... ===="
-        # divider that visually heads the upcoming section, so a flat
-        # global key doesn't land below the divider and look like it
-        # belongs to that section.
+        # Find the most recent "# ==== ... ====" divider that precedes
+        # the first section header, and insert above it. Walking simply
+        # backwards past blank lines isn't enough — if a prior write
+        # left orphan keys between the divider and the section header
+        # (a v7.1.3-era artifact), a strict walk-back would stop at
+        # them and the new key would land below the divider. Searching
+        # the whole pre-section range catches the divider regardless.
         insertion_idx = first_section_idx
-        j = insertion_idx - 1
-        while j >= 0 and cleaned[j].strip() == '':
-            j -= 1
-        if j >= 0:
-            s = cleaned[j].strip()
+        for i in range(first_section_idx - 1, -1, -1):
+            s = cleaned[i].strip()
             if s.startswith('# ====') and s.endswith('===='):
-                insertion_idx = j
+                insertion_idx = i
+                break
         new_block.append('\n')
         cleaned[insertion_idx:insertion_idx] = new_block
 
