@@ -893,9 +893,13 @@ async def ui_api_config(request):
                 else:
                     logger.info(f"Config reverted to default: {key}: \"{old_val}\" -> default \"{default_val}\"")
 
-            # Write updated config file
+            # Write updated config file. Collapse blank-line drift
+            # introduced by prior strip-and-reinsert cycles (and by the
+            # misplaced-key pre-pass above) before writing so the file
+            # doesn't grow extra blanks every save.
+            from stash_jellyfin_proxy.config.helpers import collapse_blank_runs
             with open(runtime.CONFIG_FILE, 'w') as f:
-                f.writelines(new_lines)
+                f.writelines(collapse_blank_runs(new_lines))
 
             # Apply configuration changes immediately (where safe to do so)
             # Settings that need restart: PROXY_BIND, PROXY_PORT, UI_PORT, LOG_DIR, LOG_FILE

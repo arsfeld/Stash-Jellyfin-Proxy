@@ -46,6 +46,24 @@ def generate_server_id():
     return str(uuid.uuid4())
 
 
+def collapse_blank_runs(lines):
+    """Collapse runs of 2+ consecutive blank lines into a single blank
+    line. Repeated strip-and-reinsert cycles in save_config_value (e.g.
+    CONFIG_LAST_BOOT_AT, rewritten every boot) leave behind one extra
+    blank per cycle when the stripped key was bracketed by separator
+    blanks; this normalizes that drift before write.
+    """
+    out = []
+    prev_blank = False
+    for line in lines:
+        is_blank = line.strip() == ''
+        if is_blank and prev_blank:
+            continue
+        out.append(line)
+        prev_blank = is_blank
+    return out
+
+
 def find_global_insert_idx(lines):
     """Return where to insert a flat global key into `lines`, or None if
     the file has no `[section]` headers (caller should append at end).
@@ -139,6 +157,7 @@ def save_config_value(config_file: str, key: str, value: str, comment: str = Non
         new_block.append('\n')
         cleaned[insertion_idx:insertion_idx] = new_block
 
+    cleaned = collapse_blank_runs(cleaned)
     with open(config_file, 'w') as f:
         f.writelines(cleaned)
     return True
