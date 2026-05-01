@@ -46,6 +46,52 @@ def generate_server_id():
     return str(uuid.uuid4())
 
 
+def collapse_blank_runs(lines):
+    """Collapse runs of 2+ consecutive blank lines into a single blank
+    line. Repeated strip-and-reinsert cycles in save_config_value (e.g.
+    CONFIG_LAST_BOOT_AT, rewritten every boot) leave behind one extra
+    blank per cycle when the stripped key was bracketed by separator
+    blanks; this normalizes that drift before write.
+    """
+    out = []
+    prev_blank = False
+    for line in lines:
+        is_blank = line.strip() == ''
+        if is_blank and prev_blank:
+            continue
+        out.append(line)
+        prev_blank = is_blank
+    return out
+
+
+def find_global_insert_idx(lines):
+    """Return where to insert a flat global key into `lines`, or None if
+    the file has no `[section]` headers (caller should append at end).
+
+    The insertion point is just before the first `[section]` header,
+    backed up over any preceding "# ==== ... ====" decorative divider
+    so the new key lands above the divider that visually heads the
+    upcoming section. Walking is over the whole pre-section range
+    (not just contiguous blanks) so misplaced keys above the section
+    header don't block the divider search.
+    """
+    first_section_idx = None
+    for i, line in enumerate(lines):
+        s = line.strip()
+        if s.startswith('[') and s.endswith(']'):
+            first_section_idx = i
+            break
+    if first_section_idx is None:
+        return None
+    insertion_idx = first_section_idx
+    for i in range(first_section_idx - 1, -1, -1):
+        s = lines[i].strip()
+        if s.startswith('# ====') and s.endswith('===='):
+            insertion_idx = i
+            break
+    return insertion_idx
+
+
 def _line_matches_key(line: str, key: str) -> bool:
     """True if `line` is `KEY = ...` or `# KEY = ...`, exact key match.
     Used so SERVER_ID doesn't collide with a hypothetical SERVER_ID_FOO."""
@@ -85,19 +131,14 @@ def save_config_value(config_file: str, key: str, value: str, comment: str = Non
     # regardless of section. Also strip any prior occurrence of the
     # same comment line we're about to insert — otherwise repeated
     # saves of a per-boot key (CONFIG_LAST_BOOT_AT) accumulate one
-    # extra comment copy per boot. Track where the first section
-    # header sits.
+    # extra comment copy per boot.
     comment_marker = f'# {comment}'.strip() if comment else None
     cleaned = []
-    first_section_idx = None
     for line in lines:
         if _line_matches_key(line, key):
             continue
         if comment_marker and line.strip() == comment_marker:
             continue
-        stripped = line.strip()
-        if first_section_idx is None and stripped.startswith('[') and stripped.endswith(']'):
-            first_section_idx = len(cleaned)
         cleaned.append(line)
 
     new_block = []
@@ -105,29 +146,18 @@ def save_config_value(config_file: str, key: str, value: str, comment: str = Non
         new_block.append(f'# {comment}\n')
     new_block.append(f'{key} = {value}\n')
 
-    if first_section_idx is None:
+    insertion_idx = find_global_insert_idx(cleaned)
+    if insertion_idx is None:
         if cleaned and not cleaned[-1].endswith('\n'):
             cleaned.append('\n')
         if cleaned and cleaned[-1].strip() != '':
             cleaned.append('\n')
         cleaned.extend(new_block)
     else:
-        # Find the most recent "# ==== ... ====" divider that precedes
-        # the first section header, and insert above it. Walking simply
-        # backwards past blank lines isn't enough — if a prior write
-        # left orphan keys between the divider and the section header
-        # (a v7.1.3-era artifact), a strict walk-back would stop at
-        # them and the new key would land below the divider. Searching
-        # the whole pre-section range catches the divider regardless.
-        insertion_idx = first_section_idx
-        for i in range(first_section_idx - 1, -1, -1):
-            s = cleaned[i].strip()
-            if s.startswith('# ====') and s.endswith('===='):
-                insertion_idx = i
-                break
         new_block.append('\n')
         cleaned[insertion_idx:insertion_idx] = new_block
 
+    cleaned = collapse_blank_runs(cleaned)
     with open(config_file, 'w') as f:
         f.writelines(cleaned)
     return True

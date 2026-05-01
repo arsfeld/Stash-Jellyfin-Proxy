@@ -650,26 +650,53 @@ async def ui_api_config(request):
             # Sensitive keys - log changes but mask values
             sensitive_keys = ["STASH_API_KEY", "SJS_PASSWORD"]
 
-            # Read existing config file preserving all lines
+            # Read existing config file preserving all lines.
+            # Pre-pass: strip any line for a known global key that
+            # appears inside a [section] block. The loader binds
+            # post-section KEY = VALUE lines to that section's dict
+            # (e.g. cfg_sections["player.default"]["FAVORITE_TAG"])
+            # instead of cfg["FAVORITE_TAG"], so a misplaced flat key
+            # is dead weight at runtime — and a previous version of
+            # this handler appended new keys at file end exactly into
+            # that trap. Strip them on read so they're effectively
+            # "absent" and get re-inserted at global scope below.
             original_lines = []
             existing_values = {}  # Currently active (uncommented) values
             all_keys_in_file = set()  # Track all keys in file (commented or not)
             if os.path.isfile(runtime.CONFIG_FILE):
                 with open(runtime.CONFIG_FILE, 'r') as f:
-                    original_lines = f.readlines()
-                    for line in original_lines:
-                        stripped = line.strip()
-                        if stripped and not stripped.startswith('#') and '=' in stripped:
-                            key, _, value = stripped.partition('=')
-                            key = key.strip()
-                            existing_values[key] = value.strip().strip('"').strip("'")
-                            all_keys_in_file.add(key)
-                        elif stripped.startswith('#') and '=' in stripped:
-                            # Track commented keys too
-                            uncommented = stripped.lstrip('#').strip()
-                            if '=' in uncommented:
-                                key, _, _ = uncommented.partition('=')
-                                all_keys_in_file.add(key.strip())
+                    raw_lines = f.readlines()
+                config_keys_set = set(config_keys)
+                current_section = None
+                for line in raw_lines:
+                    stripped = line.strip()
+                    if stripped.startswith('[') and stripped.endswith(']'):
+                        current_section = stripped[1:-1]
+                        original_lines.append(line)
+                        continue
+                    if (current_section is not None and stripped
+                            and not stripped.startswith('#') and '=' in stripped):
+                        misplaced_key, _, _ = stripped.partition('=')
+                        if misplaced_key.strip() in config_keys_set:
+                            logger.info(
+                                f"Hoisting misplaced global key out of [{current_section}]: "
+                                f"{misplaced_key.strip()}"
+                            )
+                            continue
+                    original_lines.append(line)
+                for line in original_lines:
+                    stripped = line.strip()
+                    if stripped and not stripped.startswith('#') and '=' in stripped:
+                        key, _, value = stripped.partition('=')
+                        key = key.strip()
+                        existing_values[key] = value.strip().strip('"').strip("'")
+                        all_keys_in_file.add(key)
+                    elif stripped.startswith('#') and '=' in stripped:
+                        # Track commented keys too
+                        uncommented = stripped.lstrip('#').strip()
+                        if '=' in uncommented:
+                            key, _, _ = uncommented.partition('=')
+                            all_keys_in_file.add(key.strip())
 
             # Get current running values to compare against
             current_running = {
@@ -829,10 +856,25 @@ async def ui_api_config(request):
                 else:
                     new_lines.append(line)
 
-            # Only add truly new keys that don't exist anywhere in the file
-            for key in updates:
-                if key not in updated_keys:
-                    new_lines.append(f'{key} = "{updates[key]}"\n')
+            # Only add truly new keys that don't exist anywhere in the file.
+            # Insert at global scope (before the first [section] header,
+            # backed up over the divider) so the loader treats them as
+            # flat keys — appending at end would bind them into the
+            # trailing section's dict and they'd be invisible at next
+            # bootstrap.
+            new_keys_block = [
+                f'{key} = "{updates[key]}"\n'
+                for key in updates
+                if key not in updated_keys
+            ]
+            if new_keys_block:
+                from stash_jellyfin_proxy.config.helpers import find_global_insert_idx
+                insertion_idx = find_global_insert_idx(new_lines)
+                if insertion_idx is None:
+                    new_lines.extend(new_keys_block)
+                else:
+                    new_keys_block.append('\n')
+                    new_lines[insertion_idx:insertion_idx] = new_keys_block
 
             # Log configuration changes
             for key, new_val in updates.items():
@@ -851,9 +893,13 @@ async def ui_api_config(request):
                 else:
                     logger.info(f"Config reverted to default: {key}: \"{old_val}\" -> default \"{default_val}\"")
 
-            # Write updated config file
+            # Write updated config file. Collapse blank-line drift
+            # introduced by prior strip-and-reinsert cycles (and by the
+            # misplaced-key pre-pass above) before writing so the file
+            # doesn't grow extra blanks every save.
+            from stash_jellyfin_proxy.config.helpers import collapse_blank_runs
             with open(runtime.CONFIG_FILE, 'w') as f:
-                f.writelines(new_lines)
+                f.writelines(collapse_blank_runs(new_lines))
 
             # Apply configuration changes immediately (where safe to do so)
             # Settings that need restart: PROXY_BIND, PROXY_PORT, UI_PORT, LOG_DIR, LOG_FILE
