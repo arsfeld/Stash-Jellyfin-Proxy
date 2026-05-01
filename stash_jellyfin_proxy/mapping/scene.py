@@ -37,19 +37,25 @@ def is_series_scene(scene: Dict[str, Any]) -> bool:
 
 
 def is_scene_favorite(scene: Dict[str, Any]) -> bool:
-    """Check if a scene has the configured favorite tag."""
+    """Check if a scene has the configured favorite tag.
+
+    Compare case-insensitively to mirror get_or_create_tag's case-insensitive
+    lookup: config FAVORITE_TAG="FAVORITE" must still match an existing
+    Stash tag named "Favorite", otherwise toggles write but reads return
+    IsFavorite=False forever (issue #17)."""
     if not runtime.FAVORITE_TAG:
         return False
-    tag_names = [t.get("name", "") for t in scene.get("tags", [])]
-    return runtime.FAVORITE_TAG in tag_names
+    target = runtime.FAVORITE_TAG.strip().lower()
+    return any((t.get("name") or "").strip().lower() == target for t in scene.get("tags", []))
 
 
 def is_group_favorite(group: Dict[str, Any]) -> bool:
-    """Check if a group has the configured favorite tag."""
+    """Check if a group has the configured favorite tag. Case-insensitive
+    for the same reason as is_scene_favorite."""
     if not runtime.FAVORITE_TAG:
         return False
-    tag_names = [t.get("name", "") for t in group.get("tags", [])]
-    return runtime.FAVORITE_TAG in tag_names
+    target = runtime.FAVORITE_TAG.strip().lower()
+    return any((t.get("name") or "").strip().lower() == target for t in group.get("tags", []))
 
 
 _GENRE_UNSET = object()

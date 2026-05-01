@@ -68,18 +68,23 @@ def _extract_performer_id(item_id: str) -> str:
     return item_id.replace("person-", "")
 
 
-async def _toggle_scene_favorite(item_id: str, add: bool) -> None:
+async def _toggle_scene_favorite(item_id: str, add: bool) -> bool:
+    """Return True iff the Stash write actually succeeded. False on any
+    upstream failure so the caller can avoid claiming a successful toggle
+    when nothing actually changed."""
     numeric_id = item_id.replace("scene-", "")
     tag_id = await get_or_create_tag(runtime.FAVORITE_TAG)
     if not tag_id:
-        return
+        logger.warning(f"Favorite toggle failed for {item_id}: could not resolve tag '{runtime.FAVORITE_TAG}' in Stash")
+        return False
     scene_res = await stash_query(
         """query FindScene($id: ID!) { findScene(id: $id) { id tags { id } } }""",
         {"id": numeric_id},
     )
     scene = scene_res.get("data", {}).get("findScene") if scene_res else None
     if not scene:
-        return
+        logger.warning(f"Favorite toggle failed for {item_id}: scene not found in Stash")
+        return False
     existing = [t["id"] for t in scene.get("tags", []) if t["id"] != tag_id]
     if add:
         existing.append(tag_id)
@@ -88,20 +93,23 @@ async def _toggle_scene_favorite(item_id: str, add: bool) -> None:
         {"input": {"id": numeric_id, "tag_ids": existing}},
     )
     logger.info(f"{'★ Favorited' if add else '☆ Unfavorited'} scene: {item_id}")
+    return True
 
 
-async def _toggle_group_favorite(item_id: str, add: bool) -> None:
+async def _toggle_group_favorite(item_id: str, add: bool) -> bool:
     group_id = item_id.replace("group-", "")
     tag_id = await get_or_create_tag(runtime.FAVORITE_TAG)
     if not tag_id:
-        return
+        logger.warning(f"Favorite toggle failed for {item_id}: could not resolve tag '{runtime.FAVORITE_TAG}' in Stash")
+        return False
     group_res = await stash_query(
         """query FindMovie($id: ID!) { findMovie(id: $id) { id tags { id } } }""",
         {"id": group_id},
     )
     group = group_res.get("data", {}).get("findMovie") if group_res else None
     if not group:
-        return
+        logger.warning(f"Favorite toggle failed for {item_id}: group not found in Stash")
+        return False
     existing = [t["id"] for t in group.get("tags", []) if t["id"] != tag_id]
     if add:
         existing.append(tag_id)
@@ -110,24 +118,27 @@ async def _toggle_group_favorite(item_id: str, add: bool) -> None:
         {"input": {"id": group_id, "tag_ids": existing}},
     )
     logger.info(f"{'★ Favorited' if add else '☆ Unfavorited'} group: {item_id}")
+    return True
 
 
-async def _toggle_performer_favorite(item_id: str, add: bool) -> None:
+async def _toggle_performer_favorite(item_id: str, add: bool) -> bool:
     pid = _extract_performer_id(item_id)
     await stash_query(
         """mutation PerformerUpdate($input: PerformerUpdateInput!) { performerUpdate(input: $input) { id favorite } }""",
         {"input": {"id": pid, "favorite": add}},
     )
     logger.info(f"{'★ Favorited' if add else '☆ Unfavorited'} performer: {item_id}")
+    return True
 
 
-async def _toggle_studio_favorite(item_id: str, add: bool) -> None:
+async def _toggle_studio_favorite(item_id: str, add: bool) -> bool:
     sid = item_id.replace("studio-", "")
     await stash_query(
         """mutation StudioUpdate($input: StudioUpdateInput!) { studioUpdate(input: $input) { id favorite } }""",
         {"input": {"id": sid, "favorite": add}},
     )
     logger.info(f"{'★ Favorited' if add else '☆ Unfavorited'} studio: {item_id}")
+    return True
 
 
 def _favorite_response(item_id: str, is_favorite: bool) -> JSONResponse:
@@ -142,45 +153,58 @@ def _favorite_response(item_id: str, is_favorite: bool) -> JSONResponse:
 
 
 async def endpoint_user_item_favorite(request):
-    """Mark item as favorite. Scene/Group: tag toggle.  Performer/Studio: native flag."""
+    """Mark item as favorite. Scene/Group: tag toggle.  Performer/Studio: native flag.
+
+    If the underlying Stash write fails, the response reflects the prior
+    (unfavorited) state rather than lying about success — clients render
+    their toggle from this response and would otherwise show a phantom
+    favorite that doesn't actually exist server-side."""
     item_id = request.path_params.get("item_id", "")
+    succeeded = False
     try:
         if item_id.startswith("scene-"):
             if not runtime.FAVORITE_TAG:
                 return _favorite_response(item_id, True)
-            await _toggle_scene_favorite(item_id, add=True)
+            succeeded = await _toggle_scene_favorite(item_id, add=True)
         elif item_id.startswith("group-"):
             if not runtime.FAVORITE_TAG:
                 return _favorite_response(item_id, True)
-            await _toggle_group_favorite(item_id, add=True)
+            succeeded = await _toggle_group_favorite(item_id, add=True)
         elif item_id.startswith("performer-") or item_id.startswith("person-"):
-            await _toggle_performer_favorite(item_id, add=True)
+            succeeded = await _toggle_performer_favorite(item_id, add=True)
         elif item_id.startswith("studio-"):
-            await _toggle_studio_favorite(item_id, add=True)
+            succeeded = await _toggle_studio_favorite(item_id, add=True)
     except Exception as e:
         logger.error(f"Error favoriting {item_id}: {e}")
-    return _favorite_response(item_id, True)
+        succeeded = False
+    return _favorite_response(item_id, succeeded)
 
 
 async def endpoint_user_item_unfavorite(request):
-    """Remove favorite. Scene/Group: untag.  Performer/Studio: native flag."""
+    """Remove favorite. Scene/Group: untag.  Performer/Studio: native flag.
+
+    On Stash-write failure we report the item as still-favorited (the
+    state the client tried to leave) rather than claiming a successful
+    removal. This avoids 'why is the tag still there?' scenarios."""
     item_id = request.path_params.get("item_id", "")
+    succeeded = False
     try:
         if item_id.startswith("scene-"):
             if not runtime.FAVORITE_TAG:
                 return _favorite_response(item_id, False)
-            await _toggle_scene_favorite(item_id, add=False)
+            succeeded = await _toggle_scene_favorite(item_id, add=False)
         elif item_id.startswith("group-"):
             if not runtime.FAVORITE_TAG:
                 return _favorite_response(item_id, False)
-            await _toggle_group_favorite(item_id, add=False)
+            succeeded = await _toggle_group_favorite(item_id, add=False)
         elif item_id.startswith("performer-") or item_id.startswith("person-"):
-            await _toggle_performer_favorite(item_id, add=False)
+            succeeded = await _toggle_performer_favorite(item_id, add=False)
         elif item_id.startswith("studio-"):
-            await _toggle_studio_favorite(item_id, add=False)
+            succeeded = await _toggle_studio_favorite(item_id, add=False)
     except Exception as e:
         logger.error(f"Error unfavoriting {item_id}: {e}")
-    return _favorite_response(item_id, False)
+        succeeded = False
+    return _favorite_response(item_id, not succeeded)
 
 
 # --- Played / unplayed ---
