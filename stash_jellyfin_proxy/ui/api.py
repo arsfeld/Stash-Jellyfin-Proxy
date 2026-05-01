@@ -16,7 +16,7 @@ from typing import Optional
 
 from starlette.responses import JSONResponse, Response
 
-from stash_jellyfin_proxy import runtime
+from stash_jellyfin_proxy import __version__, runtime
 from stash_jellyfin_proxy.stash.client import check_stash_connection_cached, stash_query
 from stash_jellyfin_proxy.state import stats as _stats
 from stash_jellyfin_proxy.state import streams as _streams
@@ -43,7 +43,7 @@ async def ui_api_status(request):
     uptime_seconds = int(time.time() - start_time) if start_time else 0
     return JSONResponse({
         "running": runtime.PROXY_RUNNING,
-        "version": "v7.0.0",
+        "version": f"v{__version__}",
         "proxyBind": runtime.PROXY_BIND,
         "proxyPort": runtime.PROXY_PORT,
         "uptime": uptime_seconds,
@@ -53,6 +53,8 @@ async def ui_api_status(request):
         "migrationPerformed": bool(getattr(runtime, "MIGRATION_PERFORMED", False)),
         "migrationLog": list(getattr(runtime, "MIGRATION_LOG", []) or []),
         "configWritable": bool(getattr(runtime, "CONFIG_WRITABLE", True)),
+        "configPersistence": getattr(runtime, "CONFIG_PERSISTENCE", "unverified"),
+        "configLastBootAt": getattr(runtime, "CONFIG_LAST_BOOT_AT", ""),
         "configFile": runtime.CONFIG_FILE,
     })
 

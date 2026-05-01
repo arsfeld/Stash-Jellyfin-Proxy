@@ -13,7 +13,7 @@
   <aside class="sidebar">
     <div class="brand">
       <div class="logo"><span class="hex">⬡</span> SJP</div>
-      <div class="ver" id="brand-version">v7.0.0</div>
+      <div class="ver" id="brand-version"></div>
     </div>
     <nav class="nav" id="nav">
       <div class="nav-item active" data-page="dashboard"><span class="dot"></span>Dashboard</div>
@@ -139,6 +139,17 @@
               <strong style="color: #d97706;">⚠ Config file is not writable.</strong>
               <code id="dash-config-writable-path"></code> can't be saved to, so <strong>SERVER_ID</strong> and <strong>ACCESS_TOKEN</strong> will regenerate on every restart — clients (Infuse, Swiftfin, SenPlayer) will need to re-add the server each time.
               <div style="margin-top: 6px; color: var(--text-dim); font-size: 13px;">Fix: ensure the proxy process can write to that file. If running in Docker, mount a writable volume for the config directory.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4b: Config-not-persistent warning (conditional) -->
+        <div class="card hide" id="dash-config-persistence-banner" style="margin-top: 16px; border-color: #dc2626; background: rgba(220, 38, 38, 0.08);">
+          <div class="card-body">
+            <div>
+              <strong style="color: #dc2626;">⚠ Config file is not surviving restarts.</strong>
+              <code id="dash-config-persistence-path"></code> is writable, but the marker we wrote on the previous boot is gone — the file got wiped between restarts. Settings, <strong>SERVER_ID</strong>, and <strong>ACCESS_TOKEN</strong> will keep resetting until this is fixed.
+              <div style="margin-top: 6px; color: var(--text-dim); font-size: 13px;">Most likely cause: <code>/config</code> is mounted as an anonymous Docker volume, or the volume isn't actually mounted (so writes land in the container's ephemeral layer and vanish on restart). Check your <code>docker run -v</code> / <code>docker-compose</code> volume mapping.</div>
             </div>
           </div>
         </div>

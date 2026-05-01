@@ -73,6 +73,7 @@ def main():
     )
 
     # Proxy imports deferred until env vars are in place.
+    import stash_jellyfin_proxy as _pkg
     import stash_jellyfin_proxy.runtime as _runtime
     from stash_jellyfin_proxy.config.bootstrap import run_bootstrap
     run_bootstrap(CONFIG_FILE, LOCAL_CONFIG_FILE)
@@ -126,7 +127,7 @@ def main():
     logging.getLogger("hypercorn.error").addFilter(SuppressDisconnectFilter())
     logging.getLogger("asyncio").setLevel(logging.CRITICAL)
 
-    logger.info("--- Stash-Jellyfin Proxy v7.1.1 ---")
+    logger.info(f"--- Stash-Jellyfin Proxy v{_pkg.__version__} ---")
 
     if not check_stash_connection():
         logger.warning("Could not connect to Stash. Proxy will start but streaming will not work until Stash is reachable.")
