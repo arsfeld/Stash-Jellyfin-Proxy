@@ -271,6 +271,28 @@ Streaming uses `httpx.AsyncClient.send(stream=True)` + `aiter_bytes()` — byte 
 
 ## Changelog
 
+### v7.1.7
+
+Issue #16 (SERVER_ID rotation) + issue #17 (favorites in Infuse) — bundled because the root cause of #17 turned out to be the same family of config-writer bugs as #16.
+
+**Favorites**
+- Case-insensitive comparison for `FAVORITE_TAG`. Configuring `FAVORITE_TAG=FAVORITE` against an existing Stash tag named `Favorite` had silently broken `IsFavorite` reads — the proxy applied the tag correctly (Stash's tag lookup is case-insensitive) but on read returned False, so Infuse never reflected the favorite back and never sent a remove.
+- Toggle handlers no longer claim success when the Stash write fails (e.g. tag couldn't be created); the response now reflects the actual prior state.
+
+**Config writer**
+- Dashboard saves of brand-new keys now insert at global scope (just before the first `[section]` header, above any `# ==== ... ====` divider). Previously the new-key branch appended at the end of the file, where the loader binds `KEY = VALUE` into the trailing section's dict — so a freshly-set `FAVORITE_TAG` ended up as `cfg_sections["player.default"]["FAVORITE_TAG"]` and was invisible at runtime. Insertion logic shared between `save_config_value` (one-key writes) and the dashboard handler (bulk writes) via a `find_global_insert_idx` helper.
+- Heal-on-read pre-pass: when the dashboard handler reads the config, it strips any line for a known global key sitting inside a `[section]` block and logs `Hoisting misplaced global key out of [...]: <KEY>`. The next save re-inserts at global scope, so existing files self-heal.
+- Comment dedup so per-boot rewrites of `CONFIG_LAST_BOOT_AT` don't accumulate copies of the same comment line.
+- Blank-line drift (one extra blank per restart) collapsed before write.
+
+**Config persistence diagnostics**
+- `SERVER_ID` and `ACCESS_TOKEN` are persisted on first generation (was being regenerated every boot in v7.0.0, breaking client reconnects — issue #16).
+- Cross-restart persistence detector: bootstrap writes `CONFIG_LAST_BOOT_AT` every boot and a one-time `CONFIG_PERSISTENCE_INTRODUCED` marker. Combined with whether `SERVER_ID` was loaded, classify the file as `persisted` / `not_persistent` / `not_writable` / `unverified` and surface on the dashboard. Catches anonymous-volume / tmpfs / missing `/config` mount scenarios that look like save bugs from the user's side. The previous `os.access + open(r+)` writability probe is replaced by a save-and-read-back round trip.
+- New dashboard banners for `not_writable` (existing) and `not_persistent` (new), each pointing at the likely cause.
+
+**Version reporting**
+- Single `__version__` constant in `stash_jellyfin_proxy/__init__.py`. Dashboard `/api/status`, startup log banner, and HTML brand badge all read it; previously three independent hardcoded strings had drifted across releases (dashboard stuck at v7.0.0, startup banner stuck at v7.1.1).
+
 ### v7.1.0
 
 **Playlists**
