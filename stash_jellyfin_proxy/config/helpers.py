@@ -82,11 +82,18 @@ def save_config_value(config_file: str, key: str, value: str, comment: str = Non
         lines = f.readlines()
 
     # Strip every existing line for this key (active or commented),
-    # regardless of section. Track where the first section header sits.
+    # regardless of section. Also strip any prior occurrence of the
+    # same comment line we're about to insert — otherwise repeated
+    # saves of a per-boot key (CONFIG_LAST_BOOT_AT) accumulate one
+    # extra comment copy per boot. Track where the first section
+    # header sits.
+    comment_marker = f'# {comment}'.strip() if comment else None
     cleaned = []
     first_section_idx = None
     for line in lines:
         if _line_matches_key(line, key):
+            continue
+        if comment_marker and line.strip() == comment_marker:
             continue
         stripped = line.strip()
         if first_section_idx is None and stripped.startswith('[') and stripped.endswith(']'):
@@ -105,8 +112,20 @@ def save_config_value(config_file: str, key: str, value: str, comment: str = Non
             cleaned.append('\n')
         cleaned.extend(new_block)
     else:
+        # Walk back past blank lines and any decorative "# ==== ... ===="
+        # divider that visually heads the upcoming section, so a flat
+        # global key doesn't land below the divider and look like it
+        # belongs to that section.
+        insertion_idx = first_section_idx
+        j = insertion_idx - 1
+        while j >= 0 and cleaned[j].strip() == '':
+            j -= 1
+        if j >= 0:
+            s = cleaned[j].strip()
+            if s.startswith('# ====') and s.endswith('===='):
+                insertion_idx = j
         new_block.append('\n')
-        cleaned[first_section_idx:first_section_idx] = new_block
+        cleaned[insertion_idx:insertion_idx] = new_block
 
     with open(config_file, 'w') as f:
         f.writelines(cleaned)
