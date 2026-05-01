@@ -86,6 +86,20 @@ LOCAL_CONFIG_FILE: str = ""
 # rotate on every restart, breaking client reconnects (issue #16).
 CONFIG_WRITABLE: bool = True
 
+# Result of the boot-time persistence probe (issue #17). One of:
+#   "persisted"      — file survived the prior boot (LAST_BOOT_AT marker found)
+#   "not_persistent" — INTRODUCED marker present but LAST_BOOT_AT missing,
+#                      meaning the file got wiped between boots (anonymous
+#                      Docker volume, tmpfs, missing /config mount)
+#   "not_writable"   — couldn't write the marker this boot
+#   "unverified"     — first run, or first boot after upgrading to a build
+#                      that writes these markers; can't classify yet
+CONFIG_PERSISTENCE: str = "unverified"
+# ISO-8601 UTC timestamp written to the config every successful boot.
+# Surfaced read-only on the dashboard so operators can see the last
+# boot time even when the file was just wiped.
+CONFIG_LAST_BOOT_AT: str = ""
+
 # --- Fixed identity strings ---
 # The Jellyfin protocol version we pretend to be. Bump when clients
 # require newer API features.

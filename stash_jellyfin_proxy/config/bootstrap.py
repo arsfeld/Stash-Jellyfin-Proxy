@@ -412,30 +412,67 @@ def run_bootstrap(config_file: str, local_config_file: str) -> None:
     _uuid_padded = SERVER_ID.replace("-", "").ljust(32, "0")[:32]
     USER_ID = str(uuid.uuid5(uuid.UUID(_uuid_padded), SJS_USER or "user"))
 
-    # ---- Probe config-file writability ----
-    # If the file (or its parent dir, when the file doesn't yet exist)
-    # isn't writable, SERVER_ID and ACCESS_TOKEN can't persist — they'll
-    # regenerate on every restart and break client reconnects.
-    # We do both an os.access check (catches non-root users) and an
-    # open('r+') probe (catches read-only filesystem mounts, where root
-    # would otherwise bypass DAC and look writable).
+    # ---- Probe config-file writability + cross-boot persistence ----
+    # We write a per-boot timestamp (CONFIG_LAST_BOOT_AT) and a one-time
+    # introduction marker (CONFIG_PERSISTENCE_INTRODUCED). The pair lets
+    # us classify the file state into four buckets:
+    #   persisted      — INTRODUCED present + LAST_BOOT_AT survived prior boot
+    #   not_persistent — INTRODUCED present but LAST_BOOT_AT missing (wiped)
+    #   not_writable   — couldn't write the marker now (perms / read-only)
+    #   unverified     — fresh install, or first boot after upgrade-to-this-
+    #                    version; need another boot to know
+    # Captures from cfg below reflect file contents at load time, before
+    # any of bootstrap's own writes (SERVER_ID/ACCESS_TOKEN/LAST_BOOT_AT).
+    import datetime
+    prior_last_boot_at = (cfg.get("CONFIG_LAST_BOOT_AT", "") or "").strip()
+    prior_introduced = (cfg.get("CONFIG_PERSISTENCE_INTRODUCED", "") or "").strip()
+    had_server_id_at_load = bool((cfg.get("SERVER_ID", "") or "").strip())
+
+    now_iso = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    CONFIG_LAST_BOOT_AT = now_iso
+
     CONFIG_WRITABLE = True
-    if os.path.isfile(config_file):
-        if not os.access(config_file, os.W_OK):
+    CONFIG_PERSISTENCE = "unverified"
+    write_error = None
+    try:
+        save_config_value(
+            config_file, "CONFIG_LAST_BOOT_AT", now_iso,
+            "Updated every successful boot. If missing on a later boot the config wasn't persisted.",
+        )
+        # Verify the write actually landed by re-reading. Catches the
+        # rare case of a write that returns success but doesn't commit
+        # (e.g., overlay/tmpfs misconfigurations).
+        verify_cfg, _, _ = load_config(config_file)
+        if (verify_cfg.get("CONFIG_LAST_BOOT_AT", "") or "").strip() != now_iso:
             CONFIG_WRITABLE = False
-        else:
-            try:
-                with open(config_file, "r+"):
-                    pass
-            except OSError:
-                CONFIG_WRITABLE = False
-    else:
-        parent = os.path.dirname(os.path.abspath(config_file)) or "."
-        if not os.access(parent, os.W_OK):
-            CONFIG_WRITABLE = False
+            write_error = "write succeeded but read-back returned a different value"
+        elif not prior_introduced:
+            # First boot that's writing markers. Plant the introduction
+            # stamp so future boots can distinguish "fresh install" from
+            # "file got wiped after we'd been running here."
+            save_config_value(
+                config_file, "CONFIG_PERSISTENCE_INTRODUCED", now_iso,
+                "Set once, on the first boot that wrote CONFIG_LAST_BOOT_AT. Used to detect file resets.",
+            )
+    except OSError as e:
+        CONFIG_WRITABLE = False
+        write_error = str(e)
+
     if not CONFIG_WRITABLE:
+        CONFIG_PERSISTENCE = "not_writable"
         print(f"  WARNING: Config file is not writable: {config_file}")
+        if write_error:
+            print(f"  Write error: {write_error}")
         print("  SERVER_ID and ACCESS_TOKEN cannot persist; clients will need to re-add the server after every restart.")
+    elif had_server_id_at_load and prior_introduced:
+        if prior_last_boot_at:
+            CONFIG_PERSISTENCE = "persisted"
+        else:
+            CONFIG_PERSISTENCE = "not_persistent"
+            print(f"  WARNING: Config file is writable but did not survive the prior restart.")
+            print(f"  CONFIG_PERSISTENCE_INTRODUCED was set on {prior_introduced}, but CONFIG_LAST_BOOT_AT is missing.")
+            print(f"  Likely cause: /config mounted as an anonymous Docker volume or tmpfs, or not mounted at all.")
+            print(f"  Settings, SERVER_ID, and ACCESS_TOKEN will reset on every restart until /config is fixed.")
 
     # ---- Publish to stash_jellyfin_proxy.runtime ----
     runtime.publish(
@@ -480,6 +517,8 @@ def run_bootstrap(config_file: str, local_config_file: str) -> None:
         CONFIG_FILE=config_file,
         LOCAL_CONFIG_FILE=local_config_file,
         CONFIG_WRITABLE=CONFIG_WRITABLE,
+        CONFIG_PERSISTENCE=CONFIG_PERSISTENCE,
+        CONFIG_LAST_BOOT_AT=CONFIG_LAST_BOOT_AT,
         config=cfg,
         config_defined_keys=cfg_defined_keys,
         config_sections=cfg_sections,

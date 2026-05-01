@@ -143,6 +143,17 @@
           </div>
         </div>
 
+        <!-- Row 4b: Config-not-persistent warning (conditional) -->
+        <div class="card hide" id="dash-config-persistence-banner" style="margin-top: 16px; border-color: #dc2626; background: rgba(220, 38, 38, 0.08);">
+          <div class="card-body">
+            <div>
+              <strong style="color: #dc2626;">⚠ Config file is not surviving restarts.</strong>
+              <code id="dash-config-persistence-path"></code> is writable, but the marker we wrote on the previous boot is gone — the file got wiped between restarts. Settings, <strong>SERVER_ID</strong>, and <strong>ACCESS_TOKEN</strong> will keep resetting until this is fixed.
+              <div style="margin-top: 6px; color: var(--text-dim); font-size: 13px;">Most likely cause: <code>/config</code> is mounted as an anonymous Docker volume, or the volume isn't actually mounted (so writes land in the container's ephemeral layer and vanish on restart). Check your <code>docker run -v</code> / <code>docker-compose</code> volume mapping.</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Row 4: Migration notice (conditional) -->
         <div class="card hide" id="dash-migration-banner" style="margin-top: 16px; border-color: var(--accent, #3b82f6);">
           <div class="card-body" style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">

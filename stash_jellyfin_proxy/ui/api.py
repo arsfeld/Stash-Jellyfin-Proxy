@@ -53,6 +53,8 @@ async def ui_api_status(request):
         "migrationPerformed": bool(getattr(runtime, "MIGRATION_PERFORMED", False)),
         "migrationLog": list(getattr(runtime, "MIGRATION_LOG", []) or []),
         "configWritable": bool(getattr(runtime, "CONFIG_WRITABLE", True)),
+        "configPersistence": getattr(runtime, "CONFIG_PERSISTENCE", "unverified"),
+        "configLastBootAt": getattr(runtime, "CONFIG_LAST_BOOT_AT", ""),
         "configFile": runtime.CONFIG_FILE,
     })
 

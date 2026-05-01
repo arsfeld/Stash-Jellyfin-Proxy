@@ -315,6 +315,18 @@ async function renderDashStatus() {
     } else {
       cwBanner.classList.add("hide");
     }
+
+    // Config-not-persistent banner — file is writable but didn't survive
+    // the prior restart (anonymous volume, tmpfs, missing /config mount).
+    // Suppressed when not_writable already shows, since that one is the
+    // upstream problem and persistence can't be tested without writes.
+    const cpBanner = qs("#dash-config-persistence-banner");
+    if (s.configPersistence === "not_persistent" && s.configWritable !== false) {
+      qs("#dash-config-persistence-path").textContent = s.configFile || "(unknown)";
+      cpBanner.classList.remove("hide");
+    } else {
+      cpBanner.classList.add("hide");
+    }
   } catch {}
 }
 
